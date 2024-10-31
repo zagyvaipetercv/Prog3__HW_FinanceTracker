@@ -1,9 +1,17 @@
 package financetracker;
 
-import financetracker.windowing.LoginWindow;
+import financetracker.controllers.UserController;
+import financetracker.exceptions.CannotCreateUserControllerException;
+import financetracker.windowing.ErrorBox;
 
 public class Main {
     public static void main(String[] args) {
-        LoginWindow loginWindow = new LoginWindow();
+        UserController userController;
+        try {
+            userController = new UserController();
+        } catch (CannotCreateUserControllerException e) {
+            ErrorBox.show("ERROR", e.getMessage());
+            System.exit(-1);
+        }
     }
 }

@@ -10,11 +10,17 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
+
+import financetracker.controllers.UserController;
+
 import javax.swing.GroupLayout.Alignment;
 
 public class LoginWindow extends JFrame {
     private static final String TITLE = "Finance Tracker - Login";
     private static final Dimension DEFAULT_SIZE = new Dimension(300, 150);
+
+    public static final String LOGIN_ACTION_COMMAND = "LOGIN_WINDOW_LOGIN_CMD";
+    public static final String REGISTER_ACTION_COMMAND = "LOGIN_WINDOW_REGISTER_CMD";
 
     private JPanel panel;
 
@@ -28,8 +34,11 @@ public class LoginWindow extends JFrame {
     private JTextField passwordTextField;
 
     private transient GroupLayout layout;
+    private transient UserController userController;
 
-    public LoginWindow() {
+    public LoginWindow(UserController userController) {
+        this.userController = userController; 
+
         setTitle(TITLE);
         setSize(DEFAULT_SIZE);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -40,11 +49,26 @@ public class LoginWindow extends JFrame {
         usernameLabel = new JLabel("Username:");
         passwordLabel = new JLabel("Password:");
 
-        loginButton = new JButton("Login");
-        registerButton = new JButton("Register");
-
         usernameTextField = new JTextField();
         passwordTextField = new JPasswordField();
+        
+        loginButton = new JButton("Login");
+        loginButton.setActionCommand(LOGIN_ACTION_COMMAND);
+        loginButton.addActionListener(event -> 
+            this.userController.login(
+                    event,
+                    usernameTextField.getText(),
+                    passwordTextField.getText())
+        );
+
+        registerButton = new JButton("Register");
+        registerButton.setActionCommand(REGISTER_ACTION_COMMAND);
+        registerButton.addActionListener(event -> 
+            this.userController.register(
+                    event,
+                    usernameTextField.getText(),
+                    passwordTextField.getText())
+        );
 
         // Panel and Layout
         panel = new JPanel();
