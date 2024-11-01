@@ -2,7 +2,6 @@ package financetracker.controllers;
 
 import java.awt.event.ActionEvent;
 import java.io.EOFException;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,13 +13,10 @@ import financetracker.models.User;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.LoginWindow;
 
-public class UserController extends Controller<User> {
-    private static String filePath = "saves\\users.dat";
-    private static long nextID = 1;
 
-    public static void setSaveFilePath(String filePath) {
-        UserController.filePath = filePath;
-    }
+// FIXME: Everytime an ErrorBox is opened -> throw an exception
+public class UserController extends Controller<User> {
+    private static final String DEFAULT_SAVE_FILE_PATH = "saves\\users.dat";
 
     /**
      * Initializes the UserController
@@ -30,16 +26,10 @@ public class UserController extends Controller<User> {
      * @throws CannotCreateControllerException if intialization fails
      */
     public UserController() throws CannotCreateControllerException {
-        try {
-            createSaveFile();
-            initNextId();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new CannotCreateControllerException(UserController.class, "IO Exception occured");
-        }
+        super(DEFAULT_SAVE_FILE_PATH);
     }
 
     // PUBLIC METHODS
-
     /**
      * Registers a user to the system with 'username' and 'password'
      * If fails error then an message will appear
@@ -74,7 +64,8 @@ public class UserController extends Controller<User> {
 
         // If no error -> save
         try {
-            createAndSaveUser(username, password);
+            User user = new User(getNextId(), username, password);
+            appendNewData(user);
             return true;
         } catch (IOException e) {
             ErrorBox.show("REGISTRATION FAILED", "Registration failed due to an IO error");
@@ -137,7 +128,7 @@ public class UserController extends Controller<User> {
     }
 
     protected User findUser(String username) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getFilePath()))) {
             while (true) {
                 User user = (User) ois.readObject();
                 if (user == null) {
@@ -154,52 +145,5 @@ public class UserController extends Controller<User> {
         }
 
         return null;
-    }
-
-    // SERAILIZATION
-    // FIXME: save function overwrites save older saves -> append
-    private void createAndSaveUser(String name, String password) throws IOException {
-        User user = new User(nextID, name, password);
-        UserController.increaseNextId();
-        
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath));
-        oos.writeObject(user);
-        oos.close();
-
-    }
-
-    private void createSaveFile() throws IOException, CannotCreateControllerException {
-        File saveFile = new File(filePath);
-        
-        if (!saveFile.exists()) {
-            File dirPath = saveFile.getParentFile();
-            dirPath.mkdirs();
-            boolean fileSucces = saveFile.createNewFile();
-            if (!fileSucces) {
-                throw new CannotCreateControllerException(UserController.class, "Save file exists when it shouldn't");
-            }
-        }
-    }
-
-    // INITIALIZATION
-    private void initNextId() throws IOException, ClassNotFoundException {
-        UserController.setDefaultNextId();
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
-            while (true) {
-                ois.readObject();
-                UserController.increaseNextId();
-            }
-        } catch (EOFException e) {
-            // ois reached end of file -> close()
-            // [ois implements Closable -> no need to close manually]
-        }
-    }
-
-    private static void increaseNextId() {
-        nextID++;
-    }
-
-    private static void setDefaultNextId() {
-        nextID = 1;
     }
 }

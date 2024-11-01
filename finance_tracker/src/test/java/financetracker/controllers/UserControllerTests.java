@@ -37,7 +37,6 @@ public class UserControllerTests {
             testSaveFile.delete();
         }
 
-        UserController.setSaveFilePath(TEST_SAVE_FILE_PATH);
         userController = new UserController();
     }
 
