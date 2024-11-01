@@ -32,8 +32,6 @@ public class UserController implements Controller {
         } catch (IOException | ClassNotFoundException e) {
             throw new CannotCreateUserControllerException(UserController.class, "IO Exception occured");
         }
-
-        new LoginWindow(this);
     }
 
     // PUBLIC METHODS
@@ -110,6 +108,10 @@ public class UserController implements Controller {
             ErrorBox.show("LOGIN FAILED", "Login failed due to an IO Error");
             return false;
         }
+    }
+
+    public void showLoginView() {
+        new LoginWindow(this);
     }
 
     // CHECKS
