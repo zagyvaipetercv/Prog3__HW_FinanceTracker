@@ -9,28 +9,32 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import financetracker.exceptions.CannotCreateUserControllerException;
+import financetracker.exceptions.CannotCreateControllerException;
 import financetracker.models.User;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.LoginWindow;
 
-public class UserController implements Controller {
-    private static final String FILE_PATH = "saves\\users.dat";
+public class UserController extends Controller<User> {
+    private static String filePath = "saves\\users.dat";
     private static long nextID = 1;
+
+    public static void setSaveFilePath(String filePath) {
+        UserController.filePath = filePath;
+    }
 
     /**
      * Initializes the UserController
      * Collects metadata
      * Opens a Login Window
      * 
-     * @throws CannotCreateUserControllerException if intialization fails
+     * @throws CannotCreateControllerException if intialization fails
      */
-    public UserController() throws CannotCreateUserControllerException {
+    public UserController() throws CannotCreateControllerException {
         try {
             createSaveFile();
             initNextId();
         } catch (IOException | ClassNotFoundException e) {
-            throw new CannotCreateUserControllerException(UserController.class, "IO Exception occured");
+            throw new CannotCreateControllerException(UserController.class, "IO Exception occured");
         }
     }
 
@@ -132,8 +136,8 @@ public class UserController implements Controller {
                 password.length() < 8);
     }
 
-    private User findUser(String username) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE_PATH))) {
+    protected User findUser(String username) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
             while (true) {
                 User user = (User) ois.readObject();
                 if (user == null) {
@@ -153,33 +157,34 @@ public class UserController implements Controller {
     }
 
     // SERAILIZATION
+    // FIXME: save function overwrites save older saves -> append
     private void createAndSaveUser(String name, String password) throws IOException {
         User user = new User(nextID, name, password);
         UserController.increaseNextId();
         
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH));
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath));
         oos.writeObject(user);
         oos.close();
 
     }
 
-    private void createSaveFile() throws IOException, CannotCreateUserControllerException {
-        File saveFile = new File(FILE_PATH);
-
+    private void createSaveFile() throws IOException, CannotCreateControllerException {
+        File saveFile = new File(filePath);
+        
         if (!saveFile.exists()) {
-            boolean succes = saveFile.createNewFile();
-            if (!succes) {
-                throw new CannotCreateUserControllerException(UserController.class, "Save file exists when it shouldn't");
+            File dirPath = saveFile.getParentFile();
+            dirPath.mkdirs();
+            boolean fileSucces = saveFile.createNewFile();
+            if (!fileSucces) {
+                throw new CannotCreateControllerException(UserController.class, "Save file exists when it shouldn't");
             }
         }
     }
 
-
-
     // INITIALIZATION
     private void initNextId() throws IOException, ClassNotFoundException {
         UserController.setDefaultNextId();
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE_PATH))) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
             while (true) {
                 ois.readObject();
                 UserController.increaseNextId();

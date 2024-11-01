@@ -1,4 +1,11 @@
 package financetracker.controllers;
 
-public interface Controller {
+import financetracker.models.Model;
+
+public abstract class Controller<T extends Model> {
+    private String saveFile; 
+    
+    protected void appendToFile() {
+        
+    }
 } 
