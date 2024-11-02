@@ -1,11 +1,11 @@
-package financetracker.exceptions;
+package financetracker.exceptions.controller;
 
 import financetracker.controllers.Controller;
 
-public class CannotCreateUserControllerException extends Exception {
+public class CannotCreateControllerException extends Exception {
     private final transient Class<? extends Controller> controllerClass;
 
-    public CannotCreateUserControllerException(Class<? extends Controller> controllerClass, String reason) {
+    public CannotCreateControllerException(Class<? extends Controller> controllerClass, String reason) {
         super("Couldn't create UserController - " + reason);
         this.controllerClass = controllerClass;
     }
