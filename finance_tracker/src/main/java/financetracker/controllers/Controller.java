@@ -3,93 +3,76 @@ package financetracker.controllers;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
-import financetracker.exceptions.CannotCreateControllerException;
-import financetracker.exceptions.IdNotFoundException;
+import financetracker.exceptions.controller.CannotCreateControllerException;
+import financetracker.exceptions.controller.ControllerCannotReadException;
+import financetracker.exceptions.controller.ControllerCannotWriteException;
+import financetracker.exceptions.controller.IdNotFoundException;
 import financetracker.models.Model;
 
 public abstract class Controller<T extends Model> {
-    private String filePath; 
+    private String filePath;
     private long nextID;
 
+    // INITIALZATION
     protected Controller(String filePath) throws CannotCreateControllerException {
         this.filePath = filePath;
-
-        try {
-            createSaveFile();
-            initNextId();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new CannotCreateControllerException(this.getClass(), "IO Exception occured");
-        }
-    }
-    
-    // TODO: implement this function
-    protected void appendNewData(T t) throws IOException {
         
+        createSaveFile();
+        initNextId();
     }
 
-    // TODO: implement this function
-    protected void removeData(long id) {
-
-    }
-
-    protected long findId(T data) throws IOException, ClassNotFoundException, IdNotFoundException {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
-            while (true) {
-                T t = (T) ois.readObject();
-                if (t == null) {
-                    break;
-                }
-
-                if (t.equals(data)) {
-                    return t.getId();
-                }
-            }
-        } catch (EOFException e) {
-            // Reached end of File no need to throw IO exception -> throw IdNotFoundException instead
-        }
-
-        throw new IdNotFoundException(data);
-    }
-
-    // TODO: implement this function
-    protected int recordsSize() {
-        throw new RuntimeException("Not impleneted yet");
-    }
-
-    protected void createSaveFile() throws IOException, CannotCreateControllerException {
-        File saveFile = new File(filePath);
-        
-        if (!saveFile.exists()) {
-            File dirPath = saveFile.getParentFile();
-            dirPath.mkdirs();
-            boolean fileSucces = saveFile.createNewFile();
-            if (!fileSucces) {
-                throw new CannotCreateControllerException(this.getClass(), "Save file exists when it shouldn't");
-            }
-        }
-    }
-
-    private void initNextId() throws IOException, ClassNotFoundException {
+    private void initNextId() throws CannotCreateControllerException {
         nextID = 1;
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getFilePath()))) {
-            while (true) {
-                ois.readObject();
-                increaseNextId();
-            }
-        } catch (EOFException e) {
-            // ois reached end of file -> close()
-            // [ois implements Closable -> no need to close manually]
+            List<T> savedData = (List<T>) ois.readObject();
+            nextID = Collections.max(
+                    savedData,
+                    (model1, model2) -> ((Long) model1.getId()).compareTo(model2.getId()))
+                    .getId() + 1;
+
+        } catch (IOException | ClassNotFoundException e) {
+            throw new CannotCreateControllerException(this.getClass(), "nextId was not initialized");
         }
     }
 
+    protected void createSaveFile() throws CannotCreateControllerException {
+        File saveFile = new File(filePath);
+
+        try {
+            if (!saveFile.exists()) {
+                File dirPath = saveFile.getParentFile();
+                dirPath.mkdirs();
+                boolean fileSucces = saveFile.createNewFile();
+                if (!fileSucces) {
+                    throw new CannotCreateControllerException(this.getClass(), "Save file exists when it shouldn't");
+                }
+    
+                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath));
+                oos.writeObject(new ArrayList<T>());
+                oos.close();
+            }
+        } catch (IOException e) {
+            throw new CannotCreateControllerException(this.getClass(), filePath);
+        }
+
+    }
+
+    // METADATA
     protected void setSaveFilePath(String filePath) {
         this.filePath = filePath;
     }
 
-    protected String getFilePath() {
+    public String getFilePath() {
         return filePath;
     }
 
@@ -100,4 +83,61 @@ public abstract class Controller<T extends Model> {
     protected void increaseNextId() {
         nextID++;
     }
-} 
+
+    // IO OPEARTIONS
+    protected void appendNewData(T t) throws ControllerCannotWriteException, ControllerCannotReadException {
+        List<T> datasSaved = readAll();
+        datasSaved.add(t);
+        write(datasSaved);
+    }
+
+    protected List<T> readAll() throws ControllerCannotReadException {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            List<T> result = (List<T>) ois.readObject();
+
+            return result;
+        } catch (IOException | ClassNotFoundException e) {
+            throw new ControllerCannotReadException(this);
+        }
+
+
+    }
+
+    protected void write(List<T> datas) throws ControllerCannotWriteException {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(datas);
+        } catch (IOException e) {
+            throw new ControllerCannotWriteException(this);
+        }
+    }
+
+    protected void removeData(long id) throws ControllerCannotWriteException, ControllerCannotReadException {
+        List<T> datasSaved = readAll();
+
+        Iterator<T> iter = datasSaved.iterator();
+        while (iter.hasNext()) {
+            if (iter.next().getId() == id) {
+                iter.remove();
+                break;
+            }
+        }
+
+        write(datasSaved);
+    }
+
+    // QUERIES
+    protected long findId(T data, Comparator comparator) throws ControllerCannotReadException, IdNotFoundException {
+        List<T> savedData = readAll();
+        for (T t : savedData) {
+            if (comparator.compare(t, savedData) == 0) {
+                return t.getId();
+            }
+        }
+
+        throw new IdNotFoundException(data);
+    }
+
+    protected int recordsSize() throws ControllerCannotReadException {
+        return readAll().size();
+    }
+}

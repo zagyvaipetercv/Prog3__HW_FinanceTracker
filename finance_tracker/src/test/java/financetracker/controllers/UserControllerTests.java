@@ -8,11 +8,16 @@ import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import financetracker.exceptions.CannotCreateControllerException;
+import financetracker.exceptions.controller.CannotCreateControllerException;
+import financetracker.exceptions.controller.ControllerCannotReadException;
+import financetracker.exceptions.usercontroller.InvalidPasswordException;
+import financetracker.exceptions.usercontroller.InvalidUserNameException;
+import financetracker.exceptions.usercontroller.LoginFailedException;
+import financetracker.exceptions.usercontroller.RegistrationFailedException;
 import financetracker.models.User;
 
 public class UserControllerTests {
-    private static final String TEST_SAVE_FILE_PATH = "test_data\\saves\\test_user.dat";
+    private static final String TEST_SAVE_FILE_PATH = "test_data\saves\test_user.dat";
     
     private String validUsername1 = "ValidUsername";
     private String validPassword1 = "ValidPassword";
@@ -41,13 +46,13 @@ public class UserControllerTests {
     }
 
     @Test
-    public void checkRegisterSucceds() {
+    public void checkRegisterSucceds() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         boolean succes = userController.register(null, validUsername1, validPassword1);
         assertEquals(true, succes);
     }
 
     @Test
-    public void checkFindUser() throws ClassNotFoundException, IOException {
+    public void checkFindUser() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException, ControllerCannotReadException  {
         boolean succes = userController.register(null, validUsername1, validPassword1);
         User user = userController.findUser(validUsername1);
         assertEquals(true, succes);
@@ -57,7 +62,7 @@ public class UserControllerTests {
     }
 
     @Test
-    public void checkLoginUser() {
+    public void checkLoginUser() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException, LoginFailedException {
         boolean succesRegister = userController.register(null, validUsername1, validPassword1);
         boolean succesLogin = userController.login(null, validUsername1, validPassword1);
         
@@ -66,7 +71,7 @@ public class UserControllerTests {
     }
 
     @Test
-    public void checkWrongLogin() {
+    public void checkWrongLogin() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException, LoginFailedException {
         boolean succesReg2 = userController.register(null, validUsername2, validPassword2);
         boolean succesReg1 = userController.register(null, validUsername1, validPassword1);
 
@@ -78,38 +83,38 @@ public class UserControllerTests {
     }
 
     @Test 
-    public void checkInvalidUserName1() {
+    public void checkInvalidUserName1() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         boolean succes = userController.register(null, invalidUsernameBlank, validPassword1);
         assertEquals(false, succes);
     }
 
 
     @Test 
-    public void checkInvalidUserName2() {
+    public void checkInvalidUserName2() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         boolean succes = userController.register(null, invalidUsernameHasOnlySpace, validPassword1);
         assertEquals(false, succes);
     }
 
     @Test 
-    public void checkInvalidUserName3() {
+    public void checkInvalidUserName3() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         boolean succes = userController.register(null, invalidUsernameHasSpace, validPassword1);
         assertEquals(false, succes);
     }
 
     @Test 
-    public void checkInvalidPassword1() {
+    public void checkInvalidPassword1() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         boolean succes = userController.register(null, validUsername1, invalidPasswordBlank);
         assertEquals(false, succes);
     }
 
     @Test 
-    public void checkInvalidPassword2() {
+    public void checkInvalidPassword2() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         boolean succes = userController.register(null, validUsername1, invalidPasswordHasOnlySpace);
         assertEquals(false, succes);
     }
 
     @Test 
-    public void checkInvalidPassword3() {
+    public void checkInvalidPassword3() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         boolean succes = userController.register(null, validUsername1, invalidPasswordNotEnoughChars);
         assertEquals(false, succes);
     }

@@ -1,18 +1,19 @@
 package financetracker.controllers;
 
 import java.awt.event.ActionEvent;
-import java.io.EOFException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.util.List;
 
-import financetracker.exceptions.CannotCreateControllerException;
+import financetracker.exceptions.controller.CannotCreateControllerException;
+import financetracker.exceptions.controller.ControllerCannotReadException;
+import financetracker.exceptions.controller.ControllerCannotWriteException;
+import financetracker.exceptions.usercontroller.InvalidPasswordException;
+import financetracker.exceptions.usercontroller.InvalidUserNameException;
+import financetracker.exceptions.usercontroller.LoginFailedException;
+import financetracker.exceptions.usercontroller.RegistrationFailedException;
 import financetracker.models.User;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.LoginWindow;
-
 
 // FIXME: Everytime an ErrorBox is opened -> throw an exception
 public class UserController extends Controller<User> {
@@ -38,28 +39,25 @@ public class UserController extends Controller<User> {
      * @param username username of the user
      * @param password password of the user
      * @return true if registration was succesfull, false if not
+     * @throws RegistrationFailedException
      */
-    public boolean register(ActionEvent event, String username, String password) {
+    public boolean register(ActionEvent event, String username, String password)
+            throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         // Check for errors
         if (usernameIsInvalid(username)) {
-            ErrorBox.show("INVALID USERNAME", "Username cannot be blank or contain white spaces");
-            return false;
+            throw new InvalidUserNameException(InvalidUserNameException.ErrorType.REGISTRATION_ALREADY_EXISTS);
         }
 
         if (passwordIsInvalid(password)) {
-            ErrorBox.show("INVALID PASSWORD", "Password cannot contain white spaces or have less than 8 characters");
-            return false;
+            throw new InvalidPasswordException(InvalidPasswordException.ErrorType.NOT_ENOUGH_CHARACTERS_OR_WHITESPACE);
         }
 
         try {
             if (userExists(username)) {
-                ErrorBox.show("INVALID USERNAME", "User with \"" + username + "\" name already exists");
-                return false;
+                throw new InvalidUserNameException(InvalidUserNameException.ErrorType.REGISTRATION_ALREADY_EXISTS);
             }
-        } catch (ClassNotFoundException | IOException e) {
-            ErrorBox.show("REGISTRATION FAILED", "Couldn't perform registration check (user exists)");
-            e.printStackTrace();
-            return false;
+        } catch (ControllerCannotReadException e) {
+            throw new RegistrationFailedException("Can not check if user already exists");
         }
 
         // If no error -> save
@@ -67,9 +65,8 @@ public class UserController extends Controller<User> {
             User user = new User(getNextId(), username, password);
             appendNewData(user);
             return true;
-        } catch (IOException e) {
-            ErrorBox.show("REGISTRATION FAILED", "Registration failed due to an IO error");
-            return false;
+        } catch (ControllerCannotReadException | ControllerCannotWriteException e) {
+            throw new RegistrationFailedException("Registration failed due to an IO error");
         }
     }
 
@@ -81,27 +78,23 @@ public class UserController extends Controller<User> {
      * @param username username of the user
      * @param password password of the user
      * @return true if login was succesfull, false if not
+     * @throws LoginFailedException
+     * @throws InvalidPasswordException
      */
-    public boolean login(ActionEvent event, String username, String password) {
+    public boolean login(ActionEvent event, String username, String password)
+            throws LoginFailedException, InvalidPasswordException {
         try {
             User user = findUser(username);
-            if (user == null) {
-                ErrorBox.show("INVALID USERNAME", "\"" + username + "\" is not a registered username");
-                return false;
-            }
 
             if (!user.getPassword().equals(password)) {
-                ErrorBox.show("PASSWORDS DO NOT MATCH", "Passwords do not match");
-                return false;
+                throw new InvalidPasswordException(InvalidPasswordException.ErrorType.PASSWORDS_DO_NOT_MATCH);
             }
-
             // TODO: Open MainFrame with logged in user
             System.out.println("Succesfull login");
             return true;
 
-        } catch (ClassNotFoundException | IOException e) {
-            ErrorBox.show("LOGIN FAILED", "Login failed due to an IO Error");
-            return false;
+        } catch (ControllerCannotReadException e) {
+            throw new LoginFailedException("Login failed to an Read Exception");
         }
     }
 
@@ -110,7 +103,7 @@ public class UserController extends Controller<User> {
     }
 
     // CHECKS
-    private boolean userExists(String username) throws IOException, ClassNotFoundException {
+    private boolean userExists(String username) throws ControllerCannotReadException {
         User user = findUser(username);
 
         return user != null;
@@ -127,21 +120,12 @@ public class UserController extends Controller<User> {
                 password.length() < 8);
     }
 
-    protected User findUser(String username) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getFilePath()))) {
-            while (true) {
-                User user = (User) ois.readObject();
-                if (user == null) {
-                    break;
-                }
-
-                if (username.equals(user.getName())) {
-                    return user;
-                }
+    protected User findUser(String username) throws ControllerCannotReadException {
+        List<User> users = readAll();
+        for (User user : users) {
+            if (user.getName().equals(username)) {
+                return user;
             }
-        } catch (EOFException e) {
-            // ois reached end of file -> close()
-            // [ois implements Closable -> no need to close manually]
         }
 
         return null;

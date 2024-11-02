@@ -1,7 +1,7 @@
 package financetracker;
 
 import financetracker.controllers.UserController;
-import financetracker.exceptions.CannotCreateControllerException;
+import financetracker.exceptions.controller.*;
 import financetracker.windowing.ErrorBox;
 
 public class Main {

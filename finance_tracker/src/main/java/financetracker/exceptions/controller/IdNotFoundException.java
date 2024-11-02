@@ -1,4 +1,4 @@
-package financetracker.exceptions;
+package financetracker.exceptions.controller;
 
 import financetracker.models.Model;
 
