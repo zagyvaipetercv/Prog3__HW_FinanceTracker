@@ -9,7 +9,7 @@ public class Main {
          UserController userController;
          try {
             userController = new UserController();
-            userController.showLoginView();
+            userController.getLoginView();
         } catch (CannotCreateControllerException e) {
             ErrorBox.show("ERROR", e.getMessage());
             System.exit(-1);

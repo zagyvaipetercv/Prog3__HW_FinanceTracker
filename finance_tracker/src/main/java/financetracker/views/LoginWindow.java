@@ -1,10 +1,9 @@
-package financetracker.windowing;
+package financetracker.views;
 
 import java.awt.Dimension;
 
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -16,10 +15,11 @@ import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
+import financetracker.windowing.ErrorBox;
 
 import javax.swing.GroupLayout.Alignment;
 
-public class LoginWindow extends JFrame {
+public class LoginWindow extends FrameView {
         private static final String TITLE = "Finance Tracker - Login";
         private static final Dimension DEFAULT_SIZE = new Dimension(300, 150);
 
