@@ -1,6 +1,5 @@
 package financetracker.controllers;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,9 +31,14 @@ public abstract class Controller<T extends Model> {
     }
 
     private void initNextId() throws CannotCreateControllerException {
-        nextID = 1;
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getFilePath()))) {
             List<T> savedData = (List<T>) ois.readObject();
+
+            if (savedData.isEmpty()) {
+                nextID = 1;
+                return;
+            }
+
             nextID = Collections.max(
                     savedData,
                     (model1, model2) -> ((Long) model1.getId()).compareTo(model2.getId()))
@@ -93,9 +97,7 @@ public abstract class Controller<T extends Model> {
 
     protected List<T> readAll() throws ControllerCannotReadException {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
-            List<T> result = (List<T>) ois.readObject();
-
-            return result;
+            return (List<T>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new ControllerCannotReadException(this);
         }
@@ -126,10 +128,10 @@ public abstract class Controller<T extends Model> {
     }
 
     // QUERIES
-    protected long findId(T data, Comparator comparator) throws ControllerCannotReadException, IdNotFoundException {
+    protected long findId(T data, Comparator<T> comparator) throws ControllerCannotReadException, IdNotFoundException {
         List<T> savedData = readAll();
         for (T t : savedData) {
-            if (comparator.compare(t, savedData) == 0) {
+            if (comparator.compare(t, data) == 0) {
                 return t.getId();
             }
         }

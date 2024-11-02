@@ -64,7 +64,7 @@ public class LoginWindow extends JFrame {
                                                 event,
                                                 usernameTextField.getText(),
                                                 passwordTextField.getText());
-                        } catch (LoginFailedException | InvalidPasswordException e) {
+                        } catch (LoginFailedException | InvalidPasswordException | InvalidUserNameException e) {
                                 ErrorBox.show(e.getErrorTitle(), e.getMessage());
                         }
                 });

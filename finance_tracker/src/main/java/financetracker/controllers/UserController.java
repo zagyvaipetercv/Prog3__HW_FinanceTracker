@@ -1,7 +1,6 @@
 package financetracker.controllers;
 
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import java.util.List;
 
 import financetracker.exceptions.controller.CannotCreateControllerException;
@@ -12,10 +11,8 @@ import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
 import financetracker.models.User;
-import financetracker.windowing.ErrorBox;
 import financetracker.windowing.LoginWindow;
 
-// FIXME: Everytime an ErrorBox is opened -> throw an exception
 public class UserController extends Controller<User> {
     private static final String DEFAULT_SAVE_FILE_PATH = "saves\\users.dat";
 
@@ -28,6 +25,10 @@ public class UserController extends Controller<User> {
      */
     public UserController() throws CannotCreateControllerException {
         super(DEFAULT_SAVE_FILE_PATH);
+    }
+
+    public UserController(String filePath) throws CannotCreateControllerException {
+        super(filePath);
     }
 
     // PUBLIC METHODS
@@ -80,11 +81,15 @@ public class UserController extends Controller<User> {
      * @return true if login was succesfull, false if not
      * @throws LoginFailedException
      * @throws InvalidPasswordException
+     * @throws InvalidUserNameException
      */
     public boolean login(ActionEvent event, String username, String password)
-            throws LoginFailedException, InvalidPasswordException {
+            throws LoginFailedException, InvalidPasswordException, InvalidUserNameException {
         try {
             User user = findUser(username);
+            if (user == null) {
+                throw new InvalidUserNameException(InvalidUserNameException.ErrorType.LOGIN_NOT_REGISTERED_USERNAME);
+            }
 
             if (!user.getPassword().equals(password)) {
                 throw new InvalidPasswordException(InvalidPasswordException.ErrorType.PASSWORDS_DO_NOT_MATCH);

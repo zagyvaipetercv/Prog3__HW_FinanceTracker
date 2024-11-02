@@ -11,6 +11,7 @@ public class InvalidPasswordException extends ErrorBoxException {
     private static final String ERROR_TITLE = "INVALID PASSWORD";
 
     private final transient ErrorType type;
+
     private final transient String errorMessage;
 
     public InvalidPasswordException(ErrorType type) {
@@ -31,6 +32,15 @@ public class InvalidPasswordException extends ErrorBoxException {
         }
 
     }
+
+    public ErrorType getType() {
+        return type;
+    }
+
+    @Override
+    public String getMessage() {
+        return errorMessage;
+    } 
 
     public String getErrorTitle() {
         return ERROR_TITLE;
