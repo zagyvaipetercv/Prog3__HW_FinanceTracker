@@ -11,8 +11,8 @@ import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
 import financetracker.models.User;
+import financetracker.views.FrameView;
 import financetracker.views.LoginWindow;
-import financetracker.views.View;
 
 public class UserController extends Controller<User> {
     private static final String DEFAULT_SAVE_FILE_PATH = "saves\\users.dat";
@@ -104,7 +104,7 @@ public class UserController extends Controller<User> {
         }
     }
 
-    public View getLoginView() {
+    public FrameView getLoginView() {
         return new LoginWindow(this);
     }
 
