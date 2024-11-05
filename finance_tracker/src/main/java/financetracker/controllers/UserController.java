@@ -96,8 +96,8 @@ public class UserController extends Controller<User> {
             if (!user.getPassword().equals(password)) {
                 throw new InvalidPasswordException(InvalidPasswordException.ErrorType.PASSWORDS_DO_NOT_MATCH);
             }
-            // TODO: Open MainFrame with logged in user
-            new MainFrame();
+
+            new MainFrame(user);
             return true;
 
         } catch (ControllerCannotReadException e) {
