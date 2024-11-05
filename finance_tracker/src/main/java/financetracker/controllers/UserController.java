@@ -13,6 +13,7 @@ import financetracker.exceptions.usercontroller.RegistrationFailedException;
 import financetracker.models.User;
 import financetracker.views.FrameView;
 import financetracker.views.LoginWindow;
+import financetracker.windowing.MainFrame;
 
 public class UserController extends Controller<User> {
     private static final String DEFAULT_SAVE_FILE_PATH = "saves\\users.dat";
@@ -96,7 +97,7 @@ public class UserController extends Controller<User> {
                 throw new InvalidPasswordException(InvalidPasswordException.ErrorType.PASSWORDS_DO_NOT_MATCH);
             }
             // TODO: Open MainFrame with logged in user
-            System.out.println("Succesfull login");
+            new MainFrame();
             return true;
 
         } catch (ControllerCannotReadException e) {
