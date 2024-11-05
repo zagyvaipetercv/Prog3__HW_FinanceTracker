@@ -6,8 +6,8 @@ import financetracker.windowing.ErrorBox;
 
 public class Main {
     public static void main(String[] args) {
-         UserController userController;
-         try {
+        UserController userController;
+        try {
             userController = new UserController();
             userController.getLoginView();
         } catch (CannotCreateControllerException e) {

@@ -1,6 +1,7 @@
 package financetracker.views;
 
 import java.awt.Dimension;
+import java.awt.event.WindowEvent;
 
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
@@ -60,10 +61,16 @@ public class LoginWindow extends FrameView {
                 loginButton.setActionCommand(LOGIN_ACTION_COMMAND);
                 loginButton.addActionListener(event -> {
                         try {
-                                this.userController.login(
+                                boolean succes = this.userController.login(
                                                 event,
                                                 usernameTextField.getText(),
                                                 passwordTextField.getText());
+
+                                if (succes) {
+                                        // Close this window
+                                        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                                        this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+                                }
                         } catch (LoginFailedException | InvalidPasswordException | InvalidUserNameException e) {
                                 ErrorBox.show(e.getErrorTitle(), e.getMessage());
                         }
@@ -126,5 +133,4 @@ public class LoginWindow extends FrameView {
                 this.add(panel);
                 setVisible(true);
         }
-
 }
