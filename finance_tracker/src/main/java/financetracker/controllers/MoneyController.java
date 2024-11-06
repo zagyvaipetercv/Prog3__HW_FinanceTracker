@@ -27,12 +27,14 @@ public class MoneyController extends Controller<Money> {
     }
 
     public MoneyController(String filePath) throws CannotCreateControllerException {
-        super(filePath);    
+        super(filePath);
     }
 
-    public void addMoneyToAccount(LocalDate date, double amount, Currency currency, String reason) throws MoneyAmountIsInvalidException, ReasonIsInvalidException, BalanceCouldNotCahcngeException {
+    public void addMoneyToAccount(LocalDate date, double amount, Currency currency, String reason)
+            throws MoneyAmountIsInvalidException, ReasonIsInvalidException, BalanceCouldNotCahcngeException {
         if (amountIsInvalid(amount)) {
-            throw new MoneyAmountIsInvalidException(amount, "Amount must be greater than 0.0 when adding money to account");
+            throw new MoneyAmountIsInvalidException(amount,
+                    "Amount must be greater than 0.0 when adding money to account");
         }
 
         if (reasonIsInvalid(reason)) {
@@ -47,6 +49,7 @@ public class MoneyController extends Controller<Money> {
         }
     }
 
+    // TODO: Replace with a specialized exception (like CannotReadMoneyException or somehting)  
     public List<Money> getMoney(int year, Month month) throws ControllerCannotReadException {
         List<Money> saved = readAll();
         List<Money> result = new ArrayList<>();
@@ -77,5 +80,11 @@ public class MoneyController extends Controller<Money> {
 
     private boolean reasonIsInvalid(String reason) {
         return reason == null || reason.isBlank();
+    }
+
+    public enum CashFlowType {
+        ALL,
+        INCOME,
+        EXPENSE
     }
 }

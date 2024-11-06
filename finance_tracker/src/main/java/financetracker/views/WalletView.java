@@ -13,12 +13,10 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
 
 import financetracker.Main;
 import financetracker.controllers.MoneyController;
@@ -45,7 +43,8 @@ public class WalletView extends PanelView {
 
         LocalDate deafultDate = LocalDate.now();
         try {
-            cashFlowPanel = new CashFlowPanel(Main.getMoneyController().getMoney(deafultDate.getYear(), deafultDate.getMonth()));
+            cashFlowPanel = new CashFlowPanel(
+                    Main.getMoneyController().getMoney(deafultDate.getYear(), deafultDate.getMonth()));
         } catch (ControllerCannotReadException e) {
             ErrorBox.show("ERROR", e.getMessage());
         }
@@ -58,17 +57,15 @@ public class WalletView extends PanelView {
 
     }
 
-    private class FilterPanel extends JPanel {
-        private enum CashFlowType {
-            ALL,
-            INCOME,
-            EXPENSE
-        }
+    private void updateTable(List<Money> newList) {
+        cashFlowPanel.updateTable(newList);
+    }
 
+    private class FilterPanel extends JPanel {
         public FilterPanel() {
             // Setup panel
             setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
-            
+
             GroupLayout layout = new GroupLayout(this);
             setLayout(layout);
             layout.setAutoCreateGaps(true);
@@ -76,8 +73,8 @@ public class WalletView extends PanelView {
 
             // Setup Components
             JLabel typeLabel = new JLabel("Type:");
-            
-            JComboBox<CashFlowType> typePicker = new JComboBox<>(CashFlowType.values());
+
+            JComboBox<MoneyController.CashFlowType> typePicker = new JComboBox<>(MoneyController.CashFlowType.values());
 
             JLabel yearLabel = new JLabel("Year:");
             JTextField yearTextField = new JTextField(4);
@@ -87,7 +84,15 @@ public class WalletView extends PanelView {
 
             JButton submitButton = new JButton("Filter");
             submitButton.addActionListener(ae -> {
-                // TODO: Implement filtering
+                int year = Integer.parseInt(yearTextField.getText());
+                Month month = (Month) monthPicker.getSelectedItem();
+
+                try {
+                    List<Money> filteredList = Main.getMoneyController().getMoney(year, month);
+                    updateTable(filteredList);
+                } catch (ControllerCannotReadException e) {
+                    ErrorBox.show("ERROR", e.getMessage());
+                }
             });
 
             // Add Components
@@ -129,14 +134,20 @@ public class WalletView extends PanelView {
 
     private class CashFlowPanel extends JPanel {
 
+        private MoneyTableModel model;
+
         public CashFlowPanel(List<Money> cashFlow) {
             setLayout(new BorderLayout());
 
-            MoneyTableModel model = new MoneyTableModel(cashFlow);
+            model = new MoneyTableModel(cashFlow);
             JTable table = new JTable(model);
             JScrollPane scrollPane = new JScrollPane(table);
             add(scrollPane);
         }
+
+        private void updateTable(List<Money> newList) {
+            model.setMoneyList(newList);
+        } 
     }
 
     private class SummaryPanel extends JPanel {
@@ -159,8 +170,8 @@ public class WalletView extends PanelView {
 
     private class MoneyTableModel extends AbstractTableModel {
 
-        private final List<Money> moneyList;
-        private final String[] columnNames = {"Date", "Amount", "Currency", "Reason"};
+        private List<Money> moneyList;
+        private final String[] columnNames = { "Date", "Amount", "Currency", "Reason" };
 
         public MoneyTableModel(List<Money> moneyList) {
             this.moneyList = moneyList;
@@ -170,17 +181,17 @@ public class WalletView extends PanelView {
         public int getRowCount() {
             return moneyList.size();
         }
-    
+
         @Override
         public int getColumnCount() {
             return columnNames.length;
         }
-    
+
         @Override
         public String getColumnName(int column) {
             return columnNames[column];
         }
-    
+
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Money money = moneyList.get(rowIndex);
@@ -191,13 +202,13 @@ public class WalletView extends PanelView {
                     return money.getAmount();
                 case 2:
                     return money.getCurrency().getCurrencyCode(); // or getSymbol() for the currency symbol
-                case 3: 
+                case 3:
                     return money.getReason();
                 default:
                     return null;
             }
         }
-    
+
         @Override
         public Class<?> getColumnClass(int columnIndex) {
             switch (columnIndex) {
@@ -212,6 +223,11 @@ public class WalletView extends PanelView {
                 default:
                     return Object.class;
             }
+        }
+
+        private void setMoneyList(List<Money> moneyList) {
+            this.moneyList = moneyList;
+            fireTableDataChanged();
         }
     }
 }
