@@ -1,7 +1,7 @@
 package financetracker.views;
 
+import java.time.LocalDate;
 import java.util.Currency;
-import java.util.Locale;
 
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
@@ -16,6 +16,8 @@ import financetracker.exceptions.moneycontroller.MoneyAmountIsInvalidException;
 import financetracker.exceptions.moneycontroller.ReasonIsInvalidException;
 import financetracker.windowing.ErrorBox;
 
+
+// TODO: Add a date picker
 public class AddMoneyView extends FrameView {
 
     public AddMoneyView(MoneyController moneyController) {
@@ -40,7 +42,7 @@ public class AddMoneyView extends FrameView {
             Currency currency = Currency.getInstance("HUF");
             String reason = reasonTextField.getText();
             try {
-                moneyController.addMoneyToAccount(amount, currency, reason);
+                moneyController.addMoneyToAccount(LocalDate.now(), amount, currency, reason);
             } catch (MoneyAmountIsInvalidException | ReasonIsInvalidException | BalanceCouldNotCahcngeException e) {
                 ErrorBox.show(e.getErrorTitle(), e.getMessage());
             } catch (Exception e) {

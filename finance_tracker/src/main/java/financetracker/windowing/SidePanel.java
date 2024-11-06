@@ -8,6 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import financetracker.views.HomeView;
+import financetracker.views.WalletView;
 
 public class SidePanel extends JPanel {
     private static final int PREFFERED_WIDTH = 250;
@@ -32,16 +33,17 @@ public class SidePanel extends JPanel {
         });
         add(homeButton);
 
-        NavButton purchasesButton = new NavButton("Purchases");
-        purchasesButton.addActionListener(actionEvent -> {
-            // TODO: implement this method
+        NavButton walletButton = new NavButton("Wallet");
+        walletButton.addActionListener(ae -> {
+            mainFrame.changeView(new WalletView());
+            mainFrame.setTitle("Wallet");
         });
-        add(purchasesButton);
+        add(walletButton);
     }
 
 
     private class NavButton extends JButton {
-        private static final int PREFFERED_HEIGHT = 75;
+        private static final int PREFFERED_HEIGHT = 50;
 
         public NavButton(String text) {
             super(text);
