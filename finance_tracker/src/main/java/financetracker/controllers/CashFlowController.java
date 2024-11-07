@@ -13,20 +13,21 @@ import financetracker.exceptions.controller.ControllerCannotWriteException;
 import financetracker.exceptions.moneycontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.moneycontroller.MoneyAmountIsInvalidException;
 import financetracker.exceptions.moneycontroller.ReasonIsInvalidException;
+import financetracker.models.CashFlow;
 import financetracker.models.Money;
 
 // TODO: Create test cases for MoneyController
 // TODO: Create PanelView for Income/Expenses
 // TODO: Create Query Method for Incomes/Expenses
 
-public class MoneyController extends Controller<Money> {
-    private static final String DEFAULT_FILEPATH = "saves\\money.dat";
+public class CashFlowController extends Controller<CashFlow> {
+    private static final String DEFAULT_FILEPATH = "saves\\cash_flow.dat";
 
-    public MoneyController() throws CannotCreateControllerException {
+    public CashFlowController() throws CannotCreateControllerException {
         this(DEFAULT_FILEPATH);
     }
 
-    public MoneyController(String filePath) throws CannotCreateControllerException {
+    public CashFlowController(String filePath) throws CannotCreateControllerException {
         super(filePath);
     }
 
@@ -41,35 +42,53 @@ public class MoneyController extends Controller<Money> {
             throw new ReasonIsInvalidException(reason, "Reason can't be blank");
         }
 
-        Money money = new Money(getNextId(), date, amount, currency, reason);
+        Money money = new Money(amount, currency);
+        CashFlow cashFlow = new CashFlow(
+                getNextId(),
+                date,
+                money,
+                reason);
         try {
-            appendNewData(money);
+            appendNewData(cashFlow);
         } catch (ControllerCannotWriteException | ControllerCannotReadException e) {
             throw new BalanceCouldNotCahcngeException(money, "Couldn't add money to balance");
         }
     }
 
-    // TODO: Replace with a specialized exception (like CannotReadMoneyException or somehting)  
-    public List<Money> getMoney(int year, Month month) throws ControllerCannotReadException {
-        List<Money> saved = readAll();
-        List<Money> result = new ArrayList<>();
+    public void addMoneyToAccount(List<CashFlow> cashFlowList)
+            throws MoneyAmountIsInvalidException, ReasonIsInvalidException, BalanceCouldNotCahcngeException {
+        for (CashFlow cashFlow : cashFlowList) {
+            double amount = cashFlow.getMoney().getAmount();
+            String reason = cashFlow.getReason();
 
-        for (Money money : saved) {
-            if (money.getDate().getYear() == year && money.getDate().getMonth().equals(month)) {
-                result.add(money);
+            if (amountIsInvalid(amount)) {
+                throw new MoneyAmountIsInvalidException(amount,
+                        "Amount must be greater than 0.0 when adding money to account");
+            }
+
+            if (reasonIsInvalid(reason)) {
+                throw new ReasonIsInvalidException(reason, "Reason can't be blank");
             }
         }
 
-        return result;
+        try {
+            appendNewDatas(cashFlowList);
+        } catch (ControllerCannotReadException | ControllerCannotWriteException e) {
+            throw new BalanceCouldNotCahcngeException(null, "Couldn't add money to balance");
+        }
     }
 
-    public static String[] moneyToRowData(Money money) {
-        String[] result = new String[4];
+    // TODO: Replace with a specialized exception (like CannotReadMoneyException or
+    // somehting)
+    public List<CashFlow> getCashFlows(int year, Month month) throws ControllerCannotReadException {
+        List<CashFlow> saved = readAll();
+        List<CashFlow> result = new ArrayList<>();
 
-        result[0] = money.getDate().toString();
-        result[1] = ((Double) money.getAmount()).toString();
-        result[2] = money.getCurrency().getDisplayName();
-        result[3] = money.getReason();
+        for (CashFlow cashFlow : saved) {
+            if (cashFlow.getDate().getYear() == year && cashFlow.getDate().getMonth().equals(month)) {
+                result.add(cashFlow);
+            }
+        }
 
         return result;
     }

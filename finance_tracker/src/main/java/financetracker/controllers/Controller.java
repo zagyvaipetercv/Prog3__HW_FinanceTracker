@@ -25,7 +25,7 @@ public abstract class Controller<T extends Model> {
     // INITIALZATION
     protected Controller(String filePath) throws CannotCreateControllerException {
         this.filePath = filePath;
-        
+
         createSaveFile();
         initNextId();
     }
@@ -60,7 +60,7 @@ public abstract class Controller<T extends Model> {
                 if (!fileSucces) {
                     throw new CannotCreateControllerException(this.getClass(), "Save file exists when it shouldn't");
                 }
-    
+
                 ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath));
                 oos.writeObject(new ArrayList<T>());
                 oos.close();
@@ -95,13 +95,18 @@ public abstract class Controller<T extends Model> {
         write(datasSaved);
     }
 
+    protected void appendNewDatas(List<T> tList) throws ControllerCannotReadException, ControllerCannotWriteException {
+        List<T> dataSaved = readAll();
+        dataSaved.addAll(tList);
+        write(dataSaved);
+    }
+
     protected List<T> readAll() throws ControllerCannotReadException {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
             return (List<T>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new ControllerCannotReadException(this);
         }
-
 
     }
 

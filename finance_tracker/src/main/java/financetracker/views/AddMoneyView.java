@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
-import financetracker.controllers.MoneyController;
+import financetracker.controllers.CashFlowController;
 import financetracker.exceptions.moneycontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.moneycontroller.MoneyAmountIsInvalidException;
 import financetracker.exceptions.moneycontroller.ReasonIsInvalidException;
@@ -20,7 +20,7 @@ import financetracker.windowing.ErrorBox;
 // TODO: Add a date picker
 public class AddMoneyView extends FrameView {
 
-    public AddMoneyView(MoneyController moneyController) {
+    public AddMoneyView(CashFlowController moneyController) {
         // Setup Window
         setTitle("Finance Tracker - Add Money");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

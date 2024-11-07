@@ -19,8 +19,9 @@ import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
 
 import financetracker.Main;
-import financetracker.controllers.MoneyController;
+import financetracker.controllers.CashFlowController;
 import financetracker.exceptions.controller.ControllerCannotReadException;
+import financetracker.models.CashFlow;
 import financetracker.models.Money;
 import financetracker.windowing.ErrorBox;
 
@@ -44,7 +45,7 @@ public class WalletView extends PanelView {
         LocalDate deafultDate = LocalDate.now();
         try {
             cashFlowPanel = new CashFlowPanel(
-                    Main.getMoneyController().getMoney(deafultDate.getYear(), deafultDate.getMonth()));
+                    Main.getCashFlowController().getCashFlows(deafultDate.getYear(), deafultDate.getMonth()));
         } catch (ControllerCannotReadException e) {
             ErrorBox.show("ERROR", e.getMessage());
         }
@@ -57,7 +58,7 @@ public class WalletView extends PanelView {
 
     }
 
-    private void updateTable(List<Money> newList) {
+    private void updateTable(List<CashFlow> newList) {
         cashFlowPanel.updateTable(newList);
     }
 
@@ -74,7 +75,7 @@ public class WalletView extends PanelView {
             // Setup Components
             JLabel typeLabel = new JLabel("Type:");
 
-            JComboBox<MoneyController.CashFlowType> typePicker = new JComboBox<>(MoneyController.CashFlowType.values());
+            JComboBox<CashFlowController.CashFlowType> typePicker = new JComboBox<>(CashFlowController.CashFlowType.values());
 
             JLabel yearLabel = new JLabel("Year:");
             JTextField yearTextField = new JTextField(4);
@@ -88,7 +89,7 @@ public class WalletView extends PanelView {
                 Month month = (Month) monthPicker.getSelectedItem();
 
                 try {
-                    List<Money> filteredList = Main.getMoneyController().getMoney(year, month);
+                    List<CashFlow> filteredList = Main.getCashFlowController().getCashFlows(year, month);
                     updateTable(filteredList);
                 } catch (ControllerCannotReadException e) {
                     ErrorBox.show("ERROR", e.getMessage());
@@ -134,19 +135,19 @@ public class WalletView extends PanelView {
 
     private class CashFlowPanel extends JPanel {
 
-        private MoneyTableModel model;
+        private CashFlowTableModel model;
 
-        public CashFlowPanel(List<Money> cashFlow) {
+        public CashFlowPanel(List<CashFlow> cashFlow) {
             setLayout(new BorderLayout());
 
-            model = new MoneyTableModel(cashFlow);
+            model = new CashFlowTableModel(cashFlow);
             JTable table = new JTable(model);
             JScrollPane scrollPane = new JScrollPane(table);
             add(scrollPane);
         }
 
-        private void updateTable(List<Money> newList) {
-            model.setMoneyList(newList);
+        private void updateTable(List<CashFlow> newList) {
+            model.setCashFlowList(newList);
         } 
     }
 
@@ -168,18 +169,18 @@ public class WalletView extends PanelView {
         }
     }
 
-    private class MoneyTableModel extends AbstractTableModel {
+    private class CashFlowTableModel extends AbstractTableModel {
 
-        private List<Money> moneyList;
+        private List<CashFlow> cashFlowList;
         private final String[] columnNames = { "Date", "Amount", "Currency", "Reason" };
 
-        public MoneyTableModel(List<Money> moneyList) {
-            this.moneyList = moneyList;
+        public CashFlowTableModel(List<CashFlow> cashFlowList) {
+            this.cashFlowList = cashFlowList;
         }
 
         @Override
         public int getRowCount() {
-            return moneyList.size();
+            return cashFlowList.size();
         }
 
         @Override
@@ -194,16 +195,16 @@ public class WalletView extends PanelView {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Money money = moneyList.get(rowIndex);
+            CashFlow cashFlow = cashFlowList.get(rowIndex);
             switch (columnIndex) {
                 case 0:
-                    return money.getDate();
+                    return cashFlow.getDate();
                 case 1:
-                    return money.getAmount();
+                    return cashFlow.getMoney().getAmount();
                 case 2:
-                    return money.getCurrency().getCurrencyCode(); // or getSymbol() for the currency symbol
+                    return cashFlow.getMoney().getCurrency().getCurrencyCode(); // or getSymbol() for the currency symbol
                 case 3:
-                    return money.getReason();
+                    return cashFlow.getReason();
                 default:
                     return null;
             }
@@ -225,8 +226,8 @@ public class WalletView extends PanelView {
             }
         }
 
-        private void setMoneyList(List<Money> moneyList) {
-            this.moneyList = moneyList;
+        private void setCashFlowList(List<CashFlow> moneyList) {
+            this.cashFlowList = moneyList;
             fireTableDataChanged();
         }
     }
