@@ -1,4 +1,4 @@
-package financetracker.views;
+package financetracker.views.cashflow;
 
 import java.time.LocalDate;
 import java.util.Currency;
@@ -10,23 +10,32 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
+import com.github.lgooddatepicker.components.DatePicker;
+
 import financetracker.controllers.CashFlowController;
-import financetracker.exceptions.moneycontroller.BalanceCouldNotCahcngeException;
-import financetracker.exceptions.moneycontroller.MoneyAmountIsInvalidException;
-import financetracker.exceptions.moneycontroller.ReasonIsInvalidException;
+import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
+import financetracker.exceptions.cashflowcontroller.MoneyAmountIsInvalidException;
+import financetracker.exceptions.cashflowcontroller.ReasonIsInvalidException;
+import financetracker.views.bases.FrameView;
 import financetracker.windowing.ErrorBox;
 
+public class ChangeMoneyView extends FrameView {
 
-// TODO: Add a date picker
-public class AddMoneyView extends FrameView {
+    private CashFlowController cashFlowController;
+    
+    public ChangeMoneyView(CashFlowController cashFlowController) {
+        this.cashFlowController = cashFlowController; 
 
-    public AddMoneyView(CashFlowController moneyController) {
         // Setup Window
-        setTitle("Finance Tracker - Add Money");
+        setTitle("Finance Tracker - Change Money");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 
         // Define Components
+        JLabel dateLabel = new JLabel("Select Date:");
+        DatePicker datePicker = new DatePicker();
+        datePicker.setDate(LocalDate.now());
+
         JLabel amountLabel = new JLabel("Amount:");
         JLabel currencyLabel = new JLabel("Currency:");
         JLabel reasonLabel = new JLabel("Reason:");
@@ -38,11 +47,13 @@ public class AddMoneyView extends FrameView {
 
         // Add button action listener
         submitButton.addActionListener(ae -> {
-            double amount = Double.parseDouble(amountTextField.getText());
+            LocalDate date = datePicker.getDate();
+            String amount = amountTextField.getText();
             Currency currency = Currency.getInstance("HUF");
             String reason = reasonTextField.getText();
             try {
-                moneyController.addMoneyToAccount(LocalDate.now(), amount, currency, reason);
+                cashFlowController.changeMoneyOnAccount(date, amount, currency, reason);
+                cashFlowController.closeFrameView(this);
             } catch (MoneyAmountIsInvalidException | ReasonIsInvalidException | BalanceCouldNotCahcngeException e) {
                 ErrorBox.show(e.getErrorTitle(), e.getMessage());
             } catch (Exception e) {
@@ -61,11 +72,13 @@ public class AddMoneyView extends FrameView {
         GroupLayout.SequentialGroup hGroup = layout.createSequentialGroup();
         hGroup.addGroup(layout.createParallelGroup()
             .addComponent(amountLabel)
-            .addComponent(amountTextField));
+            .addComponent(amountTextField)
+            .addComponent(dateLabel));
 
         hGroup.addGroup(layout.createParallelGroup()
             .addComponent(currencyLabel)
-            .addComponent(hufLabel));
+            .addComponent(hufLabel)
+            .addComponent(datePicker));
 
         hGroup.addGroup(layout.createParallelGroup()
             .addComponent(reasonLabel)
@@ -74,6 +87,7 @@ public class AddMoneyView extends FrameView {
         hGroup.addGroup(layout.createParallelGroup()
             .addComponent(submitButton));
 
+            
         layout.setHorizontalGroup(hGroup);
 
         GroupLayout.SequentialGroup vGroup = layout.createSequentialGroup();
@@ -87,6 +101,12 @@ public class AddMoneyView extends FrameView {
             .addComponent(hufLabel)
             .addComponent(reasonTextField)
             .addComponent(submitButton));
+
+        vGroup.addGroup(layout.createParallelGroup()
+            .addComponent(dateLabel)
+            .addComponent(datePicker));
+
+        
 
         layout.setVerticalGroup(vGroup);
 

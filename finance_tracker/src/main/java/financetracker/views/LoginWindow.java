@@ -10,11 +10,13 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
+import financetracker.Main;
 import financetracker.controllers.UserController;
 import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
+import financetracker.views.bases.FrameView;
 import financetracker.windowing.ErrorBox;
 
 import javax.swing.GroupLayout.Alignment;
@@ -22,9 +24,6 @@ import javax.swing.GroupLayout.Alignment;
 public class LoginWindow extends FrameView {
         private static final String TITLE = "Finance Tracker - Login";
         private static final Dimension DEFAULT_SIZE = new Dimension(300, 150);
-
-        public static final String LOGIN_ACTION_COMMAND = "LOGIN_WINDOW_LOGIN_CMD";
-        public static final String REGISTER_ACTION_COMMAND = "LOGIN_WINDOW_REGISTER_CMD";
 
         private JPanel panel;
 
@@ -37,8 +36,8 @@ public class LoginWindow extends FrameView {
         private JTextField usernameTextField;
         private JTextField passwordTextField;
 
-        private transient GroupLayout layout;
-        private transient UserController userController;
+        private GroupLayout layout;
+        private UserController userController;
 
         public LoginWindow(UserController userController) {
                 this.userController = userController;
@@ -57,20 +56,20 @@ public class LoginWindow extends FrameView {
                 passwordTextField = new JPasswordField();
 
                 loginButton = new JButton("Login");
-                loginButton.setActionCommand(LOGIN_ACTION_COMMAND);
                 loginButton.addActionListener(event -> {
                         try {
                                 this.userController.login(
                                                 event,
                                                 usernameTextField.getText(),
                                                 passwordTextField.getText());
+                                
+                                userController.closeFrameView(this);
                         } catch (LoginFailedException | InvalidPasswordException | InvalidUserNameException e) {
                                 ErrorBox.show(e.getErrorTitle(), e.getMessage());
                         }
                 });
 
                 registerButton = new JButton("Register");
-                registerButton.setActionCommand(REGISTER_ACTION_COMMAND);
                 registerButton.addActionListener(event -> {
                         try {
                                 this.userController.register(

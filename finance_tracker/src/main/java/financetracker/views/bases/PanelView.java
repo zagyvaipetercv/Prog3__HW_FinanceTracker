@@ -1,5 +1,5 @@
 
-package financetracker.views;
+package financetracker.views.bases;
 
 import javax.swing.JPanel;
 

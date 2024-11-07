@@ -1,8 +1,10 @@
-package financetracker.views;
+package financetracker.views.cashflow;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
@@ -18,22 +20,27 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
 
-import financetracker.Main;
 import financetracker.controllers.CashFlowController;
+import financetracker.controllers.CashFlowController.CashFlowType;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.models.CashFlow;
 import financetracker.models.Money;
+import financetracker.views.bases.PanelView;
 import financetracker.windowing.ErrorBox;
 
 public class WalletView extends PanelView {
     private static final int RIGHT_PANEL_WIDTH = 250;
-    private static final Color BORDER_COLOR = Color.BLACK;
+    private static final Color BORDER_COLOR = Color.GRAY;
     private static final int BORDER_THICKNESS = 1;
 
     private CashFlowPanel cashFlowPanel;
     private SummaryPanel summaryPanel;
 
-    public WalletView() {
+    private CashFlowController cashFlowController;
+
+    public WalletView(CashFlowController cashFlowController) {
+        this.cashFlowController = cashFlowController;
+
         setLayout(new BorderLayout());
 
         JPanel centerPanel = new JPanel(new BorderLayout());
@@ -42,24 +49,29 @@ public class WalletView extends PanelView {
         JPanel rightPanel = new JPanel(new BorderLayout());
         add(rightPanel, BorderLayout.EAST);
 
+        // Get Data for Panels
         LocalDate deafultDate = LocalDate.now();
+        int year = deafultDate.getYear();
+        Month month = deafultDate.getMonth();
         try {
             cashFlowPanel = new CashFlowPanel(
-                    Main.getCashFlowController().getCashFlows(deafultDate.getYear(), deafultDate.getMonth()));
+                    cashFlowController.getCashFlows(year, month, CashFlowType.ALL));
+
+            summaryPanel = new SummaryPanel(
+                    cashFlowController.getMoneyOnAccount(),
+                    cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.INCOME),
+                    cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.EXPENSE),
+                    cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.ALL));
+
         } catch (ControllerCannotReadException e) {
             ErrorBox.show("ERROR", e.getMessage());
         }
-        summaryPanel = new SummaryPanel();
 
         centerPanel.add(new FilterPanel(), BorderLayout.NORTH);
         centerPanel.add(cashFlowPanel, BorderLayout.CENTER);
         rightPanel.add(summaryPanel, BorderLayout.NORTH);
         rightPanel.add(new OptionsPanel(), BorderLayout.CENTER);
 
-    }
-
-    private void updateTable(List<CashFlow> newList) {
-        cashFlowPanel.updateTable(newList);
     }
 
     private class FilterPanel extends JPanel {
@@ -73,24 +85,37 @@ public class WalletView extends PanelView {
             layout.setAutoCreateContainerGaps(true);
 
             // Setup Components
-            JLabel typeLabel = new JLabel("Type:");
+            LocalDate currentDate = LocalDate.now();
 
-            JComboBox<CashFlowController.CashFlowType> typePicker = new JComboBox<>(CashFlowController.CashFlowType.values());
+            JLabel typeLabel = new JLabel("Type:");
+            JComboBox<CashFlowController.CashFlowType> typePicker = new JComboBox<>(
+                    CashFlowController.CashFlowType.values());
 
             JLabel yearLabel = new JLabel("Year:");
             JTextField yearTextField = new JTextField(4);
+            yearTextField.setText(String.valueOf(currentDate.getYear()));
 
             JLabel monthLabel = new JLabel("Month:");
             JComboBox<Month> monthPicker = new JComboBox<>(Month.values());
+            monthPicker.setSelectedItem(currentDate.getMonth());
 
             JButton submitButton = new JButton("Filter");
             submitButton.addActionListener(ae -> {
                 int year = Integer.parseInt(yearTextField.getText());
                 Month month = (Month) monthPicker.getSelectedItem();
+                CashFlowType type = (CashFlowType) typePicker.getSelectedItem();
 
                 try {
-                    List<CashFlow> filteredList = Main.getCashFlowController().getCashFlows(year, month);
-                    updateTable(filteredList);
+                    // Get Datas
+                    List<CashFlow> filteredList = cashFlowController.getCashFlows(year, month, type);
+                    Money sumMonth = cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.ALL);
+                    Money income = cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.INCOME);
+                    Money expense = cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.EXPENSE);
+
+                    // Update the panels
+                    cashFlowPanel.updateTable(filteredList);
+                    summaryPanel.upadteSummary(income, expense, sumMonth);
+
                 } catch (ControllerCannotReadException e) {
                     ErrorBox.show("ERROR", e.getMessage());
                 }
@@ -139,6 +164,7 @@ public class WalletView extends PanelView {
 
         public CashFlowPanel(List<CashFlow> cashFlow) {
             setLayout(new BorderLayout());
+            setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
 
             model = new CashFlowTableModel(cashFlow);
             JTable table = new JTable(model);
@@ -148,15 +174,52 @@ public class WalletView extends PanelView {
 
         private void updateTable(List<CashFlow> newList) {
             model.setCashFlowList(newList);
-        } 
+        }
     }
 
     private class SummaryPanel extends JPanel {
-        private static final int PANEL_HEIGHT = 100;
+        private static final int PANEL_HEIGHT = 120;
 
-        public SummaryPanel() {
+        JLabel moneyOnAcountLabel;
+        JLabel sumIncomeLabel;
+        JLabel sumExpenseLabel;
+        JLabel selectedMonthSumLabel;
+
+        public SummaryPanel(Money onAccount, Money sumIncome, Money sumExpense, Money selectedMonthSum) {
+            setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
             setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, PANEL_HEIGHT));
-            setBackground(Color.RED);
+            GridLayout layout = new GridLayout(4,2);
+            setLayout(layout);
+
+            JLabel moneyOnAccountTitleLabel = new JLabel("Money on account:");
+            add(moneyOnAccountTitleLabel);
+            moneyOnAcountLabel = new JLabel(onAccount.toString());
+            add(moneyOnAcountLabel);
+
+            JLabel selectedMonthSumTitleLabel = new JLabel("Selected month sum:");
+            add(selectedMonthSumTitleLabel);
+            selectedMonthSumLabel = new JLabel(selectedMonthSum.toString());
+            add(selectedMonthSumLabel);
+
+            JLabel incomeTitleLable = new JLabel("Income:");
+            add(incomeTitleLable);
+            sumIncomeLabel = new JLabel(sumIncome.toString());
+            add(sumIncomeLabel);
+
+            JLabel expenseTitleLable = new JLabel("Expenses:");
+            add(expenseTitleLable);
+            sumExpenseLabel = new JLabel(sumExpense.toString());
+            add(sumExpenseLabel);
+        }
+
+        private void upadteSummary(Money sumIncome, Money sumExpense, Money selectedMonthSum) {
+            sumExpenseLabel.setText(sumExpense.toString());
+            sumIncomeLabel.setText(sumIncome.toString());
+            selectedMonthSumLabel.setText(selectedMonthSum.toString());
+        }
+
+        private void upadateMoneyOnAccount(Money onAccount) {
+            moneyOnAcountLabel.setText(onAccount.toString());
         }
     }
 
@@ -164,8 +227,28 @@ public class WalletView extends PanelView {
         private static final int PANEL_HEIGHT = 30;
 
         public OptionsPanel() {
+            setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
             setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, 0));
-            setBackground(Color.WHITE);
+            FlowLayout layout = new FlowLayout();
+            layout.setAlignOnBaseline(true);
+            setLayout(layout);
+
+            OptionButton changeMoneyButton = new OptionButton("Cahnge Money on account");
+            changeMoneyButton.addActionListener(ae -> cashFlowController.getChangeMoneyView().setVisible(true));
+            add(changeMoneyButton);
+
+            OptionButton setMoneyButton = new OptionButton("Set Money on account");
+            setMoneyButton.addActionListener(ae -> cashFlowController.getSetMoneyView().setVisible(true));
+            add(setMoneyButton);
+        }
+
+        private class OptionButton extends JButton {
+            private static final int BUTTON_HEIGHT = 30;
+
+            public OptionButton(String text) {
+                super(text);
+                setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, BUTTON_HEIGHT));
+            }
         }
     }
 
@@ -202,7 +285,8 @@ public class WalletView extends PanelView {
                 case 1:
                     return cashFlow.getMoney().getAmount();
                 case 2:
-                    return cashFlow.getMoney().getCurrency().getCurrencyCode(); // or getSymbol() for the currency symbol
+                    return cashFlow.getMoney().getCurrency().getCurrencyCode(); // or getSymbol() for the currency
+                                                                                // symbol
                 case 3:
                     return cashFlow.getReason();
                 default:

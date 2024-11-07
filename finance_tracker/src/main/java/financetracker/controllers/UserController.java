@@ -11,8 +11,8 @@ import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
 import financetracker.models.User;
-import financetracker.views.FrameView;
 import financetracker.views.LoginWindow;
+import financetracker.views.bases.FrameView;
 import financetracker.windowing.MainFrame;
 
 public class UserController extends Controller<User> {
@@ -25,12 +25,12 @@ public class UserController extends Controller<User> {
      * 
      * @throws CannotCreateControllerException if intialization fails
      */
-    public UserController() throws CannotCreateControllerException {
-        super(DEFAULT_SAVE_FILE_PATH);
+    public UserController(MainFrame mainFrame) throws CannotCreateControllerException {
+        this(DEFAULT_SAVE_FILE_PATH, mainFrame);
     }
 
-    public UserController(String filePath) throws CannotCreateControllerException {
-        super(filePath);
+    public UserController(String filePath, MainFrame mainFrame) throws CannotCreateControllerException {
+        super(filePath, mainFrame);
     }
 
     // PUBLIC METHODS
@@ -97,7 +97,7 @@ public class UserController extends Controller<User> {
                 throw new InvalidPasswordException(InvalidPasswordException.ErrorType.PASSWORDS_DO_NOT_MATCH);
             }
 
-            new MainFrame(user);
+            mainFrame = new MainFrame(user);
             return true;
 
         } catch (ControllerCannotReadException e) {

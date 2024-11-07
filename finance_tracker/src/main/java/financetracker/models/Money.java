@@ -27,4 +27,9 @@ public class Money implements Serializable {
     public void setCurrency(Currency currency) {
         this.currency = currency;
     }
+
+    @Override
+    public String toString() {
+        return amount + " " + (currency.getCurrencyCode().equals("HUF") ? "Ft" : currency.getDisplayName());
+    }
 }

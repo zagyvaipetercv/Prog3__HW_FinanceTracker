@@ -12,19 +12,26 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.WindowConstants;
+
 import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.exceptions.controller.ControllerCannotWriteException;
 import financetracker.exceptions.controller.IdNotFoundException;
 import financetracker.models.Model;
+import financetracker.views.bases.FrameView;
+import financetracker.windowing.MainFrame;
 
 public abstract class Controller<T extends Model> {
     private String filePath;
     private long nextID;
 
+    protected MainFrame mainFrame;
+
     // INITIALZATION
-    protected Controller(String filePath) throws CannotCreateControllerException {
+    protected Controller(String filePath, MainFrame mainFrame) throws CannotCreateControllerException {
         this.filePath = filePath;
+        this.mainFrame = mainFrame;
 
         createSaveFile();
         initNextId();
@@ -146,5 +153,10 @@ public abstract class Controller<T extends Model> {
 
     protected int recordsSize() throws ControllerCannotReadException {
         return readAll().size();
+    }
+
+    public void closeFrameView(FrameView fv) {
+        fv.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        fv.dispose();
     }
 }

@@ -1,4 +1,4 @@
-package financetracker.exceptions.moneycontroller;
+package financetracker.exceptions.cashflowcontroller;
 
 import financetracker.exceptions.ErrorBoxException;
 
