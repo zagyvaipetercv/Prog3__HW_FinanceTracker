@@ -22,6 +22,7 @@ import javax.swing.table.AbstractTableModel;
 
 import financetracker.controllers.CashFlowController;
 import financetracker.controllers.CashFlowController.CashFlowType;
+import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.models.CashFlow;
 import financetracker.models.Money;
@@ -49,10 +50,10 @@ public class WalletView extends PanelView {
         JPanel rightPanel = new JPanel(new BorderLayout());
         add(rightPanel, BorderLayout.EAST);
 
+        int year = cashFlowController.getSelectedYear();
+        Month month = cashFlowController.getSelectedMonth();
+
         // Get Data for Panels
-        LocalDate deafultDate = LocalDate.now();
-        int year = deafultDate.getYear();
-        Month month = deafultDate.getMonth();
         try {
             cashFlowPanel = new CashFlowPanel(
                     cashFlowController.getCashFlows(year, month, CashFlowType.ALL));
@@ -85,39 +86,33 @@ public class WalletView extends PanelView {
             layout.setAutoCreateContainerGaps(true);
 
             // Setup Components
-            LocalDate currentDate = LocalDate.now();
-
             JLabel typeLabel = new JLabel("Type:");
             JComboBox<CashFlowController.CashFlowType> typePicker = new JComboBox<>(
                     CashFlowController.CashFlowType.values());
+            typePicker.setSelectedItem(cashFlowController.getSelectedCashFlowType());
 
             JLabel yearLabel = new JLabel("Year:");
             JTextField yearTextField = new JTextField(4);
-            yearTextField.setText(String.valueOf(currentDate.getYear()));
+            yearTextField.setText(String.valueOf(cashFlowController.getSelectedYear()));
 
             JLabel monthLabel = new JLabel("Month:");
             JComboBox<Month> monthPicker = new JComboBox<>(Month.values());
-            monthPicker.setSelectedItem(currentDate.getMonth());
+            monthPicker.setSelectedItem(cashFlowController.getSelectedMonth());
 
             JButton submitButton = new JButton("Filter");
             submitButton.addActionListener(ae -> {
-                int year = Integer.parseInt(yearTextField.getText());
+                String yearString = yearTextField.getText();
                 Month month = (Month) monthPicker.getSelectedItem();
                 CashFlowType type = (CashFlowType) typePicker.getSelectedItem();
 
                 try {
                     // Get Datas
-                    List<CashFlow> filteredList = cashFlowController.getCashFlows(year, month, type);
-                    Money sumMonth = cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.ALL);
-                    Money income = cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.INCOME);
-                    Money expense = cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.EXPENSE);
-
-                    // Update the panels
-                    cashFlowPanel.updateTable(filteredList);
-                    summaryPanel.upadteSummary(income, expense, sumMonth);
-
+                    cashFlowController.setFilterOptions(yearString, month, type);
+                    cashFlowController.refreshWalletView();
                 } catch (ControllerCannotReadException e) {
                     ErrorBox.show("ERROR", e.getMessage());
+                } catch (InvalidYearFormatException e) {
+                    ErrorBox.show(e.getErrorTitle(), e.getMessage());
                 }
             });
 
@@ -171,10 +166,6 @@ public class WalletView extends PanelView {
             JScrollPane scrollPane = new JScrollPane(table);
             add(scrollPane);
         }
-
-        private void updateTable(List<CashFlow> newList) {
-            model.setCashFlowList(newList);
-        }
     }
 
     private class SummaryPanel extends JPanel {
@@ -210,16 +201,6 @@ public class WalletView extends PanelView {
             add(expenseTitleLable);
             sumExpenseLabel = new JLabel(sumExpense.toString());
             add(sumExpenseLabel);
-        }
-
-        private void upadteSummary(Money sumIncome, Money sumExpense, Money selectedMonthSum) {
-            sumExpenseLabel.setText(sumExpense.toString());
-            sumIncomeLabel.setText(sumIncome.toString());
-            selectedMonthSumLabel.setText(selectedMonthSum.toString());
-        }
-
-        private void upadateMoneyOnAccount(Money onAccount) {
-            moneyOnAcountLabel.setText(onAccount.toString());
         }
     }
 

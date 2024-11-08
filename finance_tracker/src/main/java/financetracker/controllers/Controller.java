@@ -100,6 +100,7 @@ public abstract class Controller<T extends Model> {
         List<T> datasSaved = readAll();
         datasSaved.add(t);
         write(datasSaved);
+        increaseNextId();
     }
 
     protected void appendNewDatas(List<T> tList) throws ControllerCannotReadException, ControllerCannotWriteException {

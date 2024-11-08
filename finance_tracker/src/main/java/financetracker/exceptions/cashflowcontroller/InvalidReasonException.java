@@ -2,12 +2,12 @@ package financetracker.exceptions.cashflowcontroller;
 
 import financetracker.exceptions.ErrorBoxException;
 
-public class ReasonIsInvalidException extends ErrorBoxException {
+public class InvalidReasonException extends ErrorBoxException {
     private static final String ERROR_TITLE = "INVALID REASON";
 
     private final transient String reason;
 
-    public ReasonIsInvalidException(String reason, String message) {
+    public InvalidReasonException(String reason, String message) {
         super(message);
         this.reason = reason;
     }

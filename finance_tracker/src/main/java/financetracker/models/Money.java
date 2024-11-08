@@ -32,4 +32,14 @@ public class Money implements Serializable {
     public String toString() {
         return amount + " " + (currency.getCurrencyCode().equals("HUF") ? "Ft" : currency.getDisplayName());
     }
+
+    @Override 
+    public boolean equals(Object o) {
+        if (!o.getClass().equals(Money.class)) {
+            return false;
+        }
+
+        Money m = (Money)o;
+        return m.getAmount() == amount && m.getCurrency().equals(currency);
+    }
 }

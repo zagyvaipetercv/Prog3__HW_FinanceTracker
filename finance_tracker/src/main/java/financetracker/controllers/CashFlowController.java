@@ -7,8 +7,9 @@ import java.util.Currency;
 import java.util.List;
 
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
-import financetracker.exceptions.cashflowcontroller.MoneyAmountIsInvalidException;
-import financetracker.exceptions.cashflowcontroller.ReasonIsInvalidException;
+import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
+import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
+import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.exceptions.controller.ControllerCannotWriteException;
@@ -21,17 +22,21 @@ import financetracker.views.cashflow.SetMoneyView;
 import financetracker.views.cashflow.WalletView;
 import financetracker.windowing.MainFrame;
 
-// TODO: Create test cases for MoneyController
 public class CashFlowController extends Controller<CashFlow> {
 
     private static final String DEFAULT_FILEPATH = "saves\\cash_flow.dat";
 
+    private CashFlowType selectedCashFlowType;
     private int selectedYear;
     private Month selectedMonth;
-    private List<CashFlow> cachedTableData;
 
     private Money moneyOnAccount;
 
+    private int cachedYear;
+    private Month cachedMonth;
+    private List<CashFlow> cachedTableData;
+
+    // VIEW GETTERS
     public FrameView getChangeMoneyView() {
         return new ChangeMoneyView(this);
     }
@@ -44,11 +49,19 @@ public class CashFlowController extends Controller<CashFlow> {
         return new WalletView(this);
     }
 
-    public CashFlowController(MainFrame mainFrame) throws CannotCreateControllerException, ControllerCannotReadException {
+    // VIEW REFRESHER
+    public void refreshWalletView() {
+        mainFrame.changeView(getWalletView());
+    }
+
+    // CONSTRUCTORS
+    public CashFlowController(MainFrame mainFrame)
+            throws CannotCreateControllerException, ControllerCannotReadException {
         this(DEFAULT_FILEPATH, mainFrame);
     }
 
-    public CashFlowController(String filePath, MainFrame mainFrame) throws CannotCreateControllerException, ControllerCannotReadException {
+    public CashFlowController(String filePath, MainFrame mainFrame)
+            throws CannotCreateControllerException, ControllerCannotReadException {
         super(filePath, mainFrame);
         List<CashFlow> allCashFlows = readAll();
         double sum = 0.0;
@@ -57,17 +70,21 @@ public class CashFlowController extends Controller<CashFlow> {
         }
 
         moneyOnAccount = new Money(sum, Currency.getInstance("HUF"));
+
+        LocalDate defaultDate = LocalDate.now();
+        selectedYear = defaultDate.getYear();
+        selectedMonth = defaultDate.getMonth();
+        selectedCashFlowType = CashFlowType.ALL;
+
+        reloadCache(selectedYear, selectedMonth);
     }
 
-    private void refresh() {
-        mainFrame.changeView(getWalletView());
-    }
-
+    // DATA MODIFIERS
     public void changeMoneyOnAccount(LocalDate date, String amountString, Currency currency, String reason)
-            throws ReasonIsInvalidException, BalanceCouldNotCahcngeException, MoneyAmountIsInvalidException {
+            throws InvalidReasonException, BalanceCouldNotCahcngeException, InvalidAmountException {
 
         if (reasonIsInvalid(reason)) {
-            throw new ReasonIsInvalidException(reason, "Reason can't be blank");
+            throw new InvalidReasonException(reason, "Reason can't be blank");
         }
 
         double amount = parseAmount(amountString);
@@ -80,16 +97,16 @@ public class CashFlowController extends Controller<CashFlow> {
         try {
             appendNewData(cashFlow);
             moneyOnAccount = new Money(moneyOnAccount.getAmount() + amount, currency);
-            if (!cacheIsInvalid(cashFlow.getDate().getYear(), cashFlow.getDate().getMonth())) {
+            if (!cacheIsInvalid(selectedYear, selectedMonth)) {
                 cachedTableData.add(cashFlow);
             }
-            refresh();
         } catch (ControllerCannotWriteException | ControllerCannotReadException e) {
             throw new BalanceCouldNotCahcngeException(money, "Couldn't add money to balance");
         }
     }
 
-    public void setMoneyOnAccount(String newAmountString, Currency currency, String reason) throws MoneyAmountIsInvalidException, BalanceCouldNotCahcngeException, ReasonIsInvalidException {
+    public void setMoneyOnAccount(String newAmountString, Currency currency, String reason)
+            throws InvalidAmountException, BalanceCouldNotCahcngeException, InvalidReasonException {
         double newAmount = parseAmount(newAmountString);
         LocalDate today = LocalDate.now();
         double currentAmount = moneyOnAccount.getAmount();
@@ -101,34 +118,12 @@ public class CashFlowController extends Controller<CashFlow> {
         try {
             appendNewDatas(cashFlowList);
             cachedTableData.addAll(cashFlowList);
-            refresh();
         } catch (ControllerCannotReadException | ControllerCannotWriteException e) {
             throw new BalanceCouldNotCahcngeException(null, "Couldn't add money to balance");
         }
     }
 
-    private boolean cacheIsInvalid(int year, Month month) {
-        return (selectedYear != year || !selectedMonth.equals(month));
-    }
-
-    private void reloadCache(int year, Month month) throws ControllerCannotReadException {
-        selectedYear = year;
-        selectedMonth = month;
-
-        List<CashFlow> saved = readAll();
-        cachedTableData = new ArrayList<>();
-
-        for (CashFlow cashFlow : saved) {
-            int cashFlowYear = cashFlow.getDate().getYear();
-            Month cashFlowMonth = cashFlow.getDate().getMonth();
-            if (cashFlowYear == year && cashFlowMonth.equals(month)) {
-                cachedTableData.add(cashFlow);
-            }
-        }
-    }
-
-    // TODO: Replace with a specialized exception (like CannotReadMoneyException or
-    // somehting)
+    // DATA QUERIES
     public List<CashFlow> getCashFlows(int year, Month month, CashFlowType type) throws ControllerCannotReadException {
         if (cacheIsInvalid(year, month)) {
             reloadCache(year, month);
@@ -170,14 +165,75 @@ public class CashFlowController extends Controller<CashFlow> {
         return moneyOnAccount;
     }
 
-    private double parseAmount(String amountString) throws MoneyAmountIsInvalidException {
+    // SETTERS
+    public void setFilterOptions(String yearString, Month month, CashFlowType type)
+            throws ControllerCannotReadException, InvalidYearFormatException {
+        setFilterOptions(parseYear(yearString), month, type);
+    }
+
+    void setFilterOptions(int year, Month month, CashFlowType type) throws ControllerCannotReadException {
+        selectedYear = year;
+        selectedMonth = month;
+        selectedCashFlowType = type;
+        if (cacheIsInvalid(selectedYear, selectedMonth)) {
+            reloadCache(selectedYear, selectedMonth);
+        }
+    }
+
+    // GETTERS
+    public int getSelectedYear() {
+        return selectedYear;
+    }
+
+    public Month getSelectedMonth() {
+        return selectedMonth;
+    }
+
+    public CashFlowType getSelectedCashFlowType() {
+        return selectedCashFlowType;
+    }
+
+    // CACHED DATA
+    private boolean cacheIsInvalid(int year, Month month) {
+        return (year != cachedYear || !month.equals(cachedMonth));
+    }
+
+    private void reloadCache(int year, Month month) throws ControllerCannotReadException {
+        List<CashFlow> saved = readAll();
+        cachedTableData = new ArrayList<>();
+
+        // Update cached meta data
+        cachedYear = year;
+        cachedMonth = month;
+
+        // Update cached cash flows
+        for (CashFlow cashFlow : saved) {
+            int cashFlowYear = cashFlow.getDate().getYear();
+            Month cashFlowMonth = cashFlow.getDate().getMonth();
+            if (cashFlowYear == year && cashFlowMonth.equals(month)) {
+                cachedTableData.add(cashFlow);
+            }
+        }
+    }
+
+    // DATA VALIDATORS AND PARSERS
+    private int parseYear(String yearString) throws InvalidYearFormatException {
+        try {
+            return Integer.parseInt(yearString);
+        } catch (NumberFormatException e) {
+            throw new InvalidYearFormatException("'" + yearString + "' is not in a valid format");
+        }
+    }
+
+    private double parseAmount(String amountString) throws InvalidAmountException {
         try {
             if (amountString.isBlank()) {
-                throw new MoneyAmountIsInvalidException(amountString);
+                throw new InvalidAmountException(amountString, "Amount can ot be blank");
             }
             return Double.parseDouble(amountString);
         } catch (NullPointerException | NumberFormatException e) {
-            throw new MoneyAmountIsInvalidException(amountString);
+            throw new InvalidAmountException(amountString, "'" + amountString
+                    + "' is not a number or in the wrong format (allowed characters are numbers and '.')");
         }
     }
 
@@ -190,6 +246,5 @@ public class CashFlowController extends Controller<CashFlow> {
         INCOME,
         EXPENSE
     }
-
 
 }
