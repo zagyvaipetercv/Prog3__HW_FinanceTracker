@@ -12,7 +12,7 @@ import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
 import financetracker.models.User;
 import financetracker.views.LoginWindow;
-import financetracker.views.bases.FrameView;
+import financetracker.views.base.FrameView;
 import financetracker.windowing.MainFrame;
 
 public class UserController extends Controller<User> {

@@ -15,7 +15,7 @@ import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.models.User;
 import financetracker.views.HomeView;
-import financetracker.views.bases.PanelView;
+import financetracker.views.base.PanelView;
 
 public class MainFrame extends JFrame {
     private static final String TITLE = "Finance Tracker";

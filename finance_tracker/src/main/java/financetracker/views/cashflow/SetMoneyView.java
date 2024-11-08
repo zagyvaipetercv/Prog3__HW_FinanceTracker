@@ -13,7 +13,7 @@ import financetracker.controllers.CashFlowController;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.MoneyAmountIsInvalidException;
 import financetracker.exceptions.cashflowcontroller.ReasonIsInvalidException;
-import financetracker.views.bases.FrameView;
+import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 
 public class SetMoneyView extends FrameView {

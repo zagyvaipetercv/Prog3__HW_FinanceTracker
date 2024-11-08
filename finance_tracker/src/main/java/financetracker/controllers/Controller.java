@@ -19,7 +19,7 @@ import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.exceptions.controller.ControllerCannotWriteException;
 import financetracker.exceptions.controller.IdNotFoundException;
 import financetracker.models.Model;
-import financetracker.views.bases.FrameView;
+import financetracker.views.base.FrameView;
 import financetracker.windowing.MainFrame;
 
 public abstract class Controller<T extends Model> {

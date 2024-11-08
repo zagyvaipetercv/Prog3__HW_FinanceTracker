@@ -2,7 +2,7 @@ package financetracker.views;
 
 import javax.swing.JLabel;
 
-import financetracker.views.bases.PanelView;
+import financetracker.views.base.PanelView;
 
 public class HomeView extends PanelView {
     public HomeView(String userName) {

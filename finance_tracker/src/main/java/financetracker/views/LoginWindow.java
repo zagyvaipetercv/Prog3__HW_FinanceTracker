@@ -16,7 +16,7 @@ import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
-import financetracker.views.bases.FrameView;
+import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 
 import javax.swing.GroupLayout.Alignment;

@@ -25,7 +25,7 @@ import financetracker.controllers.CashFlowController.CashFlowType;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.models.CashFlow;
 import financetracker.models.Money;
-import financetracker.views.bases.PanelView;
+import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
 
 public class WalletView extends PanelView {

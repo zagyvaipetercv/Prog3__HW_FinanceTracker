@@ -1,4 +1,4 @@
-package financetracker.views.bases;
+package financetracker.views.base;
 
 import javax.swing.JFrame;
 
