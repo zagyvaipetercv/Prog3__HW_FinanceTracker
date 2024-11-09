@@ -10,7 +10,6 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
-import financetracker.Main;
 import financetracker.controllers.UserController;
 import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
@@ -36,8 +35,8 @@ public class LoginWindow extends FrameView {
         private JTextField usernameTextField;
         private JTextField passwordTextField;
 
-        private GroupLayout layout;
-        private UserController userController;
+        private transient GroupLayout layout;
+        private transient UserController userController;
 
         public LoginWindow(UserController userController) {
                 this.userController = userController;

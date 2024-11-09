@@ -205,8 +205,6 @@ public class WalletView extends PanelView {
     }
 
     private class OptionsPanel extends JPanel {
-        private static final int PANEL_HEIGHT = 30;
-
         public OptionsPanel() {
             setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
             setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, 0));
@@ -289,11 +287,6 @@ public class WalletView extends PanelView {
                 default:
                     return Object.class;
             }
-        }
-
-        private void setCashFlowList(List<CashFlow> moneyList) {
-            this.cashFlowList = moneyList;
-            fireTableDataChanged();
         }
     }
 }

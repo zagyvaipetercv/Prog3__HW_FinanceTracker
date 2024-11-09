@@ -2,6 +2,7 @@ package financetracker.models;
 
 import java.io.Serializable;
 import java.util.Currency;
+import java.util.Objects;
 
 public class Money implements Serializable {
     private double amount;
@@ -41,5 +42,10 @@ public class Money implements Serializable {
 
         Money m = (Money)o;
         return m.getAmount() == amount && m.getCurrency().equals(currency);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(((Double)amount), currency);
     }
 }

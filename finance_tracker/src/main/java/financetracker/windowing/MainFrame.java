@@ -1,7 +1,6 @@
 package financetracker.windowing;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 
@@ -28,7 +27,7 @@ public class MainFrame extends JFrame {
     private String subTitle;
     private User user;
 
-    private CashFlowController cashFlowController;
+    private transient CashFlowController cashFlowController;
 
     public MainFrame(User userSignedIn) {
         super();
@@ -85,7 +84,6 @@ public class MainFrame extends JFrame {
 
     private class SidePanel extends JPanel {
         private static final int PREFFERED_WIDTH = 250;
-        private static final Color BACKGROUND_COLOR = new Color(100, 100, 100);
 
         public SidePanel(MainFrame mainFrame) {
             super();

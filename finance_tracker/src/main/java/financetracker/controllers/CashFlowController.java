@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 
+import financetracker.MetadataManager;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
@@ -23,8 +24,6 @@ import financetracker.views.cashflow.WalletView;
 import financetracker.windowing.MainFrame;
 
 public class CashFlowController extends Controller<CashFlow> {
-
-    private static final String DEFAULT_FILEPATH = "saves\\cash_flow.dat";
 
     private CashFlowType selectedCashFlowType;
     private int selectedYear;
@@ -57,7 +56,7 @@ public class CashFlowController extends Controller<CashFlow> {
     // CONSTRUCTORS
     public CashFlowController(MainFrame mainFrame)
             throws CannotCreateControllerException, ControllerCannotReadException {
-        this(DEFAULT_FILEPATH, mainFrame);
+        this(MetadataManager.getFilePath(CashFlowController.class), mainFrame);
     }
 
     public CashFlowController(String filePath, MainFrame mainFrame)
@@ -97,7 +96,7 @@ public class CashFlowController extends Controller<CashFlow> {
         try {
             appendNewData(cashFlow);
             moneyOnAccount = new Money(moneyOnAccount.getAmount() + amount, currency);
-            if (!cacheIsInvalid(selectedYear, selectedMonth)) {
+            if (!cacheIsInvalid(date.getYear(), date.getMonth())) {
                 cachedTableData.add(cashFlow);
             }
         } catch (ControllerCannotWriteException | ControllerCannotReadException e) {

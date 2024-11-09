@@ -3,6 +3,7 @@ package financetracker.controllers;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
+import financetracker.MetadataManager;
 import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.exceptions.controller.ControllerCannotWriteException;
@@ -16,8 +17,6 @@ import financetracker.views.base.FrameView;
 import financetracker.windowing.MainFrame;
 
 public class UserController extends Controller<User> {
-    private static final String DEFAULT_SAVE_FILE_PATH = "saves\\users.dat";
-
     /**
      * Initializes the UserController
      * Collects metadata
@@ -26,7 +25,7 @@ public class UserController extends Controller<User> {
      * @throws CannotCreateControllerException if intialization fails
      */
     public UserController(MainFrame mainFrame) throws CannotCreateControllerException {
-        this(DEFAULT_SAVE_FILE_PATH, mainFrame);
+        this(MetadataManager.getFilePath(UserController.class), mainFrame);
     }
 
     public UserController(String filePath, MainFrame mainFrame) throws CannotCreateControllerException {

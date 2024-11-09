@@ -14,6 +14,7 @@ import java.util.List;
 
 import javax.swing.WindowConstants;
 
+import financetracker.MetadataManager;
 import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.exceptions.controller.ControllerCannotWriteException;
@@ -38,6 +39,9 @@ public abstract class Controller<T extends Model> {
     }
 
     private void initNextId() throws CannotCreateControllerException {
+        // TODO: uncomment when MetadatManager class is done
+        // nextID = MetadataManager.getNextId(this.getClass());
+
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getFilePath()))) {
             List<T> savedData = (List<T>) ois.readObject();
 
