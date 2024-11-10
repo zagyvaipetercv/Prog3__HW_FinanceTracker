@@ -1,7 +1,7 @@
 package financetracker;
 
 import financetracker.controllers.UserController;
-import financetracker.exceptions.controller.*;
+import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.MainFrame;
 
@@ -12,8 +12,8 @@ public class Main {
         try {
             UserController userController = new UserController(mainFrame);
             userController.getLoginView().setVisible(true);
-        } catch (CannotCreateControllerException e) {
-            ErrorBox.show("ERROR", e.getMessage());
+        } catch (ControllerWasNotCreated e) {
+            ErrorBox.show(e.getErrorTitle(), e.getMessage());
             System.exit(-1);
         }
     }

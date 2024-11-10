@@ -18,16 +18,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.table.AbstractTableModel;
 
 import financetracker.controllers.CashFlowController;
-import financetracker.controllers.CashFlowController.CashFlowType;
-import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
+import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
-
 import financetracker.models.CashFlowTableModel;
 
 public class WalletView extends PanelView {
@@ -35,14 +32,12 @@ public class WalletView extends PanelView {
     private static final Color BORDER_COLOR = Color.GRAY;
     private static final int BORDER_THICKNESS = 1;
 
-    private CashFlowPanel cashFlowPanel;
-    private SummaryPanel summaryPanel;
-
     private CashFlowController cashFlowController;
-    private CashFlowTableModel cashFlowTableModel;
 
-    public WalletView(CashFlowController cashFlowController) {
-        cashFlowTableModel = new CashFlowTableModel(null);
+    public WalletView(
+            CashFlowController cashFlowController,
+            CashFlowTableModel tm,
+            Money incomes, Money expneses, Money thisMonth, Money all) {
         this.cashFlowController = cashFlowController;
 
         setLayout(new BorderLayout());
@@ -53,27 +48,9 @@ public class WalletView extends PanelView {
         JPanel rightPanel = new JPanel(new BorderLayout());
         add(rightPanel, BorderLayout.EAST);
 
-        int year = cashFlowController.getSelectedYear();
-        Month month = cashFlowController.getSelectedMonth();
-
-        // Get Data for Panels
-        try {
-            cashFlowPanel = new CashFlowPanel(
-                    cashFlowController.getCashFlows(year, month, CashFlowType.ALL));
-
-            summaryPanel = new SummaryPanel(
-                    cashFlowController.getMoneyOnAccount(),
-                    cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.INCOME),
-                    cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.EXPENSE),
-                    cashFlowController.getSummarizedCashFlow(year, month, CashFlowType.ALL));
-
-        } catch (ControllerCannotReadException e) {
-            ErrorBox.show("ERROR", e.getMessage());
-        }
-
         centerPanel.add(new FilterPanel(), BorderLayout.NORTH);
-        centerPanel.add(cashFlowPanel, BorderLayout.CENTER);
-        rightPanel.add(summaryPanel, BorderLayout.NORTH);
+        centerPanel.add(new CashFlowPanel(tm), BorderLayout.CENTER);
+        rightPanel.add(new SummaryPanel(all, incomes, expneses, thisMonth), BorderLayout.NORTH);
         rightPanel.add(new OptionsPanel(), BorderLayout.CENTER);
 
     }
@@ -104,18 +81,15 @@ public class WalletView extends PanelView {
 
             JButton submitButton = new JButton("Filter");
             submitButton.addActionListener(ae -> {
-                String yearString = yearTextField.getText();
-                Month month = (Month) monthPicker.getSelectedItem();
-                CashFlowType type = (CashFlowType) typePicker.getSelectedItem();
-
                 try {
-                    // Get Datas
-                    cashFlowController.setFilterOptions(yearString, month, type);
-                    cashFlowController.refreshWalletView();
-                } catch (ControllerCannotReadException e) {
-                    ErrorBox.show("ERROR", e.getMessage());
+                    cashFlowController.setFilterOptions(
+                        yearTextField.getText(), 
+                        (Month) monthPicker.getSelectedItem(),
+                        (CashFlowController.CashFlowType)typePicker.getSelectedItem());
                 } catch (InvalidYearFormatException e) {
                     ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                } catch (SerializerCannotRead e) {
+                    ErrorBox.show("ERROR", e.getMessage());
                 }
             });
 
@@ -158,14 +132,11 @@ public class WalletView extends PanelView {
 
     private class CashFlowPanel extends JPanel {
 
-        private CashFlowTableModel model;
-
-        public CashFlowPanel(List<CashFlow> cashFlow) {
+        public CashFlowPanel(CashFlowTableModel tm) {
             setLayout(new BorderLayout());
             setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
 
-            model = new CashFlowTableModel(cashFlow);
-            JTable table = new JTable(model);
+            JTable table = new JTable(tm);
             JScrollPane scrollPane = new JScrollPane(table);
             add(scrollPane);
         }
@@ -182,7 +153,7 @@ public class WalletView extends PanelView {
         public SummaryPanel(Money onAccount, Money sumIncome, Money sumExpense, Money selectedMonthSum) {
             setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
             setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, PANEL_HEIGHT));
-            GridLayout layout = new GridLayout(4,2);
+            GridLayout layout = new GridLayout(4, 2);
             setLayout(layout);
 
             JLabel moneyOnAccountTitleLabel = new JLabel("Money on account:");

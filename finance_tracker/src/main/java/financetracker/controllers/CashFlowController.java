@@ -12,9 +12,9 @@ import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
+import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
-import financetracker.exceptions.modelserailizer.SerializerWasNotCreated;
 import financetracker.models.CashFlowTableModel;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
@@ -25,7 +25,7 @@ import financetracker.views.cashflow.SetMoneyView;
 import financetracker.views.cashflow.WalletView;
 import financetracker.windowing.MainFrame;
 
-public class CashFlowController extends Controller<CashFlow> implements ActionListener {
+public class CashFlowController extends Controller<CashFlow> {
 
     private static final String DEAFULT_SAVE_PATH = "saves\\cashflow.dat";
 
@@ -33,11 +33,16 @@ public class CashFlowController extends Controller<CashFlow> implements ActionLi
     private int selectedYear;
     private Month selectedMonth;
 
-    private Money moneyOnAccount;
-
     private int cachedYear;
     private Month cachedMonth;
     private List<CashFlow> cachedCashFlow;
+
+    private Money moneyOnAccount;
+    private Money sumIncomes;
+    private Money sumExpenses;
+    private Money sumThisMonth;
+
+    private CashFlowTableModel cashFlowTableModel;
 
     public FrameView getChangeMoneyView() {
         return new ChangeMoneyView(this);
@@ -48,7 +53,7 @@ public class CashFlowController extends Controller<CashFlow> implements ActionLi
     }
 
     public PanelView getWalletView() {
-        return new WalletView(this);
+        return new WalletView(this, cashFlowTableModel, sumIncomes, sumExpenses, sumThisMonth, moneyOnAccount);
     }
 
     // VIEW REFRESHER
@@ -56,47 +61,77 @@ public class CashFlowController extends Controller<CashFlow> implements ActionLi
         mainFrame.changeView(getWalletView());
     }
 
+    public CashFlowController(MainFrame mainFrame) throws ControllerWasNotCreated {
+        this(DEAFULT_SAVE_PATH, mainFrame);
+    }
 
-    public CashFlowController(MainFrame mainFrame)
-            throws SerializerWasNotCreated, SerializerCannotRead {
-        super(DEAFULT_SAVE_PATH, mainFrame);
-        List<CashFlow> allCashFlows = modelSerializer.readAll();
-        double sum = 0.0;
-        for (CashFlow cashFlow : allCashFlows) {
-            sum += cashFlow.getMoney().getAmount();
+    public CashFlowController(String filePath, MainFrame mainFrame)
+            throws ControllerWasNotCreated {
+        super(filePath, mainFrame);
+        
+        try {
+            List<CashFlow> allCashFlows = modelSerializer.readAll();
+            double sum = 0.0;
+            for (CashFlow cashFlow : allCashFlows) {
+                sum += cashFlow.getMoney().getAmount();
+            }
+    
+            moneyOnAccount = new Money(sum, Currency.getInstance("HUF"));
+    
+            LocalDate defaultDate = LocalDate.now();
+            selectedYear = defaultDate.getYear();
+            selectedMonth = defaultDate.getMonth();
+            selectedCashFlowType = CashFlowType.ALL;
+    
+            reloadCache(selectedYear, selectedMonth);
+    
+            sumIncomes = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.INCOME);
+            sumExpenses = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.EXPENSE);
+            sumThisMonth = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.ALL);
+    
+            cashFlowTableModel = new CashFlowTableModel(getCashFlows(selectedYear, selectedMonth, CashFlowType.ALL));
+
+        } catch (SerializerCannotRead e) {
+            throw new ControllerWasNotCreated("CashFlow controller could not read data", this.getClass());
         }
-
-        moneyOnAccount = new Money(sum, Currency.getInstance("HUF"));
-
-        LocalDate defaultDate = LocalDate.now();
-        selectedYear = defaultDate.getYear();
-        selectedMonth = defaultDate.getMonth();
-        selectedCashFlowType = CashFlowType.ALL;
-
-        reloadCache(selectedYear, selectedMonth);
     }
 
     // DATA MODIFIERS
     public void changeMoneyOnAccount(LocalDate date, String amountString, Currency currency, String reason)
             throws InvalidReasonException, BalanceCouldNotCahcngeException, InvalidAmountException {
 
+        double amount = parseAmount(amountString);
+        addNewCashFlow(date, amount, currency, reason);
+
+        refreshWalletView();
+    }
+
+    private void addNewCashFlow(LocalDate date, double amount, Currency currency, String reason)
+            throws InvalidReasonException, BalanceCouldNotCahcngeException {
         if (reasonIsInvalid(reason)) {
             throw new InvalidReasonException(reason, "Reason can't be blank");
         }
 
-        double amount = parseAmount(amountString);
         Money money = new Money(amount, currency);
         CashFlow cashFlow = new CashFlow(
                 modelSerializer.getNextId(),
                 date,
                 money,
                 reason);
+
         try {
-            modelSerializer.appendNewData(cashFlow);
+            modelSerializer.appendNewData(cashFlow); // Write data
+
+            // Update view models
             moneyOnAccount = new Money(moneyOnAccount.getAmount() + amount, currency);
             if (!cacheIsInvalid(date.getYear(), date.getMonth())) {
                 cachedCashFlow.add(cashFlow);
+                cashFlowTableModel = new CashFlowTableModel(cachedCashFlow);
+                sumIncomes = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.INCOME);
+                sumExpenses = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.EXPENSE);
+                sumThisMonth = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.ALL);
             }
+
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new BalanceCouldNotCahcngeException(money, "Couldn't add money to balance");
         }
@@ -121,7 +156,7 @@ public class CashFlowController extends Controller<CashFlow> implements ActionLi
     }
 
     // DATA QUERIES
-    public List<CashFlow> getCashFlows(int year, Month month, CashFlowType type) throws ControllerCannotReadException {
+    public List<CashFlow> getCashFlows(int year, Month month, CashFlowType type) throws SerializerCannotRead {
         if (cacheIsInvalid(year, month)) {
             reloadCache(year, month);
         }
@@ -148,7 +183,7 @@ public class CashFlowController extends Controller<CashFlow> implements ActionLi
         return result;
     }
 
-    public Money getSummarizedCashFlow(int year, Month month, CashFlowType type) throws ControllerCannotReadException {
+    public Money getSummarizedCashFlow(int year, Month month, CashFlowType type) throws SerializerCannotRead {
         List<CashFlow> cashFlowList = getCashFlows(year, month, type);
         double sum = 0.0;
         for (CashFlow cashFlow : cashFlowList) {
@@ -164,11 +199,11 @@ public class CashFlowController extends Controller<CashFlow> implements ActionLi
 
     // SETTERS
     public void setFilterOptions(String yearString, Month month, CashFlowType type)
-            throws ControllerCannotReadException, InvalidYearFormatException {
+            throws InvalidYearFormatException, SerializerCannotRead {
         setFilterOptions(parseYear(yearString), month, type);
     }
 
-    void setFilterOptions(int year, Month month, CashFlowType type) throws ControllerCannotReadException {
+    void setFilterOptions(int year, Month month, CashFlowType type) throws SerializerCannotRead {
         selectedYear = year;
         selectedMonth = month;
         selectedCashFlowType = type;
@@ -243,11 +278,4 @@ public class CashFlowController extends Controller<CashFlow> implements ActionLi
         INCOME,
         EXPENSE
     }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'actionPerformed'");
-    }
-
 }

@@ -15,17 +15,17 @@ import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
+import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
-import financetracker.exceptions.controller.CannotCreateControllerException;
-import financetracker.exceptions.controller.ControllerCannotReadException;
 
 class CashFlowControllerTests extends ControllerTests {
 
     private CashFlowController controller;
 
     @BeforeEach
-    public void setupController() throws CannotCreateControllerException, ControllerCannotReadException {
+    public void setupController() throws ControllerWasNotCreated  {
         controller = new CashFlowController(TEST_SAVE_FILE_PATH, null);
     }
 
@@ -42,7 +42,7 @@ class CashFlowControllerTests extends ControllerTests {
     }
 
     @Test
-    void checkSetFilters() throws InvalidYearFormatException, ControllerCannotReadException {
+    void checkSetFilters() throws InvalidYearFormatException, SerializerCannotRead {
         controller.setFilterOptions("2000", Month.JANUARY, CashFlowType.INCOME);
         assertEquals(2000, controller.getSelectedYear());
         assertEquals(Month.JANUARY, controller.getSelectedMonth());
@@ -57,7 +57,7 @@ class CashFlowControllerTests extends ControllerTests {
     }
 
     @Test
-    void checkGetCashFlowOnEmptySaveFile() throws ControllerCannotReadException {
+    void checkGetCashFlowOnEmptySaveFile() throws SerializerCannotRead  {
         // Pre
         controller.setFilterOptions(2001, Month.FEBRUARY, CashFlowType.EXPENSE);
         double delta = 0.01;
@@ -75,7 +75,7 @@ class CashFlowControllerTests extends ControllerTests {
 
     @Test
     void checkChangeMoneyOnAccount() throws InvalidReasonException, BalanceCouldNotCahcngeException,
-            InvalidAmountException, ControllerCannotReadException {
+            InvalidAmountException, SerializerCannotRead {
         // Pre
         LocalDate dateOfChange = LocalDate.of(2000, 01, 01);
         String amountString = "2000.5";
@@ -153,8 +153,7 @@ class CashFlowControllerTests extends ControllerTests {
 
     @Test
     void checkSummarizedCashFlows()
-            throws InvalidReasonException, BalanceCouldNotCahcngeException, InvalidAmountException,
-            ControllerCannotReadException {
+            throws InvalidReasonException, BalanceCouldNotCahcngeException, InvalidAmountException, SerializerCannotRead {
 
         // Act
         controller.changeMoneyOnAccount(
@@ -197,8 +196,7 @@ class CashFlowControllerTests extends ControllerTests {
 
     @Test
     void checkSetMoneyOnAccount()
-            throws InvalidAmountException, BalanceCouldNotCahcngeException, InvalidReasonException,
-            ControllerCannotReadException {
+            throws InvalidAmountException, BalanceCouldNotCahcngeException, InvalidReasonException, SerializerCannotRead {
 
         LocalDate dateOfChange = LocalDate.now();
         // Act

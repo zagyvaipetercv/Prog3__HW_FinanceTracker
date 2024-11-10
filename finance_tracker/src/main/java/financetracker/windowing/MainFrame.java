@@ -11,8 +11,7 @@ import javax.swing.WindowConstants;
 
 import financetracker.controllers.CashFlowController;
 import financetracker.datatypes.User;
-import financetracker.exceptions.controller.CannotCreateControllerException;
-import financetracker.exceptions.controller.ControllerCannotReadException;
+import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.views.HomeView;
 import financetracker.views.base.PanelView;
 
@@ -34,8 +33,8 @@ public class MainFrame extends JFrame {
         
         try {
             this.cashFlowController = new CashFlowController(this);
-        } catch (CannotCreateControllerException | ControllerCannotReadException e) {
-            ErrorBox.show("ERROR", e.getMessage());
+        } catch (ControllerWasNotCreated e) {
+            ErrorBox.show(e.getErrorTitle(), e.getMessage());
             System.exit(-1);
         }
 

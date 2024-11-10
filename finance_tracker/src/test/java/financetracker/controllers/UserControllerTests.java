@@ -6,8 +6,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import financetracker.datatypes.User;
-import financetracker.exceptions.controller.CannotCreateControllerException;
-import financetracker.exceptions.controller.ControllerCannotReadException;
+import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
@@ -32,7 +32,7 @@ class UserControllerTests extends ControllerTests {
     private UserController userController;
 
     @BeforeEach
-    public void setupController() throws CannotCreateControllerException {
+    public void setupController() throws ControllerWasNotCreated  {
         userController = new UserController(TEST_SAVE_FILE_PATH, null);
     }
 
@@ -43,8 +43,7 @@ class UserControllerTests extends ControllerTests {
     }
 
     @Test
-    void checkFindUser() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException,
-            ControllerCannotReadException {
+    void checkFindUser() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException, SerializerCannotRead {
         boolean succes = userController.register(null, validUsername1, validPassword1);
         User user = userController.findUser(validUsername1);
         assertEquals(true, succes);

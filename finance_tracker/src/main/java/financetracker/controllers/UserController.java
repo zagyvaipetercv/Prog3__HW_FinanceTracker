@@ -3,11 +3,10 @@ package financetracker.controllers;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-import financetracker.MetadataManager;
 import financetracker.datatypes.User;
-import financetracker.exceptions.controller.CannotCreateControllerException;
-import financetracker.exceptions.controller.ControllerCannotReadException;
-import financetracker.exceptions.controller.ControllerCannotWriteException;
+import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.exceptions.modelserailizer.SerializerCannotRead;
+import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
 import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
@@ -16,7 +15,10 @@ import financetracker.views.LoginWindow;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.MainFrame;
 
-public class UserController extends ModelSerailizer<User> {
+public class UserController extends Controller<User> {
+
+    private static final String DEFAULT_SAVE_PATH = "saves\\users.dat";
+
     /**
      * Initializes the UserController
      * Collects metadata
@@ -24,11 +26,11 @@ public class UserController extends ModelSerailizer<User> {
      * 
      * @throws CannotCreateControllerException if intialization fails
      */
-    public UserController(MainFrame mainFrame) throws CannotCreateControllerException {
-        this(MetadataManager.getFilePath(UserController.class), mainFrame);
+    public UserController(MainFrame mainFrame) throws ControllerWasNotCreated {
+        this(DEFAULT_SAVE_PATH, mainFrame);
     }
 
-    public UserController(String filePath, MainFrame mainFrame) throws CannotCreateControllerException {
+    public UserController(String filePath, MainFrame mainFrame) throws ControllerWasNotCreated {
         super(filePath, mainFrame);
     }
 
@@ -58,16 +60,16 @@ public class UserController extends ModelSerailizer<User> {
             if (userExists(username)) {
                 throw new InvalidUserNameException(InvalidUserNameException.ErrorType.REGISTRATION_ALREADY_EXISTS);
             }
-        } catch (ControllerCannotReadException e) {
+        } catch (SerializerCannotRead e) {
             throw new RegistrationFailedException("Can not check if user already exists");
         }
 
         // If no error -> save
         try {
-            User user = new User(getNextId(), username, password);
-            appendNewData(user);
+            User user = new User(modelSerializer.getNextId(), username, password);
+            modelSerializer.appendNewData(user);
             return true;
-        } catch (ControllerCannotReadException | ControllerCannotWriteException e) {
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new RegistrationFailedException("Registration failed due to an IO error");
         }
     }
@@ -99,7 +101,7 @@ public class UserController extends ModelSerailizer<User> {
             mainFrame = new MainFrame(user);
             return true;
 
-        } catch (ControllerCannotReadException e) {
+        } catch (SerializerCannotRead e) {
             throw new LoginFailedException("Login failed to an Read Exception");
         }
     }
@@ -109,7 +111,7 @@ public class UserController extends ModelSerailizer<User> {
     }
 
     // CHECKS
-    private boolean userExists(String username) throws ControllerCannotReadException {
+    private boolean userExists(String username) throws SerializerCannotRead {
         User user = findUser(username);
 
         return user != null;
@@ -126,8 +128,8 @@ public class UserController extends ModelSerailizer<User> {
                 password.length() < 8);
     }
 
-    protected User findUser(String username) throws ControllerCannotReadException {
-        List<User> users = readAll();
+    protected User findUser(String username) throws SerializerCannotRead {
+        List<User> users = modelSerializer.readAll();
         for (User user : users) {
             if (user.getName().equals(username)) {
                 return user;

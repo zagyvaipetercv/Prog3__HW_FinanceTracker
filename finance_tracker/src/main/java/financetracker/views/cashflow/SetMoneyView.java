@@ -39,7 +39,6 @@ public class SetMoneyView extends FrameView {
             String reason = reasonTextField.getText();
             try {
                 cashFlowController.setMoneyOnAccount(amount, currency, reason);
-                cashFlowController.refreshWalletView();
                 cashFlowController.closeFrameView(this);
             } catch (InvalidAmountException | InvalidReasonException | BalanceCouldNotCahcngeException e) {
                 ErrorBox.show(e.getErrorTitle(), e.getMessage());
