@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 
 import financetracker.MetadataManager;
+import financetracker.datatypes.User;
 import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.exceptions.controller.ControllerCannotWriteException;
@@ -11,12 +12,11 @@ import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
-import financetracker.models.User;
 import financetracker.views.LoginWindow;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.MainFrame;
 
-public class UserController extends Controller<User> {
+public class UserController extends ModelSerailizer<User> {
     /**
      * Initializes the UserController
      * Collects metadata

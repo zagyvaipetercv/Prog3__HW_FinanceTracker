@@ -7,7 +7,6 @@ import financetracker.windowing.MainFrame;
 
 public class Main {
     public static void main(String[] args) {
-        MetadataManager.init();
         MainFrame mainFrame = null;
 
         try {

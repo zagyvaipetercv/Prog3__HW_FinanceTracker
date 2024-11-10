@@ -1,4 +1,4 @@
-package financetracker.models;
+package financetracker.datatypes;
 
 public class Category extends Model {
     private String name;

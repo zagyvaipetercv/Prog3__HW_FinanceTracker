@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import financetracker.datatypes.User;
 import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
 import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
-import financetracker.models.User;
 
 class UserControllerTests extends ControllerTests {
 

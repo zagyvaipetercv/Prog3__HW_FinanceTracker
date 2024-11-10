@@ -1,4 +1,4 @@
-package financetracker.models;
+package financetracker.datatypes;
 
 public class BoughtItem extends Model {
     private Category category;

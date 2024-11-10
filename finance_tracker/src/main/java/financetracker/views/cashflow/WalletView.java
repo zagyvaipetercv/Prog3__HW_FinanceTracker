@@ -22,12 +22,13 @@ import javax.swing.table.AbstractTableModel;
 
 import financetracker.controllers.CashFlowController;
 import financetracker.controllers.CashFlowController.CashFlowType;
+import financetracker.datatypes.CashFlow;
+import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
-import financetracker.exceptions.controller.ControllerCannotReadException;
-import financetracker.models.CashFlow;
-import financetracker.models.Money;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
+
+import financetracker.models.CashFlowTableModel;
 
 public class WalletView extends PanelView {
     private static final int RIGHT_PANEL_WIDTH = 250;
@@ -38,8 +39,10 @@ public class WalletView extends PanelView {
     private SummaryPanel summaryPanel;
 
     private CashFlowController cashFlowController;
+    private CashFlowTableModel cashFlowTableModel;
 
     public WalletView(CashFlowController cashFlowController) {
+        cashFlowTableModel = new CashFlowTableModel(null);
         this.cashFlowController = cashFlowController;
 
         setLayout(new BorderLayout());
@@ -227,65 +230,6 @@ public class WalletView extends PanelView {
             public OptionButton(String text) {
                 super(text);
                 setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, BUTTON_HEIGHT));
-            }
-        }
-    }
-
-    private class CashFlowTableModel extends AbstractTableModel {
-
-        private List<CashFlow> cashFlowList;
-        private final String[] columnNames = { "Date", "Amount", "Currency", "Reason" };
-
-        public CashFlowTableModel(List<CashFlow> cashFlowList) {
-            this.cashFlowList = cashFlowList;
-        }
-
-        @Override
-        public int getRowCount() {
-            return cashFlowList.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnNames.length;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return columnNames[column];
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            CashFlow cashFlow = cashFlowList.get(rowIndex);
-            switch (columnIndex) {
-                case 0:
-                    return cashFlow.getDate();
-                case 1:
-                    return cashFlow.getMoney().getAmount();
-                case 2:
-                    return cashFlow.getMoney().getCurrency().getCurrencyCode(); // or getSymbol() for the currency
-                                                                                // symbol
-                case 3:
-                    return cashFlow.getReason();
-                default:
-                    return null;
-            }
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            switch (columnIndex) {
-                case 0:
-                    return LocalDate.class;
-                case 1:
-                    return Double.class;
-                case 2:
-                    return String.class;
-                case 3:
-                    return String.class;
-                default:
-                    return Object.class;
             }
         }
     }

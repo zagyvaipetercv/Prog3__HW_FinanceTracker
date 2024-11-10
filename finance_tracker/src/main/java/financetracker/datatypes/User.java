@@ -1,4 +1,4 @@
-package financetracker.models;
+package financetracker.datatypes;
 
 public class User extends Model {
     private static final long serialVersionUID = 1_001L;

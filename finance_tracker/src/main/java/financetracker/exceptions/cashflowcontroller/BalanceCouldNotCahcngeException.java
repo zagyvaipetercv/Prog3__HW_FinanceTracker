@@ -1,7 +1,7 @@
 package financetracker.exceptions.cashflowcontroller;
 
+import financetracker.datatypes.Money;
 import financetracker.exceptions.ErrorBoxException;
-import financetracker.models.Money;
 
 public class BalanceCouldNotCahcngeException extends ErrorBoxException {
 

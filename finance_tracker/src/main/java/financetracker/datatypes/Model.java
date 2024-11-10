@@ -1,4 +1,4 @@
-package financetracker.models;
+package financetracker.datatypes;
 
 import java.io.Serializable;
 

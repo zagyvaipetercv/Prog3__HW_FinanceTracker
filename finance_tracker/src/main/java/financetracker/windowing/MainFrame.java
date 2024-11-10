@@ -10,9 +10,9 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import financetracker.controllers.CashFlowController;
+import financetracker.datatypes.User;
 import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
-import financetracker.models.User;
 import financetracker.views.HomeView;
 import financetracker.views.base.PanelView;
 

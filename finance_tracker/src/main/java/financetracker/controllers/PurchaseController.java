@@ -1,10 +1,10 @@
 package financetracker.controllers;
 
+import financetracker.datatypes.Purchase;
 import financetracker.exceptions.controller.CannotCreateControllerException;
-import financetracker.models.Purchase;
 import financetracker.windowing.MainFrame;
 
-public class PurchaseController extends Controller<Purchase> {
+public class PurchaseController extends ModelSerailizer<Purchase> {
     private static final String DEFAULT_FILE_PATH = "saves\\purchases.dat";
     
     public PurchaseController(MainFrame mainFrame) throws CannotCreateControllerException {

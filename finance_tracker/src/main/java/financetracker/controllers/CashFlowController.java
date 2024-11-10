@@ -1,21 +1,23 @@
 package financetracker.controllers;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 
-import financetracker.MetadataManager;
+import financetracker.datatypes.CashFlow;
+import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
+import financetracker.exceptions.modelserailizer.SerializerCannotRead;
+import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
+import financetracker.exceptions.modelserailizer.SerializerWasNotCreated;
+import financetracker.models.CashFlowTableModel;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
-import financetracker.exceptions.controller.CannotCreateControllerException;
-import financetracker.exceptions.controller.ControllerCannotReadException;
-import financetracker.exceptions.controller.ControllerCannotWriteException;
-import financetracker.models.CashFlow;
-import financetracker.models.Money;
 import financetracker.views.base.FrameView;
 import financetracker.views.base.PanelView;
 import financetracker.views.cashflow.ChangeMoneyView;
@@ -23,7 +25,9 @@ import financetracker.views.cashflow.SetMoneyView;
 import financetracker.views.cashflow.WalletView;
 import financetracker.windowing.MainFrame;
 
-public class CashFlowController extends Controller<CashFlow> {
+public class CashFlowController extends Controller<CashFlow> implements ActionListener {
+
+    private static final String DEAFULT_SAVE_PATH = "saves\\cashflow.dat";
 
     private CashFlowType selectedCashFlowType;
     private int selectedYear;
@@ -33,9 +37,8 @@ public class CashFlowController extends Controller<CashFlow> {
 
     private int cachedYear;
     private Month cachedMonth;
-    private List<CashFlow> cachedTableData;
+    private List<CashFlow> cachedCashFlow;
 
-    // VIEW GETTERS
     public FrameView getChangeMoneyView() {
         return new ChangeMoneyView(this);
     }
@@ -53,16 +56,11 @@ public class CashFlowController extends Controller<CashFlow> {
         mainFrame.changeView(getWalletView());
     }
 
-    // CONSTRUCTORS
-    public CashFlowController(MainFrame mainFrame)
-            throws CannotCreateControllerException, ControllerCannotReadException {
-        this(MetadataManager.getFilePath(CashFlowController.class), mainFrame);
-    }
 
-    public CashFlowController(String filePath, MainFrame mainFrame)
-            throws CannotCreateControllerException, ControllerCannotReadException {
-        super(filePath, mainFrame);
-        List<CashFlow> allCashFlows = readAll();
+    public CashFlowController(MainFrame mainFrame)
+            throws SerializerWasNotCreated, SerializerCannotRead {
+        super(DEAFULT_SAVE_PATH, mainFrame);
+        List<CashFlow> allCashFlows = modelSerializer.readAll();
         double sum = 0.0;
         for (CashFlow cashFlow : allCashFlows) {
             sum += cashFlow.getMoney().getAmount();
@@ -89,17 +87,17 @@ public class CashFlowController extends Controller<CashFlow> {
         double amount = parseAmount(amountString);
         Money money = new Money(amount, currency);
         CashFlow cashFlow = new CashFlow(
-                getNextId(),
+                modelSerializer.getNextId(),
                 date,
                 money,
                 reason);
         try {
-            appendNewData(cashFlow);
+            modelSerializer.appendNewData(cashFlow);
             moneyOnAccount = new Money(moneyOnAccount.getAmount() + amount, currency);
             if (!cacheIsInvalid(date.getYear(), date.getMonth())) {
-                cachedTableData.add(cashFlow);
+                cachedCashFlow.add(cashFlow);
             }
-        } catch (ControllerCannotWriteException | ControllerCannotReadException e) {
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new BalanceCouldNotCahcngeException(money, "Couldn't add money to balance");
         }
     }
@@ -115,9 +113,9 @@ public class CashFlowController extends Controller<CashFlow> {
 
     public void addListOfCashFlow(List<CashFlow> cashFlowList) throws BalanceCouldNotCahcngeException {
         try {
-            appendNewDatas(cashFlowList);
-            cachedTableData.addAll(cashFlowList);
-        } catch (ControllerCannotReadException | ControllerCannotWriteException e) {
+            modelSerializer.appendNewDatas(cashFlowList);
+            cachedCashFlow.addAll(cashFlowList);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new BalanceCouldNotCahcngeException(null, "Couldn't add money to balance");
         }
     }
@@ -129,7 +127,7 @@ public class CashFlowController extends Controller<CashFlow> {
         }
 
         List<CashFlow> result = new ArrayList<>();
-        for (CashFlow cashFlow : cachedTableData) {
+        for (CashFlow cashFlow : cachedCashFlow) {
             switch (type) {
                 case INCOME:
                     if (cashFlow.getMoney().getAmount() > 0) {
@@ -144,7 +142,7 @@ public class CashFlowController extends Controller<CashFlow> {
                     break;
 
                 default:
-                    return cachedTableData;
+                    return cachedCashFlow;
             }
         }
         return result;
@@ -197,9 +195,9 @@ public class CashFlowController extends Controller<CashFlow> {
         return (year != cachedYear || !month.equals(cachedMonth));
     }
 
-    private void reloadCache(int year, Month month) throws ControllerCannotReadException {
-        List<CashFlow> saved = readAll();
-        cachedTableData = new ArrayList<>();
+    private void reloadCache(int year, Month month) throws SerializerCannotRead {
+        List<CashFlow> saved = modelSerializer.readAll();
+        cachedCashFlow = new ArrayList<>();
 
         // Update cached meta data
         cachedYear = year;
@@ -210,7 +208,7 @@ public class CashFlowController extends Controller<CashFlow> {
             int cashFlowYear = cashFlow.getDate().getYear();
             Month cashFlowMonth = cashFlow.getDate().getMonth();
             if (cashFlowYear == year && cashFlowMonth.equals(month)) {
-                cachedTableData.add(cashFlow);
+                cachedCashFlow.add(cashFlow);
             }
         }
     }
@@ -244,6 +242,12 @@ public class CashFlowController extends Controller<CashFlow> {
         ALL,
         INCOME,
         EXPENSE
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'actionPerformed'");
     }
 
 }

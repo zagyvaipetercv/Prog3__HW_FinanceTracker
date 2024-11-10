@@ -11,14 +11,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import financetracker.controllers.CashFlowController.CashFlowType;
+import financetracker.datatypes.CashFlow;
+import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.exceptions.controller.CannotCreateControllerException;
 import financetracker.exceptions.controller.ControllerCannotReadException;
-import financetracker.models.CashFlow;
-import financetracker.models.Money;
 
 class CashFlowControllerTests extends ControllerTests {
 
@@ -33,8 +33,6 @@ class CashFlowControllerTests extends ControllerTests {
     void checkDefaultInit() {
         LocalDate defaultDate = LocalDate.now();
         double delta = 0.01;
-
-        assertEquals(TEST_SAVE_FILE_PATH, controller.getFilePath());
 
         assertEquals(defaultDate.getYear(), controller.getSelectedYear());
         assertEquals(defaultDate.getMonth(), controller.getSelectedMonth());
