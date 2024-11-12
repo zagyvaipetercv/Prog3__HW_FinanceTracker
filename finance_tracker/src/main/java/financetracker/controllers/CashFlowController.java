@@ -100,7 +100,7 @@ public class CashFlowController extends Controller<CashFlow> {
     public void changeMoneyOnAccount(LocalDate date, String amountString, Currency currency, String reason)
             throws InvalidReasonException, BalanceCouldNotCahcngeException, InvalidAmountException {
 
-        double amount = parseAmount(amountString);
+        double amount = Money.parseAmount(amountString);
         addNewCashFlow(date, amount, currency, reason);
 
         refreshWalletView();
@@ -139,7 +139,7 @@ public class CashFlowController extends Controller<CashFlow> {
 
     public void setMoneyOnAccount(String newAmountString, Currency currency, String reason)
             throws InvalidAmountException, BalanceCouldNotCahcngeException, InvalidReasonException {
-        double newAmount = parseAmount(newAmountString);
+        double newAmount = Money.parseAmount(newAmountString);
         LocalDate today = LocalDate.now();
         double currentAmount = moneyOnAccount.getAmount();
         double difference = newAmount - currentAmount;
@@ -254,18 +254,6 @@ public class CashFlowController extends Controller<CashFlow> {
             return Integer.parseInt(yearString);
         } catch (NumberFormatException e) {
             throw new InvalidYearFormatException("'" + yearString + "' is not in a valid format");
-        }
-    }
-
-    private double parseAmount(String amountString) throws InvalidAmountException {
-        try {
-            if (amountString.isBlank()) {
-                throw new InvalidAmountException(amountString, "Amount can ot be blank");
-            }
-            return Double.parseDouble(amountString);
-        } catch (NullPointerException | NumberFormatException e) {
-            throw new InvalidAmountException(amountString, "'" + amountString
-                    + "' is not a number or in the wrong format (allowed characters are numbers and '.')");
         }
     }
 

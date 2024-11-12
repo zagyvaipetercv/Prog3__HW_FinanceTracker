@@ -7,9 +7,12 @@ import java.awt.FlowLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import financetracker.controllers.CashFlowController;
+import financetracker.controllers.DebtController;
+import financetracker.controllers.UserController;
 import financetracker.datatypes.User;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.views.HomeView;
@@ -26,13 +29,17 @@ public class MainFrame extends JFrame {
     private String subTitle;
     private User user;
 
+    private transient UserController userController;
     private transient CashFlowController cashFlowController;
+    private transient DebtController debtController;
 
     public MainFrame(User userSignedIn) {
         super();
         
         try {
-            this.cashFlowController = new CashFlowController(this);
+            userController = new UserController(this);
+            cashFlowController = new CashFlowController(this);
+            debtController = new DebtController(this);
         } catch (ControllerWasNotCreated e) {
             ErrorBox.show(e.getErrorTitle(), e.getMessage());
             System.exit(-1);
@@ -109,6 +116,13 @@ public class MainFrame extends JFrame {
                 mainFrame.setTitle("Wallet");
             });
             add(walletButton);
+
+            NavButton debtsButton = new NavButton("Debts");
+            debtsButton.addActionListener(ae -> {
+                mainFrame.changeView(debtController.getDebtView());
+                mainFrame.setTitle("Debts");
+            });
+            add(debtsButton);
         }
 
         private class NavButton extends JButton {

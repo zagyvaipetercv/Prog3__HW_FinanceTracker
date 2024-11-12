@@ -31,7 +31,7 @@ public class ModelSerailizer<T extends Model> {
         initNextId();
     }
 
-    private void initNextId() throws SerializerWasNotCreated {
+    private synchronized void initNextId() throws SerializerWasNotCreated {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getFilePath()))) {
             List<T> savedData = (List<T>) ois.readObject();
 
@@ -50,7 +50,7 @@ public class ModelSerailizer<T extends Model> {
         }
     }
 
-    private void createSaveFile() throws SerializerWasNotCreated {
+    private synchronized void createSaveFile() throws SerializerWasNotCreated {
         File saveFile = new File(filePath);
 
         try {
@@ -73,7 +73,7 @@ public class ModelSerailizer<T extends Model> {
     }
 
     // METADATA
-    public void setSaveFilePath(String filePath) {
+    public synchronized void setSaveFilePath(String filePath) {
         this.filePath = filePath;
     }
 
@@ -85,25 +85,21 @@ public class ModelSerailizer<T extends Model> {
         return nextID;
     }
 
-    public void setNextId(long nextID) {
-        this.nextID = nextID;
-    }
-
     // IO OPEARTIONS
-    public void appendNewData(T t) throws SerializerCannotRead, SerializerCannotWrite {
+    public synchronized void appendNewData(T t) throws SerializerCannotRead, SerializerCannotWrite {
         List<T> datasSaved = readAll();
         datasSaved.add(t);
         write(datasSaved);
         nextID++;
     }
 
-    public void appendNewDatas(List<T> tList) throws SerializerCannotRead, SerializerCannotWrite {
+    public synchronized void appendNewDatas(List<T> tList) throws SerializerCannotRead, SerializerCannotWrite {
         List<T> dataSaved = readAll();
         dataSaved.addAll(tList);
         write(dataSaved);
     }
 
-    public List<T> readAll() throws SerializerCannotRead {
+    public synchronized List<T> readAll() throws SerializerCannotRead {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
             return (List<T>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {

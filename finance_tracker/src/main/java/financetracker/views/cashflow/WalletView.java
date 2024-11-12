@@ -25,12 +25,12 @@ import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
+import financetracker.windowing.MyWindowConstants;
+import financetracker.windowing.OptionsPanel;
 import financetracker.models.CashFlowTableModel;
 
 public class WalletView extends PanelView {
-    private static final int RIGHT_PANEL_WIDTH = 250;
-    private static final Color BORDER_COLOR = Color.GRAY;
-    private static final int BORDER_THICKNESS = 1;
+
 
     private CashFlowController cashFlowController;
 
@@ -51,14 +51,24 @@ public class WalletView extends PanelView {
         centerPanel.add(new FilterPanel(), BorderLayout.NORTH);
         centerPanel.add(new CashFlowPanel(tm), BorderLayout.CENTER);
         rightPanel.add(new SummaryPanel(all, incomes, expneses, thisMonth), BorderLayout.NORTH);
-        rightPanel.add(new OptionsPanel(), BorderLayout.CENTER);
+        
+        OptionsPanel optionsPanel = new OptionsPanel();
+        optionsPanel.addOptionButton(
+            "Change Money on account",
+            ae -> cashFlowController.getChangeMoneyView().setVisible(true));
+
+        optionsPanel.addOptionButton(
+            "Set Money on account",
+            ae -> cashFlowController.getSetMoneyView().setVisible(true));
+
+        rightPanel.add(optionsPanel, BorderLayout.CENTER);
 
     }
 
     private class FilterPanel extends JPanel {
         public FilterPanel() {
             // Setup panel
-            setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
+            setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
 
             GroupLayout layout = new GroupLayout(this);
             setLayout(layout);
@@ -134,7 +144,7 @@ public class WalletView extends PanelView {
 
         public CashFlowPanel(CashFlowTableModel tm) {
             setLayout(new BorderLayout());
-            setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
+            setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
 
             JTable table = new JTable(tm);
             JScrollPane scrollPane = new JScrollPane(table);
@@ -151,8 +161,8 @@ public class WalletView extends PanelView {
         JLabel selectedMonthSumLabel;
 
         public SummaryPanel(Money onAccount, Money sumIncome, Money sumExpense, Money selectedMonthSum) {
-            setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
-            setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, PANEL_HEIGHT));
+            setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
+            setPreferredSize(new Dimension(MyWindowConstants.OPTIONS_PANEL_WIDTH, PANEL_HEIGHT));
             GridLayout layout = new GridLayout(4, 2);
             setLayout(layout);
 
@@ -178,18 +188,19 @@ public class WalletView extends PanelView {
         }
     }
 
+    /*
     private class OptionsPanel extends JPanel {
         public OptionsPanel() {
-            setBorder(BorderFactory.createLineBorder(BORDER_COLOR, BORDER_THICKNESS));
-            setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, 0));
+            setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
+            setPreferredSize(new Dimension(MyWindowConstants.OPTIONS_PANEL_WIDTH, 0));
             FlowLayout layout = new FlowLayout();
             layout.setAlignOnBaseline(true);
             setLayout(layout);
-
-            OptionButton changeMoneyButton = new OptionButton("Cahnge Money on account");
+            
+            OptionButton changeMoneyButton = new OptionButton("Change Money on account");
             changeMoneyButton.addActionListener(ae -> cashFlowController.getChangeMoneyView().setVisible(true));
             add(changeMoneyButton);
-
+            
             OptionButton setMoneyButton = new OptionButton("Set Money on account");
             setMoneyButton.addActionListener(ae -> cashFlowController.getSetMoneyView().setVisible(true));
             add(setMoneyButton);
@@ -197,11 +208,12 @@ public class WalletView extends PanelView {
 
         private class OptionButton extends JButton {
             private static final int BUTTON_HEIGHT = 30;
-
+            
             public OptionButton(String text) {
                 super(text);
-                setPreferredSize(new Dimension(RIGHT_PANEL_WIDTH, BUTTON_HEIGHT));
+                setPreferredSize(new Dimension(MyWindowConstants.OPTIONS_PANEL_WIDTH, BUTTON_HEIGHT));
             }
         }
     }
+    */
 }

@@ -11,6 +11,7 @@ import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
+import financetracker.exceptions.usercontroller.UserNotFound;
 import financetracker.views.LoginWindow;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.MainFrame;
@@ -56,12 +57,8 @@ public class UserController extends Controller<User> {
             throw new InvalidPasswordException(InvalidPasswordException.ErrorType.NOT_ENOUGH_CHARACTERS_OR_WHITESPACE);
         }
 
-        try {
-            if (userExists(username)) {
-                throw new InvalidUserNameException(InvalidUserNameException.ErrorType.REGISTRATION_ALREADY_EXISTS);
-            }
-        } catch (SerializerCannotRead e) {
-            throw new RegistrationFailedException("Can not check if user already exists");
+        if (userExists(username)) {
+            throw new InvalidUserNameException(InvalidUserNameException.ErrorType.REGISTRATION_ALREADY_EXISTS);
         }
 
         // If no error -> save
@@ -101,8 +98,8 @@ public class UserController extends Controller<User> {
             mainFrame = new MainFrame(user);
             return true;
 
-        } catch (SerializerCannotRead e) {
-            throw new LoginFailedException("Login failed to an Read Exception");
+        } catch (UserNotFound e) {
+            throw new LoginFailedException("Login failed, User was not found");
         }
     }
 
@@ -111,10 +108,13 @@ public class UserController extends Controller<User> {
     }
 
     // CHECKS
-    private boolean userExists(String username) throws SerializerCannotRead {
-        User user = findUser(username);
-
-        return user != null;
+    private boolean userExists(String username) {
+        try {
+            User user = findUser(username);
+            return user != null;
+        } catch (UserNotFound e) {
+            return false;
+        }
     }
 
     private boolean usernameIsInvalid(String username) {
@@ -128,14 +128,18 @@ public class UserController extends Controller<User> {
                 password.length() < 8);
     }
 
-    protected User findUser(String username) throws SerializerCannotRead {
-        List<User> users = modelSerializer.readAll();
-        for (User user : users) {
-            if (user.getName().equals(username)) {
-                return user;
+    protected User findUser(String username) throws UserNotFound {
+        try {
+            List<User> users = modelSerializer.readAll();
+            for (User user : users) {
+                if (user.getName().equals(username)) {
+                    return user;
+                }
             }
+        } catch (SerializerCannotRead e) {
+            throw new UserNotFound(username, "User not found due to IO Error");
         }
 
-        return null;
+        throw new UserNotFound(username, "User not with specified usernam was not found");
     }
 }

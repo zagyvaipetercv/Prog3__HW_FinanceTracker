@@ -2,6 +2,7 @@ package financetracker;
 
 import financetracker.controllers.UserController;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.views.debt.AddNewDebtView;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.MainFrame;
 

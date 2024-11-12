@@ -17,7 +17,7 @@ public abstract class Controller<T extends Model> {
         try {
             this.modelSerializer = new ModelSerailizer<>(saveFilePath);
         } catch (SerializerWasNotCreated e) {
-            throw new ControllerWasNotCreated("Model Serializer could not be initialized", this.getClass());
+            throw new ControllerWasNotCreated("Model Serializer could not be initialized - " + this.getClass().toString() , this.getClass());
         }
     }
 

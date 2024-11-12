@@ -12,6 +12,7 @@ import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
+import financetracker.exceptions.usercontroller.UserNotFound;
 
 class UserControllerTests extends ControllerTests {
 
@@ -43,7 +44,7 @@ class UserControllerTests extends ControllerTests {
     }
 
     @Test
-    void checkFindUser() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException, SerializerCannotRead {
+    void checkFindUser() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException, UserNotFound {
         boolean succes = userController.register(null, validUsername1, validPassword1);
         User user = userController.findUser(validUsername1);
         assertEquals(true, succes);
