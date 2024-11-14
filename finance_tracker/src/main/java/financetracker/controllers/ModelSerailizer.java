@@ -107,6 +107,16 @@ public class ModelSerailizer<T extends Model> {
         }
     }
 
+    public synchronized void changeData(T t) throws SerializerCannotRead, SerializerCannotWrite {
+        List<T> all = readAll();
+        for (int i = 0; i < all.size(); i++) {
+            if (all.get(i).getId() == t.getId()) {
+                all.set(i, t);
+            }
+        }
+        write(all);
+    }
+
     private void write(List<T> datas) throws SerializerCannotWrite {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
             oos.writeObject(datas);

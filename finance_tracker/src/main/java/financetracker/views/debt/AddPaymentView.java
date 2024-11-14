@@ -1,0 +1,81 @@
+package financetracker.views.debt;
+
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.nio.file.attribute.GroupPrincipal;
+import java.util.Currency;
+
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.border.Border;
+
+import financetracker.controllers.DebtController;
+import financetracker.datatypes.Debt;
+import financetracker.datatypes.Money;
+import financetracker.views.base.FrameView;
+
+// TODO: Finish this class
+public class AddPaymentView extends FrameView {
+    private DebtController debtController;
+    private Debt debt;
+
+    private JButton repayButton;
+    private JButton repayAllButton;
+    private JButton cancelButton;
+
+    private JTextField amountTextField;
+
+    public AddPaymentView(DebtController debtController, Debt debt) {
+        this.debtController = debtController;
+        this.debt = debt;
+
+        setLayout(new BorderLayout());
+
+        initComponents();
+    }
+
+    private void initComponents() {
+        JPanel upperPanel = new JPanel();
+        GroupLayout uppperLayout = new GroupLayout(upperPanel);
+        upperPanel.setLayout(uppperLayout);
+        add(upperPanel, BorderLayout.CENTER);
+
+        FlowLayout lowerLayout = new FlowLayout(FlowLayout.CENTER);
+        JPanel lowerPanel = new JPanel(lowerLayout);
+        add(lowerPanel, BorderLayout.SOUTH);
+
+        // Setup upper panel
+        JLabel idTitleLabel = new JLabel("ID:");
+        JLabel counterPartyNameTitleLabel = new JLabel("Name:");
+        JLabel amountTitleLabel = new JLabel("Pay Amount:");
+        JLabel repayedTitleLabel = new JLabel("Already Repayed:");
+        JLabel remainingTitleLabel = new JLabel("Remaining Debt:");
+
+        Money repayed = debtController.repayed(debt);
+        Money remainingDebt = new Money(debt.getAmount().getAmount() - repayed.getAmount(), Currency.getInstance("HUF"));
+
+        JLabel idLabel = new JLabel(Long.toString(debt.getId()));
+        JLabel counterParty = new JLabel(debt.getCounterParty().getName());
+        amountTextField = new JTextField("", 20);
+        JLabel repayedLabel = new JLabel(repayed.toString());
+        JLabel remainingLabel = new JLabel(remainingDebt.toString());
+
+        // Adding upper elements
+        GroupLayout.SequentialGroup hGroup;
+
+
+        // Setup lower panel
+        repayButton = new JButton("Repay");
+        lowerPanel.add(repayButton);
+
+        repayAllButton = new JButton("Repay Remaining");
+        lowerPanel.add(repayAllButton);
+
+        cancelButton = new JButton("Cancel");
+        lowerPanel.add(cancelButton);
+    }
+}

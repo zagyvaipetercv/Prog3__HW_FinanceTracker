@@ -13,12 +13,16 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 
 import financetracker.controllers.DebtController;
 import financetracker.datatypes.Debt;
+import financetracker.exceptions.NoItemWasSelected;
+import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
 import financetracker.models.DebtListModel;
 import financetracker.views.base.PanelView;
+import financetracker.windowing.ErrorBox;
 import financetracker.windowing.OptionsPanel;
 
 public class DebtView extends PanelView {
@@ -33,6 +37,7 @@ public class DebtView extends PanelView {
         debts = new JList<>(dlm);
 
         debts.setCellRenderer(new DebtListCellRenderer());
+        debts.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         OptionsPanel optionsPanel = new OptionsPanel();
         optionsPanel.addOptionButton(
@@ -40,7 +45,15 @@ public class DebtView extends PanelView {
                 ae -> {
                     controller.getAddNewDebtView().setVisible(true);
                 });
-        optionsPanel.addOptionButton("Edit Selected", null);
+        optionsPanel.addOptionButton(
+            "Edit Selected",
+            ae -> {
+                try {
+                    controller.getEditSelectedDebtView(debts).setVisible(true);
+                } catch (NoItemWasSelected | FulfilledDebtCantChange e) {
+                    ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                }
+            });
         optionsPanel.addOptionButton("Add Payment to Selected", null);
         add(optionsPanel, BorderLayout.EAST);
 
@@ -52,15 +65,20 @@ public class DebtView extends PanelView {
 
         private static final int PREFFERED_HEIGHT = 50;
 
+        // TODO: make 
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                 boolean isSelected,
                 boolean hasFocus) {
 
-            JPanel panel = new JPanel(new GridLayout(1,6,0,0));
+            JPanel panel = new JPanel(new GridLayout(1,7,0,0));
             panel.setPreferredSize(new Dimension(0,PREFFERED_HEIGHT));
 
             Debt debt = (Debt) value;
+
+            JLabel idLabel = new JLabel("ID: " + debt.getId());
+            setComponentAttributes(idLabel);
+            panel.add(idLabel);
 
             JLabel owesLabel;
             switch (debt.getDirection()) {
@@ -127,7 +145,6 @@ public class DebtView extends PanelView {
 
         private static void setComponentAttributes(JCheckBox component) {
             component.setHorizontalAlignment(SwingConstants.CENTER);
-            //component.setBorderPainted(true);
         }
     }
 }
