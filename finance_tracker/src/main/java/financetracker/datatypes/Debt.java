@@ -1,7 +1,10 @@
 package financetracker.datatypes;
 
 import java.time.LocalDate;
+import java.util.Currency;
 import java.util.List;
+
+import financetracker.utilities.CustomMath;
 
 public class Debt extends Model {
     public enum DebtDirection {
@@ -12,24 +15,20 @@ public class Debt extends Model {
     private User counterParty;
     private DebtDirection direction;
     private LocalDate date;
-    private Money amount;
+    private Money debtAmount;
     private List<Payment> payments;
-    private boolean fulfilled;
 
     private LocalDate deadline;
-    private boolean hasDeadline;
 
-    public Debt(long id, User counterParty, DebtDirection direction, LocalDate date, Money amount,
-            List<Payment> payments, boolean fulfilled, boolean hasDeadline, LocalDate deadLine) {
+    public Debt(long id, User counterParty, DebtDirection direction, LocalDate date, Money debtAmount,
+            List<Payment> payments, LocalDate deadLine) {
         super(id);
         this.counterParty = counterParty;
         this.direction = direction;
         this.date = date;
         this.deadline = deadLine;
-        this.amount = amount;
+        this.debtAmount = debtAmount;
         this.payments = payments;
-        this.hasDeadline = hasDeadline;
-        this.fulfilled = fulfilled;
     }
 
     public User getCounterParty() {
@@ -56,12 +55,12 @@ public class Debt extends Model {
         this.date = date;
     }
 
-    public Money getAmount() {
-        return amount;
+    public Money getDebtAmount() {
+        return debtAmount;
     }
 
-    public void setAmount(Money amount) {
-        this.amount = amount;
+    public void setDebtAmount(Money amount) {
+        this.debtAmount = amount;
     }
 
     public List<Payment> getPayments() {
@@ -73,11 +72,7 @@ public class Debt extends Model {
     }
 
     public boolean isFulfilled() {
-        return fulfilled;
-    }
-
-    public void setFulfilled(boolean fulfilled) {
-        this.fulfilled = fulfilled;
+        return CustomMath.almostEquals(repayed(this).getAmount(), debtAmount.getAmount());
     }
 
     public LocalDate getDeadline() {
@@ -89,15 +84,21 @@ public class Debt extends Model {
     }
 
     public boolean hasDeadline() {
-        return hasDeadline;
-    }
-
-    public void setHasDeadline(boolean hasDeadline) {
-        this.hasDeadline = hasDeadline;
+        return deadline != null;
     }
 
     @Override
     public String toString() {
-        return counterParty.getName() + " " + direction.name() + " " + date + " " + amount;
+        return counterParty.getName() + " " + direction.name() + " " + date + " " + debtAmount;
+    }
+
+    public static Money repayed(Debt debt) {
+        double sum = 0.0;
+
+        for (Payment payment : debt.getPayments()) {
+            sum += payment.getAmount().getAmount();
+        }
+
+        return new Money(sum, Currency.getInstance("HUF"));
     }
 }

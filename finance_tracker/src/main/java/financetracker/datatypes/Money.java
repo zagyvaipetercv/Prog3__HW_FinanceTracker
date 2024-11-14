@@ -5,6 +5,7 @@ import java.util.Currency;
 import java.util.Objects;
 
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
+import financetracker.utilities.CustomMath;
 
 public class Money implements Serializable {
     private double amount;
@@ -43,7 +44,7 @@ public class Money implements Serializable {
         }
 
         Money m = (Money)o;
-        return m.getAmount() == amount && m.getCurrency().equals(currency);
+        return CustomMath.almostEquals(amount, m.getAmount()) && m.getCurrency().equals(currency);
     }
 
     @Override

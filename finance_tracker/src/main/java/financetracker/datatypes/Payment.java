@@ -1,14 +1,14 @@
 package financetracker.datatypes;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
-public class Payment extends Model {
+public class Payment implements Serializable {
     private LocalDate date;
     private Debt debt;
     private Money amount;
 
-    public Payment(long id, LocalDate date, Debt debt, Money amount) {
-        super(id);
+    public Payment(LocalDate date, Debt debt, Money amount)  {
         this.date = date;
         this.debt = debt;
         this.amount = amount;
@@ -37,4 +37,5 @@ public class Payment extends Model {
     public void setAmount(Money amount) {
         this.amount = amount;
     }
+
 }

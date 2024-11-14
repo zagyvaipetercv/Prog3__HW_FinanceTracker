@@ -48,6 +48,7 @@ public class ChangeMoneyView extends FrameView {
             String reason = reasonTextField.getText();
             try {
                 cashFlowController.changeMoneyOnAccount(date, amount, currency, reason);
+                cashFlowController.refreshWalletView();
                 cashFlowController.closeFrameView(this);
             } catch (InvalidAmountException | InvalidReasonException | BalanceCouldNotCahcngeException e) {
                 ErrorBox.show(e.getErrorTitle(), e.getMessage());

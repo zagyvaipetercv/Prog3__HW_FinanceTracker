@@ -58,6 +58,7 @@ public class EditSelectedDebtView extends FrameView {
                         hasDeadLinechCheckBox.isSelected(),
                         deadlinePicker.getDate());
 
+                debtController.refreshDebtView();
                 debtController.closeFrameView(this);
             } catch (InvalidAmountException | UserNotFound | EditingDebtFailedException e) {
                 ErrorBox.show(e.getErrorTitle(), e.getMessage());
@@ -72,7 +73,7 @@ public class EditSelectedDebtView extends FrameView {
         nameTextField.setText(debt.getCounterParty().getName());
         directionPicker.setSelectedItem(debt.getDirection());
         datePicker.setDate(debt.getDate());
-        amountTextField.setText(((Double) debt.getAmount().getAmount()).toString());
+        amountTextField.setText(((Double) debt.getDebtAmount().getAmount()).toString());
         hasDeadLinechCheckBox.setSelected(debt.hasDeadline());
         deadlinePicker.setDate((debt.hasDeadline() ? debt.getDeadline() : LocalDate.now()));
     }

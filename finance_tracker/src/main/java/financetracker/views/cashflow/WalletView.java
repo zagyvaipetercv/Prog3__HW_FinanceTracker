@@ -34,6 +34,7 @@ public class WalletView extends PanelView {
 
     private CashFlowController cashFlowController;
 
+    // FIXME: FILTER DOESNT WORK
     public WalletView(
             CashFlowController cashFlowController,
             CashFlowTableModel tm,

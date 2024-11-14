@@ -52,6 +52,7 @@ public class AddNewDebtView extends FrameView {
                                                 hasDeadLinechCheckBox.isSelected(),
                                                 deadlinePicker.getDate());
 
+                                debtController.refreshDebtView();
                                 debtController.closeFrameView(this);
                         } catch (UserNotFound | InvalidAmountException | CreatingDebtFailedException e) {
                                 ErrorBox.show(e.getErrorTitle(), e.getMessage());

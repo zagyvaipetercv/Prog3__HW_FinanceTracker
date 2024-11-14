@@ -46,15 +46,23 @@ public class DebtView extends PanelView {
                     controller.getAddNewDebtView().setVisible(true);
                 });
         optionsPanel.addOptionButton(
-            "Edit Selected",
-            ae -> {
-                try {
-                    controller.getEditSelectedDebtView(debts).setVisible(true);
-                } catch (NoItemWasSelected | FulfilledDebtCantChange e) {
-                    ErrorBox.show(e.getErrorTitle(), e.getMessage());
-                }
-            });
-        optionsPanel.addOptionButton("Add Payment to Selected", null);
+                "Edit Selected",
+                ae -> {
+                    try {
+                        controller.getEditSelectedDebtView(debts).setVisible(true);
+                    } catch (NoItemWasSelected | FulfilledDebtCantChange e) {
+                        ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                    }
+                });
+        optionsPanel.addOptionButton(
+                "Add Payment to Selected",
+                ae -> {
+                    try {
+                        controller.getAddPaymentView(debts).setVisible(true);
+                    } catch (NoItemWasSelected | FulfilledDebtCantChange e) {
+                        ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                    }
+                });
         add(optionsPanel, BorderLayout.EAST);
 
         JScrollPane scrollPane = new JScrollPane(debts);
@@ -65,14 +73,13 @@ public class DebtView extends PanelView {
 
         private static final int PREFFERED_HEIGHT = 50;
 
-        // TODO: make 
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                 boolean isSelected,
                 boolean hasFocus) {
 
-            JPanel panel = new JPanel(new GridLayout(1,7,0,0));
-            panel.setPreferredSize(new Dimension(0,PREFFERED_HEIGHT));
+            JPanel panel = new JPanel(new GridLayout(1, 7, 0, 0));
+            panel.setPreferredSize(new Dimension(0, PREFFERED_HEIGHT));
 
             Debt debt = (Debt) value;
 
@@ -97,8 +104,7 @@ public class DebtView extends PanelView {
             setComponentAttributes(owesLabel);
             panel.add(owesLabel);
 
-
-            JLabel amountLabel = new JLabel("Amount: " + debt.getAmount());
+            JLabel amountLabel = new JLabel("Amount: " + debt.getDebtAmount());
             setComponentAttributes(amountLabel);
             panel.add(amountLabel);
 
@@ -111,7 +117,7 @@ public class DebtView extends PanelView {
             setComponentAttributes(deadlineLabel);
             panel.add(deadlineLabel);
 
-            JLabel repayedAmountLabel = new JLabel("Repayed: " + controller.repayed(debt).toString());
+            JLabel repayedAmountLabel = new JLabel("Repayed: " + Debt.repayed(debt).toString());
             setComponentAttributes(repayedAmountLabel);
             panel.add(repayedAmountLabel);
 
@@ -119,7 +125,6 @@ public class DebtView extends PanelView {
             fullfilledCheckBox.setSelected(debt.isFulfilled());
             setComponentAttributes(fullfilledCheckBox);
             panel.add(fullfilledCheckBox);
-
 
             // List View Selection stuff
             if (isSelected) {

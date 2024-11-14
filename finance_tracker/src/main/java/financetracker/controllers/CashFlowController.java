@@ -102,8 +102,6 @@ public class CashFlowController extends Controller<CashFlow> {
 
         double amount = Money.parseAmount(amountString);
         addNewCashFlow(date, amount, currency, reason);
-
-        refreshWalletView();
     }
 
     private void addNewCashFlow(LocalDate date, double amount, Currency currency, String reason)

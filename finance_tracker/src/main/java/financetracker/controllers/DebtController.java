@@ -13,15 +13,20 @@ import financetracker.datatypes.Payment;
 import financetracker.datatypes.User;
 import financetracker.datatypes.Debt.DebtDirection;
 import financetracker.exceptions.NoItemWasSelected;
+import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
+import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.exceptions.debtcontroller.CreatingDebtFailedException;
+import financetracker.exceptions.debtcontroller.DeptPaymentFailedException;
 import financetracker.exceptions.debtcontroller.EditingDebtFailedException;
 import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
+import financetracker.exceptions.debtcontroller.PaymentIsGreaterThanRemaining;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
 import financetracker.exceptions.usercontroller.UserNotFound;
 import financetracker.models.DebtListModel;
+import financetracker.utilities.CustomMath;
 import financetracker.views.base.FrameView;
 import financetracker.views.base.PanelView;
 import financetracker.views.debt.AddNewDebtView;
@@ -38,6 +43,7 @@ public class DebtController extends Controller<Debt> {
     private List<Debt> cachedDebts;
 
     private UserController userController;
+    private CashFlowController cashFlowController;
 
     public FrameView getEditSelectedDebtView(JList<? extends Debt> debtsList)
             throws NoItemWasSelected, FulfilledDebtCantChange {
@@ -55,7 +61,8 @@ public class DebtController extends Controller<Debt> {
         return new AddNewDebtView(this);
     }
 
-    public FrameView getAddPaymentView(JList<? extends Debt> debtList) throws NoItemWasSelected, FulfilledDebtCantChange {
+    public FrameView getAddPaymentView(JList<? extends Debt> debtList)
+            throws NoItemWasSelected, FulfilledDebtCantChange {
         Debt selected = getSelectedItem(debtList);
 
         if (selected.isFulfilled()) {
@@ -79,14 +86,91 @@ public class DebtController extends Controller<Debt> {
         }
         debtListModel = new DebtListModel(cachedDebts);
         userController = new UserController(mainFrame);
+        cashFlowController = new CashFlowController(mainFrame);
     }
 
     public DebtController(MainFrame mainFrame) throws ControllerWasNotCreated {
         this(DEFAULT_SAVE_PATH, mainFrame);
     }
 
-    private void refreshDebtView() {
+    public void refreshDebtView() {
         mainFrame.changeView(getDebtView());
+    }
+
+    public void repayDebt(Debt debt, String amountString, LocalDate date)
+            throws InvalidAmountException, DeptPaymentFailedException, PaymentIsGreaterThanRemaining {
+        double amount = Money.parseAmount(amountString);
+
+        double remainingDebtAmount = debt.getDebtAmount().getAmount() - Debt.repayed(debt).getAmount();
+
+        if (paymentAmountIsInvalid(amount)) {
+            throw new InvalidAmountException(amountString, "Cant't repay 0 or less");
+        }
+
+        if (CustomMath.almostEquals(amount, remainingDebtAmount)) {
+            amount = remainingDebtAmount;
+        }
+
+        if (amount > remainingDebtAmount) {
+            throw new PaymentIsGreaterThanRemaining(
+                    "Payment is greater than the remaining amount",
+                    new Money(remainingDebtAmount, Currency.getInstance("HUF")),
+                    new Money(amount, Currency.getInstance("HUF")));
+        }
+
+        repay(debt, amount, date);
+    }
+
+    public void repayAll(Debt debt, LocalDate date) throws DeptPaymentFailedException {
+        double remaining = debt.getDebtAmount().getAmount() - Debt.repayed(debt).getAmount();
+
+        repay(debt, remaining, date);
+    }
+
+    private void repay(Debt debt, double amount, LocalDate date) throws DeptPaymentFailedException {
+        Payment payment = new Payment(date, debt, new Money(amount, Currency.getInstance("HUF")));
+        debt.getPayments().add(payment);
+        
+        String stringAmount;
+        switch (debt.getDirection()) {
+            case I_OWE:
+                stringAmount = Double.toString(-amount);
+                break;
+
+            case THEY_OWE:
+                stringAmount = Double.toString(amount);
+                break;
+
+            default: 
+                stringAmount = ""; // Will fail cashflow
+                break;
+        }
+        
+        try {
+            replaceDebtEverywhere(debt);
+            
+            cashFlowController.changeMoneyOnAccount(
+                    date,
+                    stringAmount,
+                    debt.getDebtAmount().getCurrency(),
+                    "Repayed Debt: " + debt.getId());
+            
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new DeptPaymentFailedException("Dept payment failed due to an IO Error", debt, amount);
+
+        } catch (InvalidReasonException | BalanceCouldNotCahcngeException | InvalidAmountException e) {
+            // If cashflow couldn't register -> go back to original
+            debt.getPayments().remove(payment);
+
+            try {
+                replaceDebtEverywhere(debt);
+            } catch (SerializerCannotRead | SerializerCannotWrite e1) {
+                throw new DeptPaymentFailedException("Payment was registered in in debt but not in cash flows. Add cashflow manually", debt, amount);
+            }   
+
+            throw new DeptPaymentFailedException("Cashflow could not register. Debt payment failed", debt, amount);
+        }
+
     }
 
     public void addDebt(String name, DebtDirection direction, LocalDate date, String amountString, boolean hasDeadline,
@@ -100,7 +184,7 @@ public class DebtController extends Controller<Debt> {
 
         Money money = new Money(amount, Currency.getInstance("HUF"));
 
-        Debt debt = new Debt(id, counterParty, direction, date, money, new ArrayList<>(), false, hasDeadline,
+        Debt debt = new Debt(id, counterParty, direction, date, money, new ArrayList<>(),
                 (hasDeadline ? deadline : null));
         try {
             modelSerializer.appendNewData(debt);
@@ -123,31 +207,21 @@ public class DebtController extends Controller<Debt> {
 
         Money money = new Money(amount, Currency.getInstance("HUF"));
 
-        Debt changedDebt = new Debt(debt.getId(), counterParty, direction, date, money, debt.getPayments(),
-                debt.isFulfilled(), hasDeadline, (hasDeadline ? deadline : null));
+        Debt newDebt = new Debt(debt.getId(), counterParty, direction, date, money, debt.getPayments(),
+                (hasDeadline ? deadline : null));
+
+        debt.setCounterParty(counterParty);
+        debt.setDirection(direction);
+        debt.setDate(date);
+        debt.setDebtAmount(money);
+        debt.setDeadline((hasDeadline ? deadline : null));
 
         try {
-            modelSerializer.changeData(changedDebt);
-            int idx = debtListModel.indexOf(debt);
-            debtListModel.removeElement(debt);
-            debtListModel.add(idx, changedDebt);
-            cachedDebts.remove(debt);
-            cachedDebts.add(changedDebt);
-
+            replaceDebtEverywhere(debt);
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new EditingDebtFailedException("Debt was not edited due to an IO Error", debt, changedDebt);
+            throw new EditingDebtFailedException("Debt was not edited due to an IO Error", debt, newDebt);
         }
 
-        refreshDebtView();
-    }
-
-    public Money repayed(Debt debt) {
-        double amount = 0.0;
-        for (Payment payment : debt.getPayments()) {
-            amount += payment.getAmount().getAmount();
-        }
-
-        return new Money(amount, Currency.getInstance("HUF"));
     }
 
     public User findCounterParty(String name) throws UserNotFound {
@@ -165,5 +239,18 @@ public class DebtController extends Controller<Debt> {
         }
 
         return selected;
+    }
+
+    private void replaceDebtEverywhere(Debt replaced) throws SerializerCannotRead, SerializerCannotWrite {
+        modelSerializer.changeData(replaced);
+        int idx = debtListModel.indexOf(replaced);
+        debtListModel.removeElement(replaced);
+        debtListModel.add(idx, replaced);
+        cachedDebts.remove(replaced);
+        cachedDebts.add(replaced);
+    }
+
+    private boolean paymentAmountIsInvalid(double amount) {
+        return amount <= 0.0;
     }
 }

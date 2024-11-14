@@ -8,13 +8,13 @@ public class EditingDebtFailedException extends ErrorBoxException {
     private static final String ERROR_TITLE = "DEBT WAS NOT EDITETD";
 
     private final transient Debt originalDebt;
-    private final transient Debt changedDebt;
+    private final transient Debt newDebt;
 
 
-    public EditingDebtFailedException(String message, Debt originalDebt, Debt changedDebt) {
+    public EditingDebtFailedException(String message, Debt originalDebt, Debt newDebt) {
         super(message);
         this.originalDebt = originalDebt;
-        this.changedDebt = changedDebt;
+        this.newDebt = newDebt;
     }
 
     @Override
@@ -26,7 +26,7 @@ public class EditingDebtFailedException extends ErrorBoxException {
         return originalDebt;
     }
 
-    public Debt getChangedDebt() {
-        return changedDebt;
+    public Debt getNewDebt() {
+        return newDebt;
     }
 }
