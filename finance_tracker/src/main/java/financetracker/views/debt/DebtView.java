@@ -13,7 +13,6 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 
 import financetracker.controllers.DebtController;
@@ -49,21 +48,19 @@ public class DebtView extends PanelView {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    private class DebtListCellRenderer extends JPanel implements ListCellRenderer<Debt> {
+    private class DebtListCellRenderer extends DefaultListCellRenderer {
 
         private static final int PREFFERED_HEIGHT = 50;
 
-        public DebtListCellRenderer() {
-            setLayout(new BorderLayout());
-        }
-
         @Override
-        public Component getListCellRendererComponent(JList<? extends Debt> list, Debt debt, int index,
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                 boolean isSelected,
                 boolean hasFocus) {
 
             JPanel panel = new JPanel(new GridLayout(1,6,0,0));
             panel.setPreferredSize(new Dimension(0,PREFFERED_HEIGHT));
+
+            Debt debt = (Debt) value;
 
             JLabel owesLabel;
             switch (debt.getDirection()) {
@@ -106,36 +103,31 @@ public class DebtView extends PanelView {
             panel.add(fullfilledCheckBox);
 
 
-            add(panel, BorderLayout.CENTER);
-
             // List View Selection stuff
             if (isSelected) {
                 panel.setBackground(list.getSelectionBackground());
                 panel.setForeground(list.getSelectionForeground());
                 fullfilledCheckBox.setBackground(list.getSelectionBackground());
                 fullfilledCheckBox.setForeground(list.getSelectionForeground());
-                setBackground(list.getSelectionBackground());
-                setForeground(list.getSelectionForeground());
             } else {
-                setBackground(list.getBackground());
-                setForeground(list.getForeground());
                 panel.setBackground(list.getBackground());
                 panel.setForeground(list.getForeground());
                 fullfilledCheckBox.setBackground(list.getBackground());
                 fullfilledCheckBox.setForeground(list.getForeground());
             }
 
-            return this;
+            panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+
+            return panel;
         }
 
         private static void setComponentAttributes(JLabel component) {
-            component.setBorder(BorderFactory.createLineBorder(Color.gray));
             component.setHorizontalAlignment(SwingConstants.CENTER);
         }
 
         private static void setComponentAttributes(JCheckBox component) {
-            component.setBorder(BorderFactory.createLineBorder(Color.gray));
             component.setHorizontalAlignment(SwingConstants.CENTER);
+            //component.setBorderPainted(true);
         }
     }
 }

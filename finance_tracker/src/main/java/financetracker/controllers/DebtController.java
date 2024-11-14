@@ -66,11 +66,7 @@ public class DebtController extends Controller<Debt> {
 
         Money money = new Money(amount, Currency.getInstance("HUF"));
 
-        if (hasDeadline) {
-            deadline = null;
-        }
-        
-        Debt debt = new Debt(id, counterParty, direction, date, money, new ArrayList<Payment>(), false, deadline);
+        Debt debt = new Debt(id, counterParty, direction, date, money, new ArrayList<>(), false, hasDeadline, (hasDeadline ? deadline : null));
         try {
             modelSerializer.appendNewData(debt);
             debtListModel.addElement(debt);
@@ -90,8 +86,7 @@ public class DebtController extends Controller<Debt> {
     }
 
     public User findCounterParty(String name) throws UserNotFound {
-        User user = userController.findUser(name);
-        return user;
+        return userController.findUser(name);
     }
 
     private boolean isMoneyAmountValid(double amount) {

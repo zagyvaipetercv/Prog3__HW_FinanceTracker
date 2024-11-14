@@ -20,7 +20,7 @@ public class Debt extends Model {
     private boolean hasDeadline;
 
     public Debt(long id, User counterParty, DebtDirection direction, LocalDate date, Money amount,
-            List<Payment> payments, boolean fulfilled, LocalDate deadLine) {
+            List<Payment> payments, boolean fulfilled, boolean hasDeadline, LocalDate deadLine) {
         super(id);
         this.counterParty = counterParty;
         this.direction = direction;
@@ -28,9 +28,8 @@ public class Debt extends Model {
         this.deadline = deadLine;
         this.amount = amount;
         this.payments = payments;
+        this.hasDeadline = hasDeadline;
         this.fulfilled = fulfilled;
-
-        hasDeadline = deadLine != null;
     }
 
     public User getCounterParty() {
