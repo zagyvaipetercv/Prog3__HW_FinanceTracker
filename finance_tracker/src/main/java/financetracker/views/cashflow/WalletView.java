@@ -34,7 +34,6 @@ public class WalletView extends PanelView {
 
     private CashFlowController cashFlowController;
 
-    // FIXME: FILTER DOESNT WORK
     public WalletView(
             CashFlowController cashFlowController,
             CashFlowTableModel tm,
@@ -97,6 +96,8 @@ public class WalletView extends PanelView {
                         yearTextField.getText(), 
                         (Month) monthPicker.getSelectedItem(),
                         (CashFlowController.CashFlowType)typePicker.getSelectedItem());
+                    
+                    cashFlowController.refreshWalletView();
                 } catch (InvalidYearFormatException e) {
                     ErrorBox.show(e.getErrorTitle(), e.getMessage());
                 } catch (SerializerCannotRead e) {

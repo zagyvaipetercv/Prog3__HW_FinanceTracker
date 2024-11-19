@@ -18,6 +18,7 @@ import javax.swing.SwingConstants;
 
 import financetracker.controllers.DebtController;
 import financetracker.datatypes.Debt;
+import financetracker.datatypes.Debt.DebtDirection;
 import financetracker.exceptions.NoItemWasSelected;
 import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
 import financetracker.models.DebtListModel;
@@ -88,13 +89,14 @@ public class DebtView extends PanelView {
             panel.add(idLabel);
 
             JLabel owesLabel;
-            switch (debt.getDirection()) {
+            DebtDirection direction = controller.getDirection(debt);
+            switch (direction) {
                 case I_OWE:
-                    owesLabel = new JLabel("You owe " + debt.getCounterParty().getName());
+                    owesLabel = new JLabel("You owe " + debt.getDebtor().getName());
                     break;
 
                 case THEY_OWE:
-                    owesLabel = new JLabel(debt.getCounterParty().getName() + " owes you");
+                    owesLabel = new JLabel(debt.getDebtor().getName() + " owes you");
                     break;
 
                 default:

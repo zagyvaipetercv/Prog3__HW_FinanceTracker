@@ -93,7 +93,7 @@ public class AddPaymentView extends FrameView {
                                 Currency.getInstance("HUF"));
 
                 JLabel idLabel = new JLabel(Long.toString(debt.getId()));
-                JLabel counterPartyLabel = new JLabel(debt.getCounterParty().getName());
+                JLabel counterPartyLabel = new JLabel(debt.getDebtor().getName());
                 amountTextField = new JTextField("", 20);
                 datePicker = new DatePicker();
                 datePicker.setDate(LocalDate.now());

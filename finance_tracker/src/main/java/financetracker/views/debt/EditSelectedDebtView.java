@@ -70,8 +70,9 @@ public class EditSelectedDebtView extends FrameView {
     }
 
     private void setDefaultValues() {
-        nameTextField.setText(debt.getCounterParty().getName());
-        directionPicker.setSelectedItem(debt.getDirection());
+        nameTextField.setText(debt.getDebtor().getName());
+        DebtDirection direction = debtController.getDirection(debt);
+        directionPicker.setSelectedItem(direction);
         datePicker.setDate(debt.getDate());
         amountTextField.setText(((Double) debt.getDebtAmount().getAmount()).toString());
         hasDeadLinechCheckBox.setSelected(debt.hasDeadline());

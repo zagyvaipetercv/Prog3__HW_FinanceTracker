@@ -1,7 +1,5 @@
 package financetracker.controllers;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
@@ -10,6 +8,7 @@ import java.util.List;
 
 import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Money;
+import financetracker.datatypes.User;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
@@ -44,6 +43,8 @@ public class CashFlowController extends Controller<CashFlow> {
 
     private CashFlowTableModel cashFlowTableModel;
 
+    private User userLogedIn;
+
     public FrameView getChangeMoneyView() {
         return new ChangeMoneyView(this);
     }
@@ -53,6 +54,7 @@ public class CashFlowController extends Controller<CashFlow> {
     }
 
     public PanelView getWalletView() {
+        refreshViewData();
         return new WalletView(this, cashFlowTableModel, sumIncomes, sumExpenses, sumThisMonth, moneyOnAccount);
     }
 
@@ -68,29 +70,27 @@ public class CashFlowController extends Controller<CashFlow> {
     public CashFlowController(String filePath, MainFrame mainFrame)
             throws ControllerWasNotCreated {
         super(filePath, mainFrame);
-        
+
+        userLogedIn = mainFrame.getUserLogedIn();
+
         try {
             List<CashFlow> allCashFlows = modelSerializer.readAll();
             double sum = 0.0;
             for (CashFlow cashFlow : allCashFlows) {
-                sum += cashFlow.getMoney().getAmount();
+                if (userLogedIn.getId() == cashFlow.getUser().getId()) {
+                    sum += cashFlow.getMoney().getAmount();
+                }
             }
-    
+
             moneyOnAccount = new Money(sum, Currency.getInstance("HUF"));
-    
+
             LocalDate defaultDate = LocalDate.now();
             selectedYear = defaultDate.getYear();
             selectedMonth = defaultDate.getMonth();
             selectedCashFlowType = CashFlowType.ALL;
-    
-            reloadCache(selectedYear, selectedMonth);
-    
-            sumIncomes = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.INCOME);
-            sumExpenses = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.EXPENSE);
-            sumThisMonth = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.ALL);
-    
-            cashFlowTableModel = new CashFlowTableModel(getCashFlows(selectedYear, selectedMonth, CashFlowType.ALL));
 
+            reloadCache(selectedYear, selectedMonth);
+            refreshViewData();
         } catch (SerializerCannotRead e) {
             throw new ControllerWasNotCreated("CashFlow controller could not read data", this.getClass());
         }
@@ -101,10 +101,10 @@ public class CashFlowController extends Controller<CashFlow> {
             throws InvalidReasonException, BalanceCouldNotCahcngeException, InvalidAmountException {
 
         double amount = Money.parseAmount(amountString);
-        addNewCashFlow(date, amount, currency, reason);
+        addNewCashFlow(userLogedIn, date, amount, currency, reason);
     }
 
-    private void addNewCashFlow(LocalDate date, double amount, Currency currency, String reason)
+    public void addNewCashFlow(User user, LocalDate date, double amount, Currency currency, String reason)
             throws InvalidReasonException, BalanceCouldNotCahcngeException {
         if (reasonIsInvalid(reason)) {
             throw new InvalidReasonException(reason, "Reason can't be blank");
@@ -113,6 +113,7 @@ public class CashFlowController extends Controller<CashFlow> {
         Money money = new Money(amount, currency);
         CashFlow cashFlow = new CashFlow(
                 modelSerializer.getNextId(),
+                user,
                 date,
                 money,
                 reason);
@@ -123,11 +124,7 @@ public class CashFlowController extends Controller<CashFlow> {
             // Update view models
             moneyOnAccount = new Money(moneyOnAccount.getAmount() + amount, currency);
             if (!cacheIsInvalid(date.getYear(), date.getMonth())) {
-                cachedCashFlow.add(cashFlow);
-                cashFlowTableModel = new CashFlowTableModel(cachedCashFlow);
-                sumIncomes = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.INCOME);
-                sumExpenses = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.EXPENSE);
-                sumThisMonth = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.ALL);
+                reloadCache(cachedYear, cachedMonth);
             }
 
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
@@ -208,6 +205,8 @@ public class CashFlowController extends Controller<CashFlow> {
         if (cacheIsInvalid(selectedYear, selectedMonth)) {
             reloadCache(selectedYear, selectedMonth);
         }
+
+        refreshViewData();
     }
 
     // GETTERS
@@ -232,7 +231,7 @@ public class CashFlowController extends Controller<CashFlow> {
         List<CashFlow> saved = modelSerializer.readAll();
         cachedCashFlow = new ArrayList<>();
 
-        // Update cached meta data
+        // Update cached date
         cachedYear = year;
         cachedMonth = month;
 
@@ -240,9 +239,24 @@ public class CashFlowController extends Controller<CashFlow> {
         for (CashFlow cashFlow : saved) {
             int cashFlowYear = cashFlow.getDate().getYear();
             Month cashFlowMonth = cashFlow.getDate().getMonth();
-            if (cashFlowYear == year && cashFlowMonth.equals(month)) {
+
+            if (userLogedIn.getId() == cashFlow.getUser().getId() && cashFlowYear == year && cashFlowMonth.equals(month)) {
                 cachedCashFlow.add(cashFlow);
             }
+        }
+    }
+
+    private void refreshViewData()  {
+        try {
+            // Update monthly cached data
+            sumThisMonth = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.ALL);
+            sumIncomes = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.INCOME);
+            sumExpenses = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.EXPENSE);
+    
+            // Update table
+            cashFlowTableModel = new CashFlowTableModel(getCashFlows(selectedYear, selectedMonth, selectedCashFlowType));
+        } catch (SerializerCannotRead e) {
+
         }
     }
 

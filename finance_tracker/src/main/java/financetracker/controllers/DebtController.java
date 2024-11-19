@@ -22,6 +22,7 @@ import financetracker.exceptions.debtcontroller.DeptPaymentFailedException;
 import financetracker.exceptions.debtcontroller.EditingDebtFailedException;
 import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
 import financetracker.exceptions.debtcontroller.PaymentIsGreaterThanRemaining;
+import financetracker.exceptions.debtcontroller.UnknownDebtDirection;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
 import financetracker.exceptions.usercontroller.UserNotFound;
@@ -44,6 +45,8 @@ public class DebtController extends Controller<Debt> {
 
     private UserController userController;
     private CashFlowController cashFlowController;
+
+    private User userLogedIn;
 
     public FrameView getEditSelectedDebtView(JList<? extends Debt> debtsList)
             throws NoItemWasSelected, FulfilledDebtCantChange {
@@ -79,14 +82,16 @@ public class DebtController extends Controller<Debt> {
     public DebtController(String saveFilePath, MainFrame mainFrame) throws ControllerWasNotCreated {
         super(saveFilePath, mainFrame);
 
+        userLogedIn = mainFrame.getUserLogedIn();
+
         try {
-            cachedDebts = modelSerializer.readAll();
+            reloadCache();
         } catch (SerializerCannotRead e) {
             throw new ControllerWasNotCreated("Couldn't read saves file", this.getClass());
         }
         debtListModel = new DebtListModel(cachedDebts);
-        userController = new UserController(mainFrame);
-        cashFlowController = new CashFlowController(mainFrame);
+        userController = mainFrame.getUserController();
+        cashFlowController = mainFrame.getCashFlowController();
     }
 
     public DebtController(MainFrame mainFrame) throws ControllerWasNotCreated {
@@ -127,46 +132,41 @@ public class DebtController extends Controller<Debt> {
         repay(debt, remaining, date);
     }
 
+    // FIXME: Rework this with new DataType
     private void repay(Debt debt, double amount, LocalDate date) throws DeptPaymentFailedException {
         Payment payment = new Payment(date, debt, new Money(amount, Currency.getInstance("HUF")));
         debt.getPayments().add(payment);
-        
-        String stringAmount;
-        switch (debt.getDirection()) {
-            case I_OWE:
-                stringAmount = Double.toString(-amount);
-                break;
 
-            case THEY_OWE:
-                stringAmount = Double.toString(amount);
-                break;
-
-            default: 
-                stringAmount = ""; // Will fail cashflow
-                break;
-        }
-        
         try {
             replaceDebtEverywhere(debt);
-            
-            cashFlowController.changeMoneyOnAccount(
+
+            cashFlowController.addNewCashFlow(
+                    debt.getDebtor(),
                     date,
-                    stringAmount,
+                    -amount,
                     debt.getDebtAmount().getCurrency(),
                     "Repayed Debt: " + debt.getId());
-            
+
+            cashFlowController.addNewCashFlow(
+                    debt.getCreditor(),
+                    date,
+                    amount,
+                    Currency.getInstance("HUF"),
+                    "Repayed Debt: " + debt.getId());
+
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new DeptPaymentFailedException("Dept payment failed due to an IO Error", debt, amount);
 
-        } catch (InvalidReasonException | BalanceCouldNotCahcngeException | InvalidAmountException e) {
+        } catch (InvalidReasonException | BalanceCouldNotCahcngeException e) {
             // If cashflow couldn't register -> go back to original
             debt.getPayments().remove(payment);
 
             try {
                 replaceDebtEverywhere(debt);
             } catch (SerializerCannotRead | SerializerCannotWrite e1) {
-                throw new DeptPaymentFailedException("Payment was registered in in debt but not in cash flows. Add cashflow manually", debt, amount);
-            }   
+                throw new DeptPaymentFailedException(
+                        "Payment was registered in in debt but not in cash flows. Add cashflow manually", debt, amount);
+            }
 
             throw new DeptPaymentFailedException("Cashflow could not register. Debt payment failed", debt, amount);
         }
@@ -184,7 +184,16 @@ public class DebtController extends Controller<Debt> {
 
         Money money = new Money(amount, Currency.getInstance("HUF"));
 
-        Debt debt = new Debt(id, counterParty, direction, date, money, new ArrayList<>(),
+        User debtor;
+        User creditor;
+        try {
+            debtor = getDebtor(counterParty, direction);
+            creditor = getCreditor(counterParty, direction);
+        } catch (UnknownDebtDirection e) {
+            throw new CreatingDebtFailedException(null, "Creating debt failed due to unkonw direction");
+        }
+
+        Debt debt = new Debt(id, debtor, creditor, date, money, new ArrayList<>(),
                 (hasDeadline ? deadline : null));
         try {
             modelSerializer.appendNewData(debt);
@@ -207,11 +216,17 @@ public class DebtController extends Controller<Debt> {
 
         Money money = new Money(amount, Currency.getInstance("HUF"));
 
-        Debt newDebt = new Debt(debt.getId(), counterParty, direction, date, money, debt.getPayments(),
-                (hasDeadline ? deadline : null));
+        User debtor;
+        User creditor;
+        try {
+            debtor = getDebtor(counterParty, direction);
+            creditor = getCreditor(counterParty, direction);
+        } catch (UnknownDebtDirection e) {
+            throw new EditingDebtFailedException("Debt was not edited due to unkonw debt direction", debt);
+        }
 
-        debt.setCounterParty(counterParty);
-        debt.setDirection(direction);
+        debt.setDebtor(debtor);
+        debt.setCreditor(creditor);
         debt.setDate(date);
         debt.setDebtAmount(money);
         debt.setDeadline((hasDeadline ? deadline : null));
@@ -219,7 +234,7 @@ public class DebtController extends Controller<Debt> {
         try {
             replaceDebtEverywhere(debt);
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new EditingDebtFailedException("Debt was not edited due to an IO Error", debt, newDebt);
+            throw new EditingDebtFailedException("Debt was not edited due to an IO Error", debt);
         }
 
     }
@@ -252,5 +267,46 @@ public class DebtController extends Controller<Debt> {
 
     private boolean paymentAmountIsInvalid(double amount) {
         return amount <= 0.0;
+    }
+
+    private void reloadCache() throws SerializerCannotRead {
+        List<Debt> all = modelSerializer.readAll();
+        cachedDebts = new ArrayList<>();
+        for (Debt debt : all) {
+            if (debt.getDebtor().getId() == userLogedIn.getId() || debt.getCreditor().getId() == userLogedIn.getId()) {
+                cachedDebts.add(debt);
+            }
+        }
+    }
+
+    private User getDebtor(User counterParty, DebtDirection direction) throws UnknownDebtDirection {
+        switch (direction) {
+            case I_OWE:
+                return userLogedIn;
+            case THEY_OWE:
+                return counterParty;
+            default:
+                throw new UnknownDebtDirection("Debt direction is unkonw", direction);
+        }
+
+    }
+
+    private User getCreditor(User counterParty, DebtDirection direction) throws UnknownDebtDirection {
+        switch (direction) {
+            case I_OWE:
+                return counterParty;
+            case THEY_OWE:
+                return userLogedIn;
+            default:
+                throw new UnknownDebtDirection("Debt direction is unkonw", direction);
+        }
+    }
+
+    public DebtDirection getDirection(Debt debt) {
+        if (debt.getDebtor().getId() == userLogedIn.getId()) {
+            return DebtDirection.I_OWE;
+        }
+
+        return DebtDirection.THEY_OWE;
     }
 }

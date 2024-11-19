@@ -7,7 +7,6 @@ import java.awt.FlowLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import financetracker.controllers.CashFlowController;
@@ -35,6 +34,7 @@ public class MainFrame extends JFrame {
 
     public MainFrame(User userSignedIn) {
         super();
+        user = userSignedIn;
         
         try {
             userController = new UserController(this);
@@ -46,7 +46,6 @@ public class MainFrame extends JFrame {
         }
 
         subTitle = "Home";
-        user = userSignedIn;
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle(TITLE + " - " + subTitle);
@@ -133,5 +132,21 @@ public class MainFrame extends JFrame {
                 setPreferredSize(new Dimension(PREFFERED_WIDTH, PREFFERED_HEIGHT));
             }
         }
+    }
+
+    public User getUserLogedIn() {
+        return user;
+    }
+
+    public UserController getUserController() {
+        return userController;
+    }
+
+    public DebtController getDebtController() {
+        return debtController;
+    }
+
+    public CashFlowController getCashFlowController() {
+        return cashFlowController;
     }
 }

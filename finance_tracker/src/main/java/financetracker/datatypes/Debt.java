@@ -12,43 +12,43 @@ public class Debt extends Model {
         THEY_OWE
     }
 
-    private User counterParty;
-    private DebtDirection direction;
+    private User debtor; // The party who owes money
+    private User creditor; // The party to whom the money is obliagated
     private LocalDate date;
     private Money debtAmount;
     private List<Payment> payments;
 
     private LocalDate deadline;
 
-    public Debt(long id, User counterParty, DebtDirection direction, LocalDate date, Money debtAmount,
+    public Debt(long id, User debtor, User creditor, LocalDate date, Money debtAmount,
             List<Payment> payments, LocalDate deadLine) {
         super(id);
-        this.counterParty = counterParty;
-        this.direction = direction;
+        this.debtor = debtor;
+        this.creditor = creditor;
         this.date = date;
         this.deadline = deadLine;
         this.debtAmount = debtAmount;
         this.payments = payments;
     }
 
-    public User getCounterParty() {
-        return counterParty;
+    public User getDebtor() {
+        return debtor;
     }
 
-    public void setCounterParty(User counterParty) {
-        this.counterParty = counterParty;
-    }
-
-    public DebtDirection getDirection() {
-        return direction;
-    }
-
-    public void setDirection(DebtDirection direction) {
-        this.direction = direction;
+    public void setDebtor(User counterParty) {
+        this.debtor = counterParty;
     }
 
     public LocalDate getDate() {
         return date;
+    }
+
+    public User getCreditor() {
+        return creditor;
+    }
+
+    public void setCreditor(User creditor) {
+        this.creditor = creditor;
     }
 
     public void setDate(LocalDate date) {
@@ -89,7 +89,7 @@ public class Debt extends Model {
 
     @Override
     public String toString() {
-        return counterParty.getName() + " " + direction.name() + " " + date + " " + debtAmount;
+        return debtor.getName() + " owes " + creditor.getName() + " " + date + " " + debtAmount;
     }
 
     public static Money repayed(Debt debt) {
