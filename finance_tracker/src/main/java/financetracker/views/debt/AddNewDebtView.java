@@ -14,7 +14,7 @@ import javax.swing.WindowConstants;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import financetracker.controllers.DebtController;
-import financetracker.datatypes.Debt.DebtDirection;
+import financetracker.controllers.DebtController.DebtDirection;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.debtcontroller.CreatingDebtFailedException;
 import financetracker.exceptions.usercontroller.UserNotFound;

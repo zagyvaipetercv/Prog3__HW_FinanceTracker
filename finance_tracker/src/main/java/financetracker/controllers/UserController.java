@@ -140,6 +140,6 @@ public class UserController extends Controller<User> {
             throw new UserNotFound(username, "User not found due to IO Error");
         }
 
-        throw new UserNotFound(username, "User not with specified usernam was not found");
+        throw new UserNotFound(username, "User with specified username was not found");
     }
 }

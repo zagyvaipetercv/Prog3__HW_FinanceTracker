@@ -7,11 +7,6 @@ import java.util.List;
 import financetracker.utilities.CustomMath;
 
 public class Debt extends Model {
-    public enum DebtDirection {
-        I_OWE,
-        THEY_OWE
-    }
-
     private User debtor; // The party who owes money
     private User creditor; // The party to whom the money is obliagated
     private LocalDate date;

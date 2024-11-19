@@ -14,8 +14,8 @@ import javax.swing.WindowConstants;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import financetracker.controllers.DebtController;
+import financetracker.controllers.DebtController.DebtDirection;
 import financetracker.datatypes.Debt;
-import financetracker.datatypes.Debt.DebtDirection;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.debtcontroller.EditingDebtFailedException;
 import financetracker.exceptions.usercontroller.UserNotFound;
@@ -51,8 +51,6 @@ public class EditSelectedDebtView extends FrameView {
             try {
                 debtController.editDebt(
                         debt,
-                        nameTextField.getText(),
-                        (DebtDirection) directionPicker.getSelectedItem(),
                         datePicker.getDate(),
                         amountTextField.getText(),
                         hasDeadLinechCheckBox.isSelected(),
@@ -60,7 +58,7 @@ public class EditSelectedDebtView extends FrameView {
 
                 debtController.refreshDebtView();
                 debtController.closeFrameView(this);
-            } catch (InvalidAmountException | UserNotFound | EditingDebtFailedException e) {
+            } catch (InvalidAmountException | EditingDebtFailedException e) {
                 ErrorBox.show(e.getErrorTitle(), e.getMessage());
             }
         });
@@ -71,8 +69,10 @@ public class EditSelectedDebtView extends FrameView {
 
     private void setDefaultValues() {
         nameTextField.setText(debt.getDebtor().getName());
+        nameTextField.setEnabled(false);
         DebtDirection direction = debtController.getDirection(debt);
         directionPicker.setSelectedItem(direction);
+        directionPicker.setEnabled(false);
         datePicker.setDate(debt.getDate());
         amountTextField.setText(((Double) debt.getDebtAmount().getAmount()).toString());
         hasDeadLinechCheckBox.setSelected(debt.hasDeadline());

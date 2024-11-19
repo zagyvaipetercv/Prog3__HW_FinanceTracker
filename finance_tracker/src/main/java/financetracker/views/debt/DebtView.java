@@ -5,25 +5,33 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.time.Month;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 
 import financetracker.controllers.DebtController;
+import financetracker.controllers.DebtController.DebtDirection;
+import financetracker.controllers.DebtController.DebtFulfilled;
 import financetracker.datatypes.Debt;
-import financetracker.datatypes.Debt.DebtDirection;
 import financetracker.exceptions.NoItemWasSelected;
 import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
+import financetracker.exceptions.usercontroller.UserNotFound;
 import financetracker.models.DebtListModel;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
+import financetracker.windowing.MyWindowConstants;
 import financetracker.windowing.OptionsPanel;
 
 public class DebtView extends PanelView {
@@ -39,6 +47,8 @@ public class DebtView extends PanelView {
 
         debts.setCellRenderer(new DebtListCellRenderer());
         debts.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JPanel centerPanel = new JPanel(new BorderLayout());
 
         OptionsPanel optionsPanel = new OptionsPanel();
         optionsPanel.addOptionButton(
@@ -67,7 +77,9 @@ public class DebtView extends PanelView {
         add(optionsPanel, BorderLayout.EAST);
 
         JScrollPane scrollPane = new JScrollPane(debts);
-        add(scrollPane, BorderLayout.CENTER);
+        centerPanel.add(new FilterPanel(), BorderLayout.NORTH);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+        add(centerPanel, BorderLayout.CENTER);
     }
 
     private class DebtListCellRenderer extends DefaultListCellRenderer {
@@ -92,7 +104,7 @@ public class DebtView extends PanelView {
             DebtDirection direction = controller.getDirection(debt);
             switch (direction) {
                 case I_OWE:
-                    owesLabel = new JLabel("You owe " + debt.getDebtor().getName());
+                    owesLabel = new JLabel("You owe " + debt.getCreditor().getName());
                     break;
 
                 case THEY_OWE:
@@ -152,6 +164,75 @@ public class DebtView extends PanelView {
 
         private static void setComponentAttributes(JCheckBox component) {
             component.setHorizontalAlignment(SwingConstants.CENTER);
+        }
+    }
+
+    private class FilterPanel extends JPanel {
+        public FilterPanel() {
+            // Setup panel
+            setBorder(
+                    BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
+
+            GroupLayout layout = new GroupLayout(this);
+            setLayout(layout);
+            layout.setAutoCreateGaps(true);
+            layout.setAutoCreateContainerGaps(true);
+
+            // Setup Components
+            JLabel directionLabel = new JLabel("Direction:");
+            JComboBox<DebtDirection> directionPicker = new JComboBox<>(
+                    DebtDirection.values());
+
+            JLabel fulfilledLabel = new JLabel("Fulfilled");
+            JComboBox<DebtFulfilled> fulfilledPicker = new JComboBox<>(DebtFulfilled.values());
+
+            JLabel userLabel = new JLabel("User:");
+            JTextField userTextField = new JTextField("", 20);
+
+            JButton submitButton = new JButton("Filter");
+            submitButton.addActionListener(ae -> {
+                try {
+                    controller.filterFor((DebtDirection) directionPicker.getSelectedItem(),
+                            (DebtFulfilled) fulfilledPicker.getSelectedItem(), userTextField.getText());
+                } catch (UserNotFound e) {
+                    ErrorBox.show(e);
+                }
+            });
+
+            // Add Components
+            GroupLayout.SequentialGroup hGroup = layout.createSequentialGroup();
+
+            hGroup.addGroup(layout.createParallelGroup()
+                    .addComponent(directionLabel)
+                    .addComponent(directionPicker));
+
+            hGroup.addGroup(layout.createParallelGroup()
+                    .addComponent(fulfilledLabel)
+                    .addComponent(fulfilledPicker));
+
+            hGroup.addGroup(layout.createParallelGroup()
+                    .addComponent(userLabel)
+                    .addComponent(userTextField));
+
+            hGroup.addGroup(layout.createParallelGroup()
+                    .addComponent(submitButton));
+
+            layout.setHorizontalGroup(hGroup);
+
+            GroupLayout.SequentialGroup vGroup = layout.createSequentialGroup();
+
+            vGroup.addGroup(layout.createParallelGroup()
+                    .addComponent(directionLabel)
+                    .addComponent(fulfilledLabel)
+                    .addComponent(userLabel));
+
+            vGroup.addGroup(layout.createParallelGroup()
+                    .addComponent(directionPicker)
+                    .addComponent(fulfilledPicker)
+                    .addComponent(userTextField)
+                    .addComponent(submitButton));
+
+            layout.setVerticalGroup(vGroup);
         }
     }
 }

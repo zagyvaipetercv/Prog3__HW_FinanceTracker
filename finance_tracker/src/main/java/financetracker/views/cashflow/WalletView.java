@@ -189,33 +189,4 @@ public class WalletView extends PanelView {
             add(sumExpenseLabel);
         }
     }
-
-    /*
-    private class OptionsPanel extends JPanel {
-        public OptionsPanel() {
-            setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
-            setPreferredSize(new Dimension(MyWindowConstants.OPTIONS_PANEL_WIDTH, 0));
-            FlowLayout layout = new FlowLayout();
-            layout.setAlignOnBaseline(true);
-            setLayout(layout);
-            
-            OptionButton changeMoneyButton = new OptionButton("Change Money on account");
-            changeMoneyButton.addActionListener(ae -> cashFlowController.getChangeMoneyView().setVisible(true));
-            add(changeMoneyButton);
-            
-            OptionButton setMoneyButton = new OptionButton("Set Money on account");
-            setMoneyButton.addActionListener(ae -> cashFlowController.getSetMoneyView().setVisible(true));
-            add(setMoneyButton);
-        }
-
-        private class OptionButton extends JButton {
-            private static final int BUTTON_HEIGHT = 30;
-            
-            public OptionButton(String text) {
-                super(text);
-                setPreferredSize(new Dimension(MyWindowConstants.OPTIONS_PANEL_WIDTH, BUTTON_HEIGHT));
-            }
-        }
-    }
-    */
 }

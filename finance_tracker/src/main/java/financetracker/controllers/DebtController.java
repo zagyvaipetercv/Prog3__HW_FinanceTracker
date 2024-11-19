@@ -11,7 +11,6 @@ import financetracker.datatypes.Debt;
 import financetracker.datatypes.Money;
 import financetracker.datatypes.Payment;
 import financetracker.datatypes.User;
-import financetracker.datatypes.Debt.DebtDirection;
 import financetracker.exceptions.NoItemWasSelected;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
@@ -42,6 +41,7 @@ public class DebtController extends Controller<Debt> {
     private DebtListModel debtListModel;
 
     private List<Debt> cachedDebts;
+    private List<Debt> shownDebts;
 
     private UserController userController;
     private CashFlowController cashFlowController;
@@ -89,7 +89,10 @@ public class DebtController extends Controller<Debt> {
         } catch (SerializerCannotRead e) {
             throw new ControllerWasNotCreated("Couldn't read saves file", this.getClass());
         }
-        debtListModel = new DebtListModel(cachedDebts);
+
+        shownDebts = new ArrayList<>(cachedDebts);
+
+        debtListModel = new DebtListModel(shownDebts);
         userController = mainFrame.getUserController();
         cashFlowController = mainFrame.getCashFlowController();
     }
@@ -132,7 +135,6 @@ public class DebtController extends Controller<Debt> {
         repay(debt, remaining, date);
     }
 
-    // FIXME: Rework this with new DataType
     private void repay(Debt debt, double amount, LocalDate date) throws DeptPaymentFailedException {
         Payment payment = new Payment(date, debt, new Money(amount, Currency.getInstance("HUF")));
         debt.getPayments().add(payment);
@@ -181,9 +183,12 @@ public class DebtController extends Controller<Debt> {
         if (!isMoneyAmountValid(amount)) {
             throw new InvalidAmountException(amountString, "Amount must be greater than 0");
         }
-
+        
         Money money = new Money(amount, Currency.getInstance("HUF"));
-
+        if (counterParty.equals(userLogedIn)) {
+            throw new CreatingDebtFailedException(null, "Other party can't be the user");
+        }
+        
         User debtor;
         User creditor;
         try {
@@ -204,11 +209,9 @@ public class DebtController extends Controller<Debt> {
         }
     }
 
-    public void editDebt(Debt debt, String name, DebtDirection direction, LocalDate date, String amountString,
-            boolean hasDeadline,
-            LocalDate deadline) throws InvalidAmountException, UserNotFound, EditingDebtFailedException {
+    public void editDebt(Debt debt, LocalDate date, String amountString, boolean hasDeadline, LocalDate deadline)
+            throws InvalidAmountException, EditingDebtFailedException {
 
-        User counterParty = findCounterParty(name);
         double amount = Money.parseAmount(amountString);
         if (!isMoneyAmountValid(amount)) {
             throw new InvalidAmountException(amountString, "Amount must be greater than 0");
@@ -216,17 +219,6 @@ public class DebtController extends Controller<Debt> {
 
         Money money = new Money(amount, Currency.getInstance("HUF"));
 
-        User debtor;
-        User creditor;
-        try {
-            debtor = getDebtor(counterParty, direction);
-            creditor = getCreditor(counterParty, direction);
-        } catch (UnknownDebtDirection e) {
-            throw new EditingDebtFailedException("Debt was not edited due to unkonw debt direction", debt);
-        }
-
-        debt.setDebtor(debtor);
-        debt.setCreditor(creditor);
         debt.setDate(date);
         debt.setDebtAmount(money);
         debt.setDeadline((hasDeadline ? deadline : null));
@@ -308,5 +300,57 @@ public class DebtController extends Controller<Debt> {
         }
 
         return DebtDirection.THEY_OWE;
+    }
+
+    public void filterFor(DebtDirection direction, DebtFulfilled fulfilled, String userName) throws UserNotFound {
+        shownDebts = new ArrayList<>(cachedDebts);
+
+        for (Debt debt : cachedDebts) {
+            // Check direction
+            if (!direction.equals(DebtDirection.UNSET) && getDirection(debt).equals(direction)) {
+                shownDebts.remove(debt);
+            }
+
+            // Check fulfilled
+            switch (fulfilled) {
+                case FULFILLED:
+                    if (!debt.isFulfilled()) {
+                        shownDebts.remove(debt);
+                    }
+                    break;
+                case NOT_FULFILLED:
+                    if (debt.isFulfilled()) {
+                        shownDebts.remove(debt);
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            // Check user
+            if (!userName.isBlank()) {
+                User counterParty = userController.findUser(userName);
+                User debtor = debt.getDebtor();
+                User creditor = debt.getCreditor();
+                if (!counterParty.equals(debtor) && !counterParty.equals(creditor)) {
+                    shownDebts.remove(debt);
+                }
+            }
+        }
+
+        debtListModel = new DebtListModel(shownDebts);
+        refreshDebtView();
+    }
+
+    public enum DebtDirection {
+        UNSET,
+        I_OWE,
+        THEY_OWE
+    }
+
+    public enum DebtFulfilled {
+        ALL,
+        NOT_FULFILLED,
+        FULFILLED
     }
 }

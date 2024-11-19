@@ -32,4 +32,13 @@ public class User extends Model {
     public String toString() {
         return getId() + " " + name + " " + password;
     }
+
+    @Override 
+    public boolean equals(Object o) {
+        if (!o.getClass().equals(User.class)) {
+            return false;    
+        }
+
+        return getId() == ((User)o).getId();
+    }
 }

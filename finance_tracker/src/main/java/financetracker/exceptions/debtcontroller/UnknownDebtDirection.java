@@ -1,6 +1,6 @@
 package financetracker.exceptions.debtcontroller;
 
-import financetracker.datatypes.Debt.DebtDirection;
+import financetracker.controllers.DebtController.DebtDirection;
 
 public class UnknownDebtDirection extends Exception {
     private final transient DebtDirection direction;
