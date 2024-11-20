@@ -13,7 +13,7 @@ public class Main {
             UserController userController = new UserController(mainFrame);
             userController.getLoginView().setVisible(true);
         } catch (ControllerWasNotCreated e) {
-            ErrorBox.show(e.getErrorTitle(), e.getMessage());
+            ErrorBox.show(null, e.getErrorTitle(), e.getMessage());
             System.exit(-1);
         }
     }

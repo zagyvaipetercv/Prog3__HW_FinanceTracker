@@ -41,7 +41,7 @@ public class MainFrame extends JFrame {
             cashFlowController = new CashFlowController(this);
             debtController = new DebtController(this);
         } catch (ControllerWasNotCreated e) {
-            ErrorBox.show(e.getErrorTitle(), e.getMessage());
+            ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
             System.exit(-1);
         }
 

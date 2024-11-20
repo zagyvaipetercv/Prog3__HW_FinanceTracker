@@ -42,9 +42,9 @@ public class SetMoneyView extends FrameView {
                 cashFlowController.refreshWalletView();
                 cashFlowController.closeFrameView(this);
             } catch (InvalidAmountException | InvalidReasonException | BalanceCouldNotCahcngeException e) {
-                ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
             } catch (Exception e) {
-                ErrorBox.show("ERROR", e.getMessage());
+                ErrorBox.show(this, "ERROR", e.getMessage());
             }
         });
 

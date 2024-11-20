@@ -26,6 +26,7 @@ import financetracker.controllers.DebtController.DebtDirection;
 import financetracker.controllers.DebtController.DebtFulfilled;
 import financetracker.datatypes.Debt;
 import financetracker.exceptions.NoItemWasSelected;
+import financetracker.exceptions.debtcontroller.DeletingDebtFailedException;
 import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
 import financetracker.exceptions.usercontroller.UserNotFound;
 import financetracker.models.DebtListModel;
@@ -62,7 +63,7 @@ public class DebtView extends PanelView {
                     try {
                         controller.getEditSelectedDebtView(debts).setVisible(true);
                     } catch (NoItemWasSelected | FulfilledDebtCantChange e) {
-                        ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                        ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
                     }
                 });
         optionsPanel.addOptionButton(
@@ -71,7 +72,17 @@ public class DebtView extends PanelView {
                     try {
                         controller.getAddPaymentView(debts).setVisible(true);
                     } catch (NoItemWasSelected | FulfilledDebtCantChange e) {
-                        ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                        ErrorBox.show(this, e);
+                    }
+                });
+
+        optionsPanel.addOptionButton(
+                "Delete Debt",
+                ae -> {
+                    try {
+                        controller.deleteDebt(debts.getSelectedValue());
+                    } catch (DeletingDebtFailedException e) {
+                        ErrorBox.show(this, e);
                     }
                 });
         add(optionsPanel, BorderLayout.EAST);
@@ -112,7 +123,7 @@ public class DebtView extends PanelView {
                     break;
 
                 default:
-                    owesLabel = new JLabel();
+                    owesLabel = new JLabel("UNSET DEBT DIRECTION");
                     break;
             }
             setComponentAttributes(owesLabel);
@@ -195,7 +206,7 @@ public class DebtView extends PanelView {
                     controller.filterFor((DebtDirection) directionPicker.getSelectedItem(),
                             (DebtFulfilled) fulfilledPicker.getSelectedItem(), userTextField.getText());
                 } catch (UserNotFound e) {
-                    ErrorBox.show(e);
+                    ErrorBox.show(this, e);
                 }
             });
 

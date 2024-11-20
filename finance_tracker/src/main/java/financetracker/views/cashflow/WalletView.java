@@ -99,9 +99,9 @@ public class WalletView extends PanelView {
                     
                     cashFlowController.refreshWalletView();
                 } catch (InvalidYearFormatException e) {
-                    ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                    ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
                 } catch (SerializerCannotRead e) {
-                    ErrorBox.show("ERROR", e.getMessage());
+                    ErrorBox.show(this, "ERROR", e.getMessage());
                 }
             });
 

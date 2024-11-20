@@ -54,7 +54,7 @@ public class AddNewDebtView extends FrameView {
                                 debtController.refreshDebtView();
                                 debtController.closeFrameView(this);
                         } catch (UserNotFound | InvalidAmountException | CreatingDebtFailedException e) {
-                                ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                                ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
                         }
                 });
 

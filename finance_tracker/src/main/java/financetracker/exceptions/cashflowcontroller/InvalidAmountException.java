@@ -12,6 +12,11 @@ public class InvalidAmountException extends ErrorBoxException {
         this.amountString = amountString;
     }
 
+    public InvalidAmountException(double amount, String message) {
+        super(message);
+        this.amountString = Double.toString(amount);
+    }
+
     public String getAmountString() {
         return amountString;
     }

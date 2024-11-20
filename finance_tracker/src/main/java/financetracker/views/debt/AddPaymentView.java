@@ -48,7 +48,7 @@ public class AddPaymentView extends FrameView {
                                 debtController.closeFrameView(this);
                         } catch (InvalidAmountException | DeptPaymentFailedException
                                         | PaymentIsGreaterThanRemaining e) {
-                                ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                                ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
                         }
                 });
 
@@ -58,7 +58,7 @@ public class AddPaymentView extends FrameView {
                                 debtController.refreshDebtView();
                                 debtController.closeFrameView(this);
                         } catch (DeptPaymentFailedException e) {
-                                ErrorBox.show(e);
+                                ErrorBox.show(this, e);
                         }
                 });
 

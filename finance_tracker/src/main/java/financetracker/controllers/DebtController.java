@@ -17,6 +17,7 @@ import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.exceptions.debtcontroller.CreatingDebtFailedException;
+import financetracker.exceptions.debtcontroller.DeletingDebtFailedException;
 import financetracker.exceptions.debtcontroller.DeptPaymentFailedException;
 import financetracker.exceptions.debtcontroller.EditingDebtFailedException;
 import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
@@ -180,9 +181,8 @@ public class DebtController extends Controller<Debt> {
         long id = modelSerializer.getNextId();
         User counterParty = findCounterParty(name);
         double amount = Money.parseAmount(amountString);
-        if (!isMoneyAmountValid(amount)) {
-            throw new InvalidAmountException(amountString, "Amount must be greater than 0");
-        }
+
+        validateAmount(amount, null);
         
         Money money = new Money(amount, Currency.getInstance("HUF"));
         if (counterParty.equals(userLogedIn)) {
@@ -213,11 +213,10 @@ public class DebtController extends Controller<Debt> {
             throws InvalidAmountException, EditingDebtFailedException {
 
         double amount = Money.parseAmount(amountString);
-        if (!isMoneyAmountValid(amount)) {
-            throw new InvalidAmountException(amountString, "Amount must be greater than 0");
-        }
+        validateAmount(amount, debt);
 
         Money money = new Money(amount, Currency.getInstance("HUF"));
+
 
         debt.setDate(date);
         debt.setDebtAmount(money);
@@ -228,15 +227,20 @@ public class DebtController extends Controller<Debt> {
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new EditingDebtFailedException("Debt was not edited due to an IO Error", debt);
         }
-
     }
 
     public User findCounterParty(String name) throws UserNotFound {
         return userController.findUser(name);
     }
 
-    private boolean isMoneyAmountValid(double amount) {
-        return amount > 0.0;
+    private void validateAmount(double amount, Debt debt) throws InvalidAmountException {
+        if (amount <= 0) {
+            throw new InvalidAmountException(amount, "Amount must be greater than 0");
+        }
+
+        if (debt != null && amount <= Debt.repayed(debt).getAmount()) {
+            throw new InvalidAmountException(amount, "Amount must stay greater than what's already repayed");
+        }
     }
 
     private Debt getSelectedItem(JList<? extends Debt> debtsList) throws NoItemWasSelected {
@@ -255,6 +259,15 @@ public class DebtController extends Controller<Debt> {
         debtListModel.add(idx, replaced);
         cachedDebts.remove(replaced);
         cachedDebts.add(replaced);
+    }
+
+    private void removeDebtEverywhere(Debt debt) throws SerializerCannotRead, SerializerCannotWrite {
+        long id = debt.getId();
+        int idx = debtListModel.indexOf(debt);
+
+        modelSerializer.removeData(id);
+        debtListModel.remove(idx);
+        cachedDebts.remove(debt);
     }
 
     private boolean paymentAmountIsInvalid(double amount) {
@@ -337,9 +350,17 @@ public class DebtController extends Controller<Debt> {
                 }
             }
         }
-
+        
         debtListModel = new DebtListModel(shownDebts);
         refreshDebtView();
+    }
+
+    public void deleteDebt(Debt debt) throws DeletingDebtFailedException {
+        try {
+            removeDebtEverywhere(debt);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new DeletingDebtFailedException("Debt was not removed", debt);
+        }
     }
 
     public enum DebtDirection {
@@ -353,4 +374,5 @@ public class DebtController extends Controller<Debt> {
         NOT_FULFILLED,
         FULFILLED
     }
+
 }

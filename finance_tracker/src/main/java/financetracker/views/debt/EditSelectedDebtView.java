@@ -59,7 +59,7 @@ public class EditSelectedDebtView extends FrameView {
                 debtController.refreshDebtView();
                 debtController.closeFrameView(this);
             } catch (InvalidAmountException | EditingDebtFailedException e) {
-                ErrorBox.show(e.getErrorTitle(), e.getMessage());
+                ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
             }
         });
 
