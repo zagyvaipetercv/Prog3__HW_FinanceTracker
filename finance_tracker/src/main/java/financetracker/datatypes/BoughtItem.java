@@ -1,14 +1,14 @@
 package financetracker.datatypes;
 
-public class BoughtItem extends Model {
+import java.io.Serializable;
+
+public class BoughtItem implements Serializable {
     private Category category;
     private String name;
     private Money pricePerUnit;
     private double amount;
 
-    public BoughtItem(long id, Category category, String name, Money pricePerUnit, double amount) {
-        super(id);
-
+    public BoughtItem(Category category, String name, Money pricePerUnit, double amount) {
         this.category = category;
         this.name = name;
         this.pricePerUnit = pricePerUnit;
@@ -45,5 +45,16 @@ public class BoughtItem extends Model {
 
     public void setAmount(double amount) {
         this.amount = amount;
+    }
+
+    public Money getSumPrice() {
+        if (pricePerUnit == null) {
+            return null;
+        }
+        return new Money(amount * pricePerUnit.getAmount(), pricePerUnit.getCurrency());
+    }
+
+    public void setSumPrice(Money sumPrice) {
+        this.pricePerUnit = new Money(sumPrice.getAmount() / amount, sumPrice.getCurrency());
     }
 }

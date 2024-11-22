@@ -10,7 +10,9 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import financetracker.controllers.CashFlowController;
+import financetracker.controllers.CategoryController;
 import financetracker.controllers.DebtController;
+import financetracker.controllers.PurchaseController;
 import financetracker.controllers.UserController;
 import financetracker.datatypes.User;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
@@ -31,6 +33,8 @@ public class MainFrame extends JFrame {
     private transient UserController userController;
     private transient CashFlowController cashFlowController;
     private transient DebtController debtController;
+    private transient PurchaseController purchaseController;
+    private transient CategoryController categoryController;
 
     public MainFrame(User userSignedIn) {
         super();
@@ -40,6 +44,8 @@ public class MainFrame extends JFrame {
             userController = new UserController(this);
             cashFlowController = new CashFlowController(this);
             debtController = new DebtController(this);
+            purchaseController = new PurchaseController(this);
+            categoryController = new CategoryController(this);
         } catch (ControllerWasNotCreated e) {
             ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
             System.exit(-1);
@@ -122,6 +128,13 @@ public class MainFrame extends JFrame {
                 mainFrame.setTitle("Debts");
             });
             add(debtsButton);
+
+            NavButton purchasesButton = new NavButton("Purchases");
+            purchasesButton.addActionListener(ae -> {
+                mainFrame.changeView(purchaseController.getPurchaseView());
+                mainFrame.setTitle("Purchases");
+            });
+            add(purchasesButton);
         }
 
         private class NavButton extends JButton {
@@ -148,5 +161,9 @@ public class MainFrame extends JFrame {
 
     public CashFlowController getCashFlowController() {
         return cashFlowController;
+    }
+
+    public CategoryController getCategoryController() {
+        return categoryController;
     }
 }

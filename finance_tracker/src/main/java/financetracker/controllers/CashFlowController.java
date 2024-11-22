@@ -45,24 +45,6 @@ public class CashFlowController extends Controller<CashFlow> {
 
     private User userLogedIn;
 
-    public FrameView getChangeMoneyView() {
-        return new ChangeMoneyView(this);
-    }
-
-    public FrameView getSetMoneyView() {
-        return new SetMoneyView(this);
-    }
-
-    public PanelView getWalletView() {
-        refreshViewData();
-        return new WalletView(this, cashFlowTableModel, sumIncomes, sumExpenses, sumThisMonth, moneyOnAccount);
-    }
-
-    // VIEW REFRESHER
-    public void refreshWalletView() {
-        mainFrame.changeView(getWalletView());
-    }
-
     public CashFlowController(MainFrame mainFrame) throws ControllerWasNotCreated {
         this(DEAFULT_SAVE_PATH, mainFrame);
     }
@@ -94,6 +76,25 @@ public class CashFlowController extends Controller<CashFlow> {
         } catch (SerializerCannotRead e) {
             throw new ControllerWasNotCreated("CashFlow controller could not read data", this.getClass());
         }
+    }
+
+    // VIEW GETTERS
+    public FrameView getChangeMoneyView() {
+        return new ChangeMoneyView(this);
+    }
+
+    public FrameView getSetMoneyView() {
+        return new SetMoneyView(this);
+    }
+
+    public PanelView getWalletView() {
+        refreshViewData();
+        return new WalletView(this, cashFlowTableModel, sumIncomes, sumExpenses, sumThisMonth, moneyOnAccount);
+    }
+
+    // VIEW REFRESHER
+    public void refreshWalletView() {
+        mainFrame.changeView(getWalletView());
     }
 
     // DATA MODIFIERS
@@ -198,7 +199,7 @@ public class CashFlowController extends Controller<CashFlow> {
         setFilterOptions(parseYear(yearString), month, type);
     }
 
-    void setFilterOptions(int year, Month month, CashFlowType type) throws SerializerCannotRead {
+    public void setFilterOptions(int year, Month month, CashFlowType type) throws SerializerCannotRead {
         selectedYear = year;
         selectedMonth = month;
         selectedCashFlowType = type;
@@ -240,21 +241,23 @@ public class CashFlowController extends Controller<CashFlow> {
             int cashFlowYear = cashFlow.getDate().getYear();
             Month cashFlowMonth = cashFlow.getDate().getMonth();
 
-            if (userLogedIn.getId() == cashFlow.getUser().getId() && cashFlowYear == year && cashFlowMonth.equals(month)) {
+            if (userLogedIn.getId() == cashFlow.getUser().getId() && cashFlowYear == year
+                    && cashFlowMonth.equals(month)) {
                 cachedCashFlow.add(cashFlow);
             }
         }
     }
 
-    private void refreshViewData()  {
+    private void refreshViewData() {
         try {
             // Update monthly cached data
             sumThisMonth = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.ALL);
             sumIncomes = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.INCOME);
             sumExpenses = getSummarizedCashFlow(selectedYear, selectedMonth, CashFlowType.EXPENSE);
-    
+
             // Update table
-            cashFlowTableModel = new CashFlowTableModel(getCashFlows(selectedYear, selectedMonth, selectedCashFlowType));
+            cashFlowTableModel = new CashFlowTableModel(
+                    getCashFlows(selectedYear, selectedMonth, selectedCashFlowType));
         } catch (SerializerCannotRead e) {
 
         }

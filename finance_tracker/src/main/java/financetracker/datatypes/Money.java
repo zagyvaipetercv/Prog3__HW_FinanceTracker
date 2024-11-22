@@ -63,4 +63,12 @@ public class Money implements Serializable {
                     + "' is not a number or in the wrong format (allowed characters are numbers and '.')");
         }
     }
+
+    public static Currency parseCurrency(String currency) {
+        if (currency.equals("Ft")) {
+            return Currency.getInstance("HUF");
+        }
+
+        return Currency.getInstance(currency);
+    }
 }

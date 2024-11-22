@@ -5,7 +5,7 @@ public class Category extends Model {
 
     public Category(long id, String name) {
         super(id);
-        this.name = name;
+        this.name = name.toUpperCase();
     }
 
     public String getName() {
