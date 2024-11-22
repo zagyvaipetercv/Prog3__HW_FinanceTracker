@@ -43,7 +43,7 @@ public class Purchase extends Model {
     }
 
     public void setBoughtItems(List<BoughtItem> boughtItems) {
-        this.boughtItems = boughtItems;
+        this.boughtItems = new ArrayList<>(boughtItems);
     }
 
     public Money getSumPrice() {
@@ -58,6 +58,15 @@ public class Purchase extends Model {
     @Override 
     public String toString() {
         return getId() + " " + user.getName() + " " + dateOfPurchase.toString() + " " + getSumPrice().toString();
+    }
+
+    @Override 
+    public boolean equals(Object o) {
+        if (o.getClass() != Purchase.class) {
+            return false;
+        }
+
+        return ((Purchase)o).getId() == getId();
     }
 
 }

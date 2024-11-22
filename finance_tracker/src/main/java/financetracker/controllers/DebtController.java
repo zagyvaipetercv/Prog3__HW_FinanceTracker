@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.swing.JList;
 
+import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Debt;
 import financetracker.datatypes.Money;
 import financetracker.datatypes.Payment;
@@ -241,43 +242,35 @@ public class DebtController extends Controller<Debt> {
 
     // HELPER METHODS
     private void repay(Debt debt, double amount, LocalDate date) throws DeptPaymentFailedException {
-        Payment payment = new Payment(date, debt, new Money(amount, Currency.getInstance("HUF")));
-        debt.getPayments().add(payment);
-
         try {
+            CashFlow debtors = null;
+            CashFlow creditors = null;
+            try {
+                debtors = cashFlowController.addNewCashFlow(
+                        debt.getDebtor(),
+                        date,
+                        -amount,
+                        debt.getDebtAmount().getCurrency(),
+                        "Repayed Debt: " + debt.getId());
+    
+                creditors = cashFlowController.addNewCashFlow(
+                        debt.getCreditor(),
+                        date,
+                        amount,
+                        Currency.getInstance("HUF"),
+                        "Repayed Debt: " + debt.getId());
+            } catch (InvalidReasonException | BalanceCouldNotCahcngeException e) { 
+                throw new DeptPaymentFailedException("Cashflow could not register. Debt payment failed", debt, amount);
+            }
+
+            Payment payment = new Payment(date, debt, new Money(amount, Currency.getInstance("HUF")), debtors,
+                    creditors);
+            debt.getPayments().add(payment);
             replaceDebtEverywhere(debt);
-
-            cashFlowController.addNewCashFlow(
-                    debt.getDebtor(),
-                    date,
-                    -amount,
-                    debt.getDebtAmount().getCurrency(),
-                    "Repayed Debt: " + debt.getId());
-
-            cashFlowController.addNewCashFlow(
-                    debt.getCreditor(),
-                    date,
-                    amount,
-                    Currency.getInstance("HUF"),
-                    "Repayed Debt: " + debt.getId());
 
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new DeptPaymentFailedException("Dept payment failed due to an IO Error", debt, amount);
-
-        } catch (InvalidReasonException | BalanceCouldNotCahcngeException e) {
-            // If cashflow couldn't register -> go back to original
-            debt.getPayments().remove(payment);
-
-            try {
-                replaceDebtEverywhere(debt);
-            } catch (SerializerCannotRead | SerializerCannotWrite e1) {
-                throw new DeptPaymentFailedException(
-                        "Payment was registered in in debt but not in cash flows. Add cashflow manually", debt, amount);
-            }
-
-            throw new DeptPaymentFailedException("Cashflow could not register. Debt payment failed", debt, amount);
         }
-
     }
 
     private User findCounterParty(String name) throws UserNotFound {

@@ -95,12 +95,17 @@ public class PurchaseController extends Controller<Purchase> {
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new CreatingPurchaseFailedException("Creating purchase failed due to IO Error", purchase);
         }
+        upadteModel();
     }
 
     public void editPurchase(Purchase purchase, PurchasedItemTableModel pitm, LocalDate dateOfPurchase)
             throws InvalidTableCellException, CategoryLookupFailedException, CreatingCategoryFailedException, EditingPurchaseFailed {
         checkCells(pitm);
         List<BoughtItem> purchasedItems = pitm.getItems();
+
+        if (purchasedItems.isEmpty()) {
+            throw new EditingPurchaseFailed("Purchase has no items", purchase);
+        }
 
         lookupCategories(purchasedItems);
 
@@ -112,6 +117,7 @@ public class PurchaseController extends Controller<Purchase> {
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new EditingPurchaseFailed("Editing purchase failed due to an IO Error", purchase);
         }
+        upadteModel();
     }
 
     private void lookupCategories(List<BoughtItem> purchasedItems)
@@ -181,6 +187,13 @@ public class PurchaseController extends Controller<Purchase> {
             List<Purchase> purchases = modelSerializer.readAll();
             purchaseListModel = new PurchaseListModel(purchases);
         } catch (SerializerCannotRead e) {
+        }
+    }
+
+    public void deletePurchase(Purchase purchase) {
+        try {
+            modelSerializer.removeData(purchase.getId());
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
         }
     }
 

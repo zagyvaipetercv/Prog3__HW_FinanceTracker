@@ -16,7 +16,6 @@ import financetracker.controllers.PurchaseController;
 import financetracker.datatypes.Purchase;
 import financetracker.exceptions.category.CategoryLookupFailedException;
 import financetracker.exceptions.category.CreatingCategoryFailedException;
-import financetracker.exceptions.purchase.CreatingPurchaseFailedException;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
 import financetracker.exceptions.purchase.EditingPurchaseFailed;
 import financetracker.exceptions.purchase.InvalidTableCellException;

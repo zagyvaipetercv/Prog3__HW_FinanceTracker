@@ -105,7 +105,7 @@ public class CashFlowController extends Controller<CashFlow> {
         addNewCashFlow(userLogedIn, date, amount, currency, reason);
     }
 
-    public void addNewCashFlow(User user, LocalDate date, double amount, Currency currency, String reason)
+    public CashFlow addNewCashFlow(User user, LocalDate date, double amount, Currency currency, String reason)
             throws InvalidReasonException, BalanceCouldNotCahcngeException {
         if (reasonIsInvalid(reason)) {
             throw new InvalidReasonException(reason, "Reason can't be blank");
@@ -131,6 +131,8 @@ public class CashFlowController extends Controller<CashFlow> {
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new BalanceCouldNotCahcngeException(money, "Couldn't add money to balance");
         }
+        
+        return cashFlow;
     }
 
     public void setMoneyOnAccount(String newAmountString, Currency currency, String reason)

@@ -53,6 +53,10 @@ public class PurchaseView extends PanelView {
                 "Edit Selected",
                 ae -> purchaseController.getEditPurchaseView(purchasesList.getSelectedValue()).setVisible(true));
 
+        optionsPanel.addOptionButton(
+                "Delete Selected",
+                ae -> purchaseController.deletePurchase(purchasesList.getSelectedValue()));
+
     }
 
     private class PurchaseListCellRenderer extends DefaultListCellRenderer {
