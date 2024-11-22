@@ -49,6 +49,30 @@ public class DebtController extends Controller<Debt> {
 
     private User userLogedIn;
 
+    // CONSTRUCTORS
+    public DebtController(String saveFilePath, MainFrame mainFrame) throws ControllerWasNotCreated {
+        super(saveFilePath, mainFrame);
+
+        userLogedIn = mainFrame.getUserLogedIn();
+
+        try {
+            reloadCache();
+        } catch (SerializerCannotRead e) {
+            throw new ControllerWasNotCreated("Couldn't read saves file", this.getClass());
+        }
+
+        shownDebts = new ArrayList<>(cachedDebts);
+
+        debtListModel = new DebtListModel(shownDebts);
+        userController = mainFrame.getUserController();
+        cashFlowController = mainFrame.getCashFlowController();
+    }
+
+    public DebtController(MainFrame mainFrame) throws ControllerWasNotCreated {
+        this(DEFAULT_SAVE_PATH, mainFrame);
+    }
+
+    // FRAMEVIEW GETTERS
     public FrameView getEditSelectedDebtView(JList<? extends Debt> debtsList)
             throws NoItemWasSelected, FulfilledDebtCantChange {
 
@@ -80,30 +104,61 @@ public class DebtController extends Controller<Debt> {
         return new DebtView(this, debtListModel);
     }
 
-    public DebtController(String saveFilePath, MainFrame mainFrame) throws ControllerWasNotCreated {
-        super(saveFilePath, mainFrame);
-
-        userLogedIn = mainFrame.getUserLogedIn();
-
-        try {
-            reloadCache();
-        } catch (SerializerCannotRead e) {
-            throw new ControllerWasNotCreated("Couldn't read saves file", this.getClass());
-        }
-
-        shownDebts = new ArrayList<>(cachedDebts);
-
-        debtListModel = new DebtListModel(shownDebts);
-        userController = mainFrame.getUserController();
-        cashFlowController = mainFrame.getCashFlowController();
-    }
-
-    public DebtController(MainFrame mainFrame) throws ControllerWasNotCreated {
-        this(DEFAULT_SAVE_PATH, mainFrame);
-    }
-
     public void refreshDebtView() {
         mainFrame.changeView(getDebtView());
+    }
+
+    // ACTIONS
+    public void addDebt(String name, DebtDirection direction, LocalDate date, String amountString, boolean hasDeadline,
+            LocalDate deadline) throws UserNotFound, InvalidAmountException, CreatingDebtFailedException {
+        long id = modelSerializer.getNextId();
+        User counterParty = findCounterParty(name);
+        double amount = Money.parseAmount(amountString);
+
+        validateAmount(amount, null);
+
+        Money money = new Money(amount, Currency.getInstance("HUF"));
+        if (counterParty.equals(userLogedIn)) {
+            throw new CreatingDebtFailedException(null, "Other party can't be the user");
+        }
+
+        User debtor;
+        User creditor;
+        try {
+            debtor = getDebtor(counterParty, direction);
+            creditor = getCreditor(counterParty, direction);
+        } catch (UnknownDebtDirection e) {
+            throw new CreatingDebtFailedException(null, "Creating debt failed due to unkonw direction");
+        }
+
+        Debt debt = new Debt(id, debtor, creditor, date, money, new ArrayList<>(),
+                (hasDeadline ? deadline : null));
+        try {
+            modelSerializer.appendNewData(debt);
+            debtListModel.addElement(debt);
+            cachedDebts.add(debt);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new CreatingDebtFailedException(debt, "Creating debt failed due to an IO Error");
+        }
+    }
+
+    public void editDebt(Debt debt, LocalDate date, String amountString, boolean hasDeadline, LocalDate deadline)
+            throws InvalidAmountException, EditingDebtFailedException {
+
+        double amount = Money.parseAmount(amountString);
+        validateAmount(amount, debt);
+
+        Money money = new Money(amount, Currency.getInstance("HUF"));
+
+        debt.setDate(date);
+        debt.setDebtAmount(money);
+        debt.setDeadline((hasDeadline ? deadline : null));
+
+        try {
+            replaceDebtEverywhere(debt);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new EditingDebtFailedException("Debt was not edited due to an IO Error", debt);
+        }
     }
 
     public void repayDebt(Debt debt, String amountString, LocalDate date)
@@ -136,6 +191,55 @@ public class DebtController extends Controller<Debt> {
         repay(debt, remaining, date);
     }
 
+    public void filterFor(DebtDirection direction, DebtFulfilled fulfilled, String userName) throws UserNotFound {
+        shownDebts = new ArrayList<>(cachedDebts);
+
+        for (Debt debt : cachedDebts) {
+            // Check direction
+            if (!direction.equals(DebtDirection.UNSET) && getDirection(debt).equals(direction)) {
+                shownDebts.remove(debt);
+            }
+
+            // Check fulfilled
+            switch (fulfilled) {
+                case FULFILLED:
+                    if (!debt.isFulfilled()) {
+                        shownDebts.remove(debt);
+                    }
+                    break;
+                case NOT_FULFILLED:
+                    if (debt.isFulfilled()) {
+                        shownDebts.remove(debt);
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            // Check user
+            if (!userName.isBlank()) {
+                User counterParty = userController.findUser(userName);
+                User debtor = debt.getDebtor();
+                User creditor = debt.getCreditor();
+                if (!counterParty.equals(debtor) && !counterParty.equals(creditor)) {
+                    shownDebts.remove(debt);
+                }
+            }
+        }
+
+        debtListModel = new DebtListModel(shownDebts);
+        refreshDebtView();
+    }
+
+    public void deleteDebt(Debt debt) throws DeletingDebtFailedException {
+        try {
+            removeDebtEverywhere(debt);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new DeletingDebtFailedException("Debt was not removed", debt);
+        }
+    }
+
+    // HELPER METHODS
     private void repay(Debt debt, double amount, LocalDate date) throws DeptPaymentFailedException {
         Payment payment = new Payment(date, debt, new Money(amount, Currency.getInstance("HUF")));
         debt.getPayments().add(payment);
@@ -176,60 +280,7 @@ public class DebtController extends Controller<Debt> {
 
     }
 
-    public void addDebt(String name, DebtDirection direction, LocalDate date, String amountString, boolean hasDeadline,
-            LocalDate deadline) throws UserNotFound, InvalidAmountException, CreatingDebtFailedException {
-        long id = modelSerializer.getNextId();
-        User counterParty = findCounterParty(name);
-        double amount = Money.parseAmount(amountString);
-
-        validateAmount(amount, null);
-        
-        Money money = new Money(amount, Currency.getInstance("HUF"));
-        if (counterParty.equals(userLogedIn)) {
-            throw new CreatingDebtFailedException(null, "Other party can't be the user");
-        }
-        
-        User debtor;
-        User creditor;
-        try {
-            debtor = getDebtor(counterParty, direction);
-            creditor = getCreditor(counterParty, direction);
-        } catch (UnknownDebtDirection e) {
-            throw new CreatingDebtFailedException(null, "Creating debt failed due to unkonw direction");
-        }
-
-        Debt debt = new Debt(id, debtor, creditor, date, money, new ArrayList<>(),
-                (hasDeadline ? deadline : null));
-        try {
-            modelSerializer.appendNewData(debt);
-            debtListModel.addElement(debt);
-            cachedDebts.add(debt);
-        } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new CreatingDebtFailedException(debt, "Creating debt failed due to an IO Error");
-        }
-    }
-
-    public void editDebt(Debt debt, LocalDate date, String amountString, boolean hasDeadline, LocalDate deadline)
-            throws InvalidAmountException, EditingDebtFailedException {
-
-        double amount = Money.parseAmount(amountString);
-        validateAmount(amount, debt);
-
-        Money money = new Money(amount, Currency.getInstance("HUF"));
-
-
-        debt.setDate(date);
-        debt.setDebtAmount(money);
-        debt.setDeadline((hasDeadline ? deadline : null));
-
-        try {
-            replaceDebtEverywhere(debt);
-        } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new EditingDebtFailedException("Debt was not edited due to an IO Error", debt);
-        }
-    }
-
-    public User findCounterParty(String name) throws UserNotFound {
+    private User findCounterParty(String name) throws UserNotFound {
         return userController.findUser(name);
     }
 
@@ -313,54 +364,6 @@ public class DebtController extends Controller<Debt> {
         }
 
         return DebtDirection.THEY_OWE;
-    }
-
-    public void filterFor(DebtDirection direction, DebtFulfilled fulfilled, String userName) throws UserNotFound {
-        shownDebts = new ArrayList<>(cachedDebts);
-
-        for (Debt debt : cachedDebts) {
-            // Check direction
-            if (!direction.equals(DebtDirection.UNSET) && getDirection(debt).equals(direction)) {
-                shownDebts.remove(debt);
-            }
-
-            // Check fulfilled
-            switch (fulfilled) {
-                case FULFILLED:
-                    if (!debt.isFulfilled()) {
-                        shownDebts.remove(debt);
-                    }
-                    break;
-                case NOT_FULFILLED:
-                    if (debt.isFulfilled()) {
-                        shownDebts.remove(debt);
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            // Check user
-            if (!userName.isBlank()) {
-                User counterParty = userController.findUser(userName);
-                User debtor = debt.getDebtor();
-                User creditor = debt.getCreditor();
-                if (!counterParty.equals(debtor) && !counterParty.equals(creditor)) {
-                    shownDebts.remove(debt);
-                }
-            }
-        }
-        
-        debtListModel = new DebtListModel(shownDebts);
-        refreshDebtView();
-    }
-
-    public void deleteDebt(Debt debt) throws DeletingDebtFailedException {
-        try {
-            removeDebtEverywhere(debt);
-        } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new DeletingDebtFailedException("Debt was not removed", debt);
-        }
     }
 
     public enum DebtDirection {

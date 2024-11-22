@@ -3,6 +3,7 @@ package financetracker.views.purchase;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.time.LocalDate;
+
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -12,17 +13,19 @@ import javax.swing.WindowConstants;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import financetracker.controllers.PurchaseController;
+import financetracker.datatypes.Purchase;
 import financetracker.exceptions.category.CategoryLookupFailedException;
 import financetracker.exceptions.category.CreatingCategoryFailedException;
 import financetracker.exceptions.purchase.CreatingPurchaseFailedException;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
+import financetracker.exceptions.purchase.EditingPurchaseFailed;
 import financetracker.exceptions.purchase.InvalidTableCellException;
 import financetracker.models.PurchasedItemTableModel;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.customtables.PurchasedItemsTable;
 
-public class AddPurchaseView extends FrameView {
+public class EditPurchaseView extends FrameView {
     private PurchaseController purchaseController;
 
     private PurchasedItemTableModel pitm;
@@ -34,14 +37,18 @@ public class AddPurchaseView extends FrameView {
     private JButton deleteRowButton;
     private JButton cancelButton;
 
-    public AddPurchaseView(PurchaseController purchaseController) {
-        this.purchaseController = purchaseController;
-        pitm = new PurchasedItemTableModel();
+    private Purchase purchase;
 
-        setTitle("Finance Tracker - Add Purchase");
+    public EditPurchaseView(PurchaseController purchaseController, Purchase purchase) {
+        this.purchaseController = purchaseController;
+        this.pitm = new PurchasedItemTableModel(purchase.getBoughtItems());
+        this.purchase = purchase;
+
+        setTitle("Finance Tracker - Edit Purchase");
 
         initComponents();
         addButtonListeners();
+        datePicker.setDate(purchase.getDateOfPurchase());
 
         pack();
         setLocationRelativeTo(null);
@@ -76,7 +83,7 @@ public class AddPurchaseView extends FrameView {
 
         submitButton = new JButton("Submit");
         deleteRowButton = new JButton("Delete Row");
-        cancelButton = new JButton("Cancel");;
+        cancelButton = new JButton("Cancel");
 
         buttonPanel.add(submitButton);
         buttonPanel.add(deleteRowButton);
@@ -100,10 +107,10 @@ public class AddPurchaseView extends FrameView {
 
         submitButton.addActionListener(ae -> {
             try {
-                purchaseController.addPurchase(pitm, datePicker.getDate());
+                purchaseController.editPurchase(purchase, pitm, datePicker.getDate());
                 purchaseController.refreshPurchaseView();
                 purchaseController.closeFrameView(this);
-            } catch (InvalidTableCellException | CreatingPurchaseFailedException | CategoryLookupFailedException
+            } catch (InvalidTableCellException | EditingPurchaseFailed | CategoryLookupFailedException
                     | CreatingCategoryFailedException e) {
                 ErrorBox.show(this, e);
             }

@@ -3,6 +3,7 @@ package financetracker.datatypes;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Currency;
 import java.util.List;
 
 public class Purchase extends Model {
@@ -43,6 +44,20 @@ public class Purchase extends Model {
 
     public void setBoughtItems(List<BoughtItem> boughtItems) {
         this.boughtItems = boughtItems;
+    }
+
+    public Money getSumPrice() {
+        double sum = 0.0;
+        for (BoughtItem boughtItem : boughtItems) {
+            sum += boughtItem.getSumPrice().getAmount();
+        }
+
+        return new Money(sum, Currency.getInstance("HUF"));
+    }
+
+    @Override 
+    public String toString() {
+        return getId() + " " + user.getName() + " " + dateOfPurchase.toString() + " " + getSumPrice().toString();
     }
 
 }

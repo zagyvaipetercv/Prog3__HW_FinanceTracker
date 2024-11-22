@@ -1,12 +1,14 @@
 package financetracker.controllers;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import financetracker.datatypes.BoughtItem;
 import financetracker.datatypes.Category;
 import financetracker.datatypes.Money;
 import financetracker.datatypes.Purchase;
+import financetracker.datatypes.User;
 import financetracker.exceptions.category.CategoryLookupFailedException;
 import financetracker.exceptions.category.CreatingCategoryFailedException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
@@ -15,12 +17,15 @@ import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
 import financetracker.exceptions.purchase.CreatingPurchaseFailedException;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
+import financetracker.exceptions.purchase.EditingPurchaseFailed;
 import financetracker.exceptions.purchase.InvalidTableCellException;
+import financetracker.exceptions.purchase.ReadingPurchasesFailedException;
 import financetracker.models.PurchaseListModel;
 import financetracker.models.PurchasedItemTableModel;
 import financetracker.views.base.FrameView;
 import financetracker.views.base.PanelView;
 import financetracker.views.purchase.AddPurchaseView;
+import financetracker.views.purchase.EditPurchaseView;
 import financetracker.views.purchase.PurchaseView;
 import financetracker.windowing.MainFrame;
 
@@ -28,7 +33,8 @@ public class PurchaseController extends Controller<Purchase> {
 
     private static final String DEFAULT_SAVE_PATH = "saves/purchases.dat";
 
-    private PurchaseListModel purchaseListModel = new PurchaseListModel();
+    private PurchaseListModel purchaseListModel;
+    private User userLogedIn;
 
     public PurchaseController(MainFrame mainFrame) throws ControllerWasNotCreated {
         this(DEFAULT_SAVE_PATH, mainFrame);
@@ -36,6 +42,15 @@ public class PurchaseController extends Controller<Purchase> {
 
     public PurchaseController(String saveFilePath, MainFrame mainFrame) throws ControllerWasNotCreated {
         super(saveFilePath, mainFrame);
+        userLogedIn = mainFrame.getUserLogedIn();
+
+        try {
+            List<Purchase> usersPurchases = getPurchases();
+            purchaseListModel = new PurchaseListModel(usersPurchases);
+        } catch (ReadingPurchasesFailedException e) {
+            throw new ControllerWasNotCreated("Purchases could not be initalized", PurchaseController.class);
+        }
+
     }
 
     public PanelView getPurchaseView() {
@@ -46,6 +61,14 @@ public class PurchaseController extends Controller<Purchase> {
         return new AddPurchaseView(this);
     }
 
+    public FrameView getEditPurchaseView(Purchase purchase) {
+        return new EditPurchaseView(this, purchase);
+    }
+
+    public void refreshPurchaseView() {
+        mainFrame.changeView(getPurchaseView());
+    }
+
     public void deleteRow(PurchasedItemTableModel pitm, int rowIndex) throws DeleteUnfinishedEmptyRowException {
         if (rowIndex == pitm.getRowCount() - 1) {
             throw new DeleteUnfinishedEmptyRowException("Can't delete unfinished empty row");
@@ -54,15 +77,45 @@ public class PurchaseController extends Controller<Purchase> {
         pitm.deleteRow(rowIndex);
     }
 
-    public void addPurchase(PurchasedItemTableModel pitm, LocalDate date) throws InvalidTableCellException, CreatingPurchaseFailedException, CategoryLookupFailedException, CreatingCategoryFailedException {
+    public void addPurchase(PurchasedItemTableModel pitm, LocalDate date) throws InvalidTableCellException,
+            CreatingPurchaseFailedException, CategoryLookupFailedException, CreatingCategoryFailedException {
         checkCells(pitm);
 
         List<BoughtItem> purchasedItems = pitm.getItems();
 
         if (purchasedItems.isEmpty()) {
-            throw new CreatingPurchaseFailedException("List has no items", null); 
+            throw new CreatingPurchaseFailedException("List has no items", null);
         }
 
+        lookupCategories(purchasedItems);
+
+        Purchase purchase = new Purchase(modelSerializer.getNextId(), mainFrame.getUserLogedIn(), date, purchasedItems);
+        try {
+            modelSerializer.appendNewData(purchase);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new CreatingPurchaseFailedException("Creating purchase failed due to IO Error", purchase);
+        }
+    }
+
+    public void editPurchase(Purchase purchase, PurchasedItemTableModel pitm, LocalDate dateOfPurchase)
+            throws InvalidTableCellException, CategoryLookupFailedException, CreatingCategoryFailedException, EditingPurchaseFailed {
+        checkCells(pitm);
+        List<BoughtItem> purchasedItems = pitm.getItems();
+
+        lookupCategories(purchasedItems);
+
+        purchase.setBoughtItems(pitm.getItems());
+        purchase.setDateOfPurchase(dateOfPurchase);
+
+        try {
+            modelSerializer.changeData(purchase);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new EditingPurchaseFailed("Editing purchase failed due to an IO Error", purchase);
+        }
+    }
+
+    private void lookupCategories(List<BoughtItem> purchasedItems)
+            throws CategoryLookupFailedException, CreatingCategoryFailedException {
         for (BoughtItem boughtItem : purchasedItems) { // Set the category for items
             Category category;
             CategoryController categoryController = mainFrame.getCategoryController();
@@ -71,17 +124,10 @@ public class PurchaseController extends Controller<Purchase> {
                 category = categoryController.getCategory(categoryId);
             } catch (SerializerCannotRead e) {
                 throw new CategoryLookupFailedException("Looking up existing categories failed");
-            } catch (IdNotFoundException e) { // If category did not exist yet -> create new category 
+            } catch (IdNotFoundException e) { // If category did not exist yet -> create new category
                 category = categoryController.createCategory(boughtItem.getCategory().getName());
             }
             boughtItem.setCategory(category);
-        }
-
-        Purchase purchase = new Purchase(modelSerializer.getNextId(), mainFrame.getUserLogedIn(), date, purchasedItems);
-        try {
-            modelSerializer.appendNewData(purchase);
-        } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new CreatingPurchaseFailedException("Creating purchase failed due to IO Error", purchase);
         }
     }
 
@@ -112,4 +158,30 @@ public class PurchaseController extends Controller<Purchase> {
             }
         }
     }
+
+    private List<Purchase> getPurchases() throws ReadingPurchasesFailedException {
+        List<Purchase> result = new ArrayList<>();
+
+        try {
+            List<Purchase> purchases = modelSerializer.readAll();
+            for (Purchase purchase : purchases) {
+                if (purchase.getUser().equals(userLogedIn)) {
+                    result.add(purchase);
+                }
+            }
+
+            return result;
+        } catch (SerializerCannotRead e) {
+            throw new ReadingPurchasesFailedException("Failed to read purchases");
+        }
+    }
+
+    private void upadteModel() {
+        try {
+            List<Purchase> purchases = modelSerializer.readAll();
+            purchaseListModel = new PurchaseListModel(purchases);
+        } catch (SerializerCannotRead e) {
+        }
+    }
+
 }

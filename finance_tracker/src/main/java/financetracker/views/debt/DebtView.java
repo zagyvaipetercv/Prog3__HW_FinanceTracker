@@ -95,7 +95,6 @@ public class DebtView extends PanelView {
 
     private class DebtListCellRenderer extends DefaultListCellRenderer {
 
-        private static final int PREFFERED_HEIGHT = 50;
 
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
@@ -103,7 +102,7 @@ public class DebtView extends PanelView {
                 boolean hasFocus) {
 
             JPanel panel = new JPanel(new GridLayout(1, 7, 0, 0));
-            panel.setPreferredSize(new Dimension(0, PREFFERED_HEIGHT));
+            panel.setPreferredSize(new Dimension(0, MyWindowConstants.LIST_CELL_PREFFERED_HEIGHT));
 
             Debt debt = (Debt) value;
 
@@ -164,7 +163,7 @@ public class DebtView extends PanelView {
                 fullfilledCheckBox.setForeground(list.getForeground());
             }
 
-            panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+            panel.setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
 
             return panel;
         }
