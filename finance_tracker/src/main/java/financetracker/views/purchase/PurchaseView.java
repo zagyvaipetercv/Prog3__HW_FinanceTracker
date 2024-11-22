@@ -15,8 +15,10 @@ import javax.swing.SwingConstants;
 
 import financetracker.controllers.PurchaseController;
 import financetracker.datatypes.Purchase;
+import financetracker.exceptions.purchase.DeletingPurchaseFailed;
 import financetracker.models.PurchaseListModel;
 import financetracker.views.base.PanelView;
+import financetracker.windowing.ErrorBox;
 import financetracker.windowing.MyWindowConstants;
 import financetracker.windowing.OptionsPanel;
 
@@ -55,7 +57,14 @@ public class PurchaseView extends PanelView {
 
         optionsPanel.addOptionButton(
                 "Delete Selected",
-                ae -> purchaseController.deletePurchase(purchasesList.getSelectedValue()));
+                ae -> {
+                    try {
+                        purchaseController.deletePurchase(purchasesList.getSelectedValue());
+                        purchaseController.refreshPurchaseView();
+                    } catch (DeletingPurchaseFailed e) {
+                        ErrorBox.show(this, e);
+                    }
+                });
 
     }
 

@@ -10,6 +10,7 @@ import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Money;
 import financetracker.datatypes.User;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
+import financetracker.exceptions.cashflowcontroller.DeletingCashFlowFailed;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
@@ -131,7 +132,7 @@ public class CashFlowController extends Controller<CashFlow> {
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new BalanceCouldNotCahcngeException(money, "Couldn't add money to balance");
         }
-        
+
         return cashFlow;
     }
 
@@ -282,5 +283,13 @@ public class CashFlowController extends Controller<CashFlow> {
         ALL,
         INCOME,
         EXPENSE
+    }
+
+    public void deleteCashFlow(CashFlow cashFlow) throws DeletingCashFlowFailed {
+        try {
+            modelSerializer.removeData(cashFlow.getId());
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new DeletingCashFlowFailed("Deleting Cashflow failed", cashFlow);
+        }
     }
 }

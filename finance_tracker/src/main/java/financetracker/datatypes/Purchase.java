@@ -10,12 +10,14 @@ public class Purchase extends Model {
     private User user;
     private LocalDate dateOfPurchase;
     private List<BoughtItem> boughtItems;
+    private CashFlow cashFlow;
 
-    public Purchase(long id, User user, LocalDate dateOfPurchase, List<BoughtItem> boughtItems) {
+    public Purchase(long id, User user, LocalDate dateOfPurchase, List<BoughtItem> boughtItems, CashFlow cashFlow) {
         super(id);
         this.user = user;
         this.dateOfPurchase = dateOfPurchase;
         this.boughtItems = new ArrayList<>(boughtItems);
+        this.cashFlow = cashFlow;
     }
 
     public List<BoughtItem> getBoughtItems() {
@@ -53,6 +55,10 @@ public class Purchase extends Model {
         }
 
         return new Money(sum, Currency.getInstance("HUF"));
+    }
+
+    public CashFlow getCashFlow() {
+        return cashFlow;
     }
 
     @Override 

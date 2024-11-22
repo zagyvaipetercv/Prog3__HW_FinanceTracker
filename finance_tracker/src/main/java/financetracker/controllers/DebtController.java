@@ -13,6 +13,7 @@ import financetracker.datatypes.Money;
 import financetracker.datatypes.Payment;
 import financetracker.datatypes.User;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
+import financetracker.exceptions.cashflowcontroller.DeletingCashFlowFailed;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
@@ -236,7 +237,9 @@ public class DebtController extends Controller<Debt> {
         try {
             removeDebtEverywhere(debt);
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new DeletingDebtFailedException("Debt was not removed", debt);
+            throw new DeletingDebtFailedException("Debt was not removed due to an IO Error", debt);
+        } catch (DeletingCashFlowFailed e) {
+            throw new DeletingDebtFailedException("Debt could not delete cashflows", debt);
         }
     }
 
@@ -252,14 +255,14 @@ public class DebtController extends Controller<Debt> {
                         -amount,
                         debt.getDebtAmount().getCurrency(),
                         "Repayed Debt: " + debt.getId());
-    
+
                 creditors = cashFlowController.addNewCashFlow(
                         debt.getCreditor(),
                         date,
                         amount,
                         Currency.getInstance("HUF"),
                         "Repayed Debt: " + debt.getId());
-            } catch (InvalidReasonException | BalanceCouldNotCahcngeException e) { 
+            } catch (InvalidReasonException | BalanceCouldNotCahcngeException e) {
                 throw new DeptPaymentFailedException("Cashflow could not register. Debt payment failed", debt, amount);
             }
 
@@ -305,10 +308,15 @@ public class DebtController extends Controller<Debt> {
         cachedDebts.add(replaced);
     }
 
-    private void removeDebtEverywhere(Debt debt) throws SerializerCannotRead, SerializerCannotWrite {
+    private void removeDebtEverywhere(Debt debt)
+            throws SerializerCannotRead, SerializerCannotWrite, DeletingCashFlowFailed {
         long id = debt.getId();
         int idx = debtListModel.indexOf(debt);
 
+        for (Payment payment : debt.getPayments()) {
+            cashFlowController.deleteCashFlow(payment.getDebtorsCashFlow());
+            cashFlowController.deleteCashFlow(payment.getCreditorsCashFlow());
+        }
         modelSerializer.removeData(id);
         debtListModel.remove(idx);
         cachedDebts.remove(debt);

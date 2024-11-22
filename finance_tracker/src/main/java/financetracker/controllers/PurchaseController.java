@@ -2,13 +2,18 @@ package financetracker.controllers;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 
 import financetracker.datatypes.BoughtItem;
+import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Category;
 import financetracker.datatypes.Money;
 import financetracker.datatypes.Purchase;
 import financetracker.datatypes.User;
+import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
+import financetracker.exceptions.cashflowcontroller.DeletingCashFlowFailed;
+import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.exceptions.category.CategoryLookupFailedException;
 import financetracker.exceptions.category.CreatingCategoryFailedException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
@@ -17,6 +22,7 @@ import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
 import financetracker.exceptions.purchase.CreatingPurchaseFailedException;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
+import financetracker.exceptions.purchase.DeletingPurchaseFailed;
 import financetracker.exceptions.purchase.EditingPurchaseFailed;
 import financetracker.exceptions.purchase.InvalidTableCellException;
 import financetracker.exceptions.purchase.ReadingPurchasesFailedException;
@@ -36,6 +42,8 @@ public class PurchaseController extends Controller<Purchase> {
     private PurchaseListModel purchaseListModel;
     private User userLogedIn;
 
+    private CashFlowController cashFlowController;
+
     public PurchaseController(MainFrame mainFrame) throws ControllerWasNotCreated {
         this(DEFAULT_SAVE_PATH, mainFrame);
     }
@@ -43,6 +51,7 @@ public class PurchaseController extends Controller<Purchase> {
     public PurchaseController(String saveFilePath, MainFrame mainFrame) throws ControllerWasNotCreated {
         super(saveFilePath, mainFrame);
         userLogedIn = mainFrame.getUserLogedIn();
+        cashFlowController = mainFrame.getCashFlowController();
 
         try {
             List<Purchase> usersPurchases = getPurchases();
@@ -89,9 +98,23 @@ public class PurchaseController extends Controller<Purchase> {
 
         lookupCategories(purchasedItems);
 
-        Purchase purchase = new Purchase(modelSerializer.getNextId(), mainFrame.getUserLogedIn(), date, purchasedItems);
+        double sumPrice = 0.0;
+        for (BoughtItem boughtItem : purchasedItems) {
+            sumPrice += boughtItem.getSumPrice().getAmount();
+        }
+
+        Purchase purchase = null;
         try {
+            long purchaseId = modelSerializer.getNextId();
+            CashFlow cashFlow = cashFlowController.addNewCashFlow(userLogedIn, date, sumPrice,
+                    Currency.getInstance("HUF"), "Purchase: " + purchaseId);
+
+            purchase = new Purchase(purchaseId, mainFrame.getUserLogedIn(), date, purchasedItems,
+                    cashFlow);
+
             modelSerializer.appendNewData(purchase);
+        } catch (InvalidReasonException | BalanceCouldNotCahcngeException e) {
+            throw new CreatingPurchaseFailedException("Cashflow for purcahse could not register", null);
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new CreatingPurchaseFailedException("Creating purchase failed due to IO Error", purchase);
         }
@@ -99,7 +122,8 @@ public class PurchaseController extends Controller<Purchase> {
     }
 
     public void editPurchase(Purchase purchase, PurchasedItemTableModel pitm, LocalDate dateOfPurchase)
-            throws InvalidTableCellException, CategoryLookupFailedException, CreatingCategoryFailedException, EditingPurchaseFailed {
+            throws InvalidTableCellException, CategoryLookupFailedException, CreatingCategoryFailedException,
+            EditingPurchaseFailed {
         checkCells(pitm);
         List<BoughtItem> purchasedItems = pitm.getItems();
 
@@ -117,6 +141,15 @@ public class PurchaseController extends Controller<Purchase> {
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new EditingPurchaseFailed("Editing purchase failed due to an IO Error", purchase);
         }
+
+        try {
+            cashFlowController.deleteCashFlow(purchase.getCashFlow());
+            cashFlowController.addNewCashFlow(userLogedIn, dateOfPurchase, purchase.getSumPrice().getAmount(),
+                    purchase.getSumPrice().getCurrency(), "Purchase: " + purchase.getId());
+        } catch (DeletingCashFlowFailed | InvalidReasonException | BalanceCouldNotCahcngeException e) {
+            throw new EditingPurchaseFailed("Editing purchase failed due to CashFlow Error", purchase);
+        }
+
         upadteModel();
     }
 
@@ -190,11 +223,17 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
-    public void deletePurchase(Purchase purchase) {
+    public void deletePurchase(Purchase purchase) throws DeletingPurchaseFailed {
         try {
+            cashFlowController.deleteCashFlow(purchase.getCashFlow());
             modelSerializer.removeData(purchase.getId());
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new DeletingPurchaseFailed("Deleting purchase failed due to an IO Error", purchase);
+        } catch (DeletingCashFlowFailed e) {
+            throw new DeletingPurchaseFailed("Deleting purcahse failed due to CashFlow error", purchase);
         }
+
+        upadteModel();
     }
 
 }
