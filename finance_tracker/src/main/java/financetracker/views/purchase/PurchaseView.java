@@ -66,6 +66,9 @@ public class PurchaseView extends PanelView {
                     }
                 });
 
+        optionsPanel.addOptionButton(
+                "Show Details",
+                ae -> purchaseController.getDetailedPurcahseView(purchasesList.getSelectedValue()).setVisible(true));
     }
 
     private class PurchaseListCellRenderer extends DefaultListCellRenderer {

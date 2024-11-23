@@ -133,7 +133,7 @@ public class PurchasedItemTableModel extends AbstractTableModel {
                 row.getSumPrice().getAmount() != 0.0);
     }
 
-    private void addEmptyRow() {
+    protected void addEmptyRow() {
         items.add(new BoughtItem(new Category(-1, ""), "", new Money(0, Currency.getInstance("HUF")), 0));
     }
 

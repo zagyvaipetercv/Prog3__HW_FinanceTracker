@@ -31,6 +31,7 @@ import financetracker.models.PurchasedItemTableModel;
 import financetracker.views.base.FrameView;
 import financetracker.views.base.PanelView;
 import financetracker.views.purchase.AddPurchaseView;
+import financetracker.views.purchase.DetailedPurchaseView;
 import financetracker.views.purchase.EditPurchaseView;
 import financetracker.views.purchase.PurchaseView;
 import financetracker.windowing.MainFrame;
@@ -72,6 +73,10 @@ public class PurchaseController extends Controller<Purchase> {
 
     public FrameView getEditPurchaseView(Purchase purchase) {
         return new EditPurchaseView(this, purchase);
+    }
+
+    public FrameView getDetailedPurcahseView(Purchase purchase) {
+        return new DetailedPurchaseView(purchase);
     }
 
     public void refreshPurchaseView() {
