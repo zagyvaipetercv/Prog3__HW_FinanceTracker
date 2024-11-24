@@ -17,6 +17,7 @@ import financetracker.controllers.UserController;
 import financetracker.datatypes.User;
 import financetracker.exceptions.ChangingViewFailed;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.views.HomeView;
 import financetracker.views.base.PanelView;
 
@@ -117,7 +118,11 @@ public class MainFrame extends JFrame {
 
             NavButton walletButton = new NavButton("Wallet");
             walletButton.addActionListener(ae -> {
-                mainFrame.changeView(cashFlowController.getWalletView());
+                try {
+                    mainFrame.changeView(cashFlowController.getWalletView());
+                } catch (UpdatingModelFailed e) {
+                    ErrorBox.show(this, e);
+                }
                 mainFrame.setTitle("Wallet");
             });
             add(walletButton);

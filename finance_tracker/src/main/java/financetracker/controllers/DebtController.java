@@ -12,7 +12,7 @@ import financetracker.datatypes.Debt;
 import financetracker.datatypes.Money;
 import financetracker.datatypes.Payment;
 import financetracker.datatypes.User;
-import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
+import financetracker.exceptions.cashflowcontroller.BalanceCouldNotChangeException;
 import financetracker.exceptions.cashflowcontroller.DeletingCashFlowFailed;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
@@ -262,7 +262,7 @@ public class DebtController extends Controller<Debt> {
                         amount,
                         Currency.getInstance("HUF"),
                         "Repayed Debt: " + debt.getId());
-            } catch (InvalidReasonException | BalanceCouldNotCahcngeException e) {
+            } catch (InvalidReasonException | BalanceCouldNotChangeException e) {
                 throw new DeptPaymentFailedException("Cashflow could not register. Debt payment failed", debt, amount);
             }
 

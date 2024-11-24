@@ -14,7 +14,7 @@ import financetracker.datatypes.Purchase;
 import financetracker.datatypes.User;
 import financetracker.exceptions.ChangingViewFailed;
 import financetracker.exceptions.FilteringFailed;
-import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
+import financetracker.exceptions.cashflowcontroller.BalanceCouldNotChangeException;
 import financetracker.exceptions.cashflowcontroller.DeletingCashFlowFailed;
 import financetracker.exceptions.cashflowcontroller.EditingCashFlowFailed;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
@@ -169,7 +169,7 @@ public class PurchaseController extends Controller<Purchase> {
             }
 
             modelSerializer.appendNewData(purchase);
-        } catch (InvalidReasonException | BalanceCouldNotCahcngeException e) {
+        } catch (InvalidReasonException | BalanceCouldNotChangeException e) {
             throw new CreatingPurchaseFailedException("Cashflow for purcahse could not register", null);
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new CreatingPurchaseFailedException("Creating purchase failed due to IO Error", purchase);

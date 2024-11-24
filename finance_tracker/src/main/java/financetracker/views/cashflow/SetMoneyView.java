@@ -10,7 +10,7 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import financetracker.controllers.CashFlowController;
-import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
+import financetracker.exceptions.cashflowcontroller.BalanceCouldNotChangeException;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.views.base.FrameView;
@@ -41,7 +41,7 @@ public class SetMoneyView extends FrameView {
                 cashFlowController.setMoneyOnAccount(amount, currency, reason);
                 cashFlowController.refreshWalletView();
                 cashFlowController.closeFrameView(this);
-            } catch (InvalidAmountException | InvalidReasonException | BalanceCouldNotCahcngeException e) {
+            } catch (InvalidAmountException | InvalidReasonException | BalanceCouldNotChangeException e) {
                 ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
             } catch (Exception e) {
                 ErrorBox.show(this, "ERROR", e.getMessage());

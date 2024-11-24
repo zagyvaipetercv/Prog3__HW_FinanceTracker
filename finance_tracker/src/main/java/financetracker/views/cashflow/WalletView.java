@@ -22,23 +22,30 @@ import javax.swing.JTextField;
 import financetracker.controllers.CashFlowController;
 import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.MyWindowConstants;
 import financetracker.windowing.OptionsPanel;
 import financetracker.models.CashFlowTableModel;
+import financetracker.models.SummarizedCashFlowModel;
 
 public class WalletView extends PanelView {
 
 
     private CashFlowController cashFlowController;
 
+    private CashFlowTableModel cashFlowTableModel;
+    private SummarizedCashFlowModel summarizedCashFlowModel;
+
     public WalletView(
             CashFlowController cashFlowController,
-            CashFlowTableModel tm,
-            Money incomes, Money expneses, Money thisMonth, Money all) {
+            CashFlowTableModel cashFlowTableModel,
+            SummarizedCashFlowModel summarizedCashFlowModel) {
         this.cashFlowController = cashFlowController;
+        this.cashFlowTableModel = cashFlowTableModel;
+        this.summarizedCashFlowModel = summarizedCashFlowModel;
 
         setLayout(new BorderLayout());
 
@@ -49,8 +56,8 @@ public class WalletView extends PanelView {
         add(rightPanel, BorderLayout.EAST);
 
         centerPanel.add(new FilterPanel(), BorderLayout.NORTH);
-        centerPanel.add(new CashFlowPanel(tm), BorderLayout.CENTER);
-        rightPanel.add(new SummaryPanel(all, incomes, expneses, thisMonth), BorderLayout.NORTH);
+        centerPanel.add(new CashFlowPanel(), BorderLayout.CENTER);
+        rightPanel.add(new SummaryPanel(), BorderLayout.NORTH);
         
         OptionsPanel optionsPanel = new OptionsPanel();
         optionsPanel.addOptionButton(
@@ -98,10 +105,8 @@ public class WalletView extends PanelView {
                         (CashFlowController.CashFlowType)typePicker.getSelectedItem());
                     
                     cashFlowController.refreshWalletView();
-                } catch (InvalidYearFormatException e) {
+                } catch (InvalidYearFormatException | UpdatingModelFailed e) {
                     ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
-                } catch (SerializerCannotRead e) {
-                    ErrorBox.show(this, "ERROR", e.getMessage());
                 }
             });
 
@@ -144,11 +149,11 @@ public class WalletView extends PanelView {
 
     private class CashFlowPanel extends JPanel {
 
-        public CashFlowPanel(CashFlowTableModel tm) {
+        public CashFlowPanel() {
             setLayout(new BorderLayout());
             setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
 
-            JTable table = new JTable(tm);
+            JTable table = new JTable(cashFlowTableModel);
             JScrollPane scrollPane = new JScrollPane(table);
             add(scrollPane);
         }
@@ -162,7 +167,7 @@ public class WalletView extends PanelView {
         JLabel sumExpenseLabel;
         JLabel selectedMonthSumLabel;
 
-        public SummaryPanel(Money onAccount, Money sumIncome, Money sumExpense, Money selectedMonthSum) {
+        public SummaryPanel() {
             setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
             setPreferredSize(new Dimension(MyWindowConstants.OPTIONS_PANEL_WIDTH, PANEL_HEIGHT));
             GridLayout layout = new GridLayout(4, 2);
@@ -170,22 +175,22 @@ public class WalletView extends PanelView {
 
             JLabel moneyOnAccountTitleLabel = new JLabel("Money on account:");
             add(moneyOnAccountTitleLabel);
-            moneyOnAcountLabel = new JLabel(onAccount.toString());
+            moneyOnAcountLabel = new JLabel(summarizedCashFlowModel.getMoneyOnAccount().toString());
             add(moneyOnAcountLabel);
 
             JLabel selectedMonthSumTitleLabel = new JLabel("Selected month sum:");
             add(selectedMonthSumTitleLabel);
-            selectedMonthSumLabel = new JLabel(selectedMonthSum.toString());
+            selectedMonthSumLabel = new JLabel(summarizedCashFlowModel.getSumThisMonth().toString());
             add(selectedMonthSumLabel);
 
             JLabel incomeTitleLable = new JLabel("Income:");
             add(incomeTitleLable);
-            sumIncomeLabel = new JLabel(sumIncome.toString());
+            sumIncomeLabel = new JLabel(summarizedCashFlowModel.getSumIncomes().toString());
             add(sumIncomeLabel);
 
             JLabel expenseTitleLable = new JLabel("Expenses:");
             add(expenseTitleLable);
-            sumExpenseLabel = new JLabel(sumExpense.toString());
+            sumExpenseLabel = new JLabel(summarizedCashFlowModel.getSumExpenses().toString());
             add(sumExpenseLabel);
         }
     }

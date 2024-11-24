@@ -13,7 +13,7 @@ import javax.swing.WindowConstants;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import financetracker.controllers.CashFlowController;
-import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
+import financetracker.exceptions.cashflowcontroller.BalanceCouldNotChangeException;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.views.base.FrameView;
@@ -50,7 +50,7 @@ public class ChangeMoneyView extends FrameView {
                 cashFlowController.changeMoneyOnAccount(date, amount, currency, reason);
                 cashFlowController.refreshWalletView();
                 cashFlowController.closeFrameView(this);
-            } catch (InvalidAmountException | InvalidReasonException | BalanceCouldNotCahcngeException e) {
+            } catch (InvalidAmountException | InvalidReasonException | BalanceCouldNotChangeException e) {
                 ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
             } catch (Exception e) {
                 ErrorBox.show(this, "ERROR", e.getMessage());
