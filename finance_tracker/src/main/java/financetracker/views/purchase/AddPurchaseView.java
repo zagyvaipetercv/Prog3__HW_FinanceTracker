@@ -17,6 +17,7 @@ import financetracker.exceptions.category.CreatingCategoryFailedException;
 import financetracker.exceptions.purchase.CreatingPurchaseFailedException;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
 import financetracker.exceptions.purchase.InvalidTableCellException;
+import financetracker.exceptions.purchase.UpadtingPurchaseModelFailed;
 import financetracker.models.PurchasedItemTableModel;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
@@ -104,7 +105,7 @@ public class AddPurchaseView extends FrameView {
                 purchaseController.refreshPurchaseView();
                 purchaseController.closeFrameView(this);
             } catch (InvalidTableCellException | CreatingPurchaseFailedException | CategoryLookupFailedException
-                    | CreatingCategoryFailedException e) {
+                    | CreatingCategoryFailedException | UpadtingPurchaseModelFailed e) {
                 ErrorBox.show(this, e);
             }
         });

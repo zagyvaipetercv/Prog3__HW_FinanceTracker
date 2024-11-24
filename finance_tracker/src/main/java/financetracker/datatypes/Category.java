@@ -20,4 +20,13 @@ public class Category extends Model {
     public String toString() {
         return name;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!o.getClass().equals(Category.class)) {
+            return false;
+        }
+
+        return ((Category) o).getId() == getId();
+    }
 }

@@ -26,6 +26,7 @@ import financetracker.exceptions.purchase.DeletingPurchaseFailed;
 import financetracker.exceptions.purchase.EditingPurchaseFailed;
 import financetracker.exceptions.purchase.InvalidTableCellException;
 import financetracker.exceptions.purchase.ReadingPurchasesFailedException;
+import financetracker.exceptions.purchase.UpadtingPurchaseModelFailed;
 import financetracker.models.PurchaseListModel;
 import financetracker.models.PurchasedItemTableModel;
 import financetracker.views.base.FrameView;
@@ -92,7 +93,7 @@ public class PurchaseController extends Controller<Purchase> {
     }
 
     public void addPurchase(PurchasedItemTableModel pitm, LocalDate date) throws InvalidTableCellException,
-            CreatingPurchaseFailedException, CategoryLookupFailedException, CreatingCategoryFailedException {
+            CreatingPurchaseFailedException, CategoryLookupFailedException, CreatingCategoryFailedException, UpadtingPurchaseModelFailed {
         checkCells(pitm);
 
         List<BoughtItem> purchasedItems = pitm.getItems();
@@ -128,7 +129,7 @@ public class PurchaseController extends Controller<Purchase> {
 
     public void editPurchase(Purchase purchase, PurchasedItemTableModel pitm, LocalDate dateOfPurchase)
             throws InvalidTableCellException, CategoryLookupFailedException, CreatingCategoryFailedException,
-            EditingPurchaseFailed {
+            EditingPurchaseFailed, UpadtingPurchaseModelFailed {
         checkCells(pitm);
         List<BoughtItem> purchasedItems = pitm.getItems();
 
@@ -220,15 +221,16 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
-    private void upadteModel() {
+    private void upadteModel() throws UpadtingPurchaseModelFailed {
         try {
-            List<Purchase> purchases = modelSerializer.readAll();
+            List<Purchase> purchases = getPurchases();
             purchaseListModel = new PurchaseListModel(purchases);
-        } catch (SerializerCannotRead e) {
+        } catch (ReadingPurchasesFailedException e) {
+            throw new UpadtingPurchaseModelFailed("Updating purchase model failed due to an IO Error");
         }
     }
 
-    public void deletePurchase(Purchase purchase) throws DeletingPurchaseFailed {
+    public void deletePurchase(Purchase purchase) throws DeletingPurchaseFailed, UpadtingPurchaseModelFailed {
         try {
             cashFlowController.deleteCashFlow(purchase.getCashFlow());
             modelSerializer.removeData(purchase.getId());

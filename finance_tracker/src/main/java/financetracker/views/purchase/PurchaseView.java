@@ -16,6 +16,7 @@ import javax.swing.SwingConstants;
 import financetracker.controllers.PurchaseController;
 import financetracker.datatypes.Purchase;
 import financetracker.exceptions.purchase.DeletingPurchaseFailed;
+import financetracker.exceptions.purchase.UpadtingPurchaseModelFailed;
 import financetracker.models.PurchaseListModel;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
@@ -61,7 +62,7 @@ public class PurchaseView extends PanelView {
                     try {
                         purchaseController.deletePurchase(purchasesList.getSelectedValue());
                         purchaseController.refreshPurchaseView();
-                    } catch (DeletingPurchaseFailed e) {
+                    } catch (DeletingPurchaseFailed | UpadtingPurchaseModelFailed e) {
                         ErrorBox.show(this, e);
                     }
                 });
