@@ -19,7 +19,7 @@ import financetracker.windowing.ErrorBox;
 public class SetMoneyView extends FrameView {
     public SetMoneyView(CashFlowController cashFlowController) {
         // Setup Window
-        setTitle("Finance Tracker - Set Money");
+        setTitle("Set Money");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         // Define Components

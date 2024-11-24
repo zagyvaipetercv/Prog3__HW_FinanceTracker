@@ -2,17 +2,27 @@ package financetracker.datatypes;
 
 import java.io.Serializable;
 
-public class BoughtItem implements Serializable {
+public class PurchasedItem implements Serializable {
+    private Purchase purchase;
     private Category category;
     private String name;
     private Money pricePerUnit;
     private double amount;
 
-    public BoughtItem(Category category, String name, Money pricePerUnit, double amount) {
+    public PurchasedItem(Purchase purchase, Category category, String name, Money pricePerUnit, double amount) {
+        this.purchase = purchase;
         this.category = category;
         this.name = name;
         this.pricePerUnit = pricePerUnit;
         this.amount = amount;
+    }
+
+    public Purchase getPurchase() {
+        return purchase;
+    }
+
+    public void setPurchase(Purchase purchase) {
+        this.purchase = purchase;
     }
 
     public Category getCategory() {
@@ -57,4 +67,5 @@ public class BoughtItem implements Serializable {
     public void setSumPrice(Money sumPrice) {
         this.pricePerUnit = new Money(sumPrice.getAmount() / amount, sumPrice.getCurrency());
     }
+
 }

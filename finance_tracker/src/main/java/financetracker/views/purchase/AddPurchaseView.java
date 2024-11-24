@@ -39,7 +39,7 @@ public class AddPurchaseView extends FrameView {
         this.purchaseController = purchaseController;
         pitm = new PurchasedItemTableModel();
 
-        setTitle("Finance Tracker - Add Purchase");
+        setTitle("Add Purchase");
 
         initComponents();
         addButtonListeners();

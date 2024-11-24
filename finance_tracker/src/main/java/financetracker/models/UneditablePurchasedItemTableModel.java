@@ -2,11 +2,11 @@ package financetracker.models;
 
 import java.util.List;
 
-import financetracker.datatypes.BoughtItem;
+import financetracker.datatypes.PurchasedItem;
 
 public class UneditablePurchasedItemTableModel extends PurchasedItemTableModel {
 
-    public UneditablePurchasedItemTableModel(List<BoughtItem> itemList) {
+    public UneditablePurchasedItemTableModel(List<PurchasedItem> itemList) {
         super(itemList);
     }
 

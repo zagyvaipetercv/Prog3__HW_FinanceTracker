@@ -42,7 +42,7 @@ public class EditSelectedDebtView extends FrameView {
         this.debt = debt;
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Finance Tracker - Edit Debt - " + debt.getId());
+        setTitle("Edit Debt - " + debt.getId());
 
         initComponents();
         setDefaultValues();

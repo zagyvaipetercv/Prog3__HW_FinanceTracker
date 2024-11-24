@@ -1,5 +1,6 @@
 package financetracker.controllers;
 
+import java.security.cert.CertPathValidatorException.Reason;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import financetracker.datatypes.Money;
 import financetracker.datatypes.User;
 import financetracker.exceptions.cashflowcontroller.BalanceCouldNotCahcngeException;
 import financetracker.exceptions.cashflowcontroller.DeletingCashFlowFailed;
+import financetracker.exceptions.cashflowcontroller.EditingCashFlowFailed;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
@@ -290,6 +292,18 @@ public class CashFlowController extends Controller<CashFlow> {
             modelSerializer.removeData(cashFlow.getId());
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
             throw new DeletingCashFlowFailed("Deleting Cashflow failed", cashFlow);
+        }
+    }
+
+    public void editCashFlow(CashFlow cashFlow, Money money, String reason, LocalDate date) throws EditingCashFlowFailed {
+        cashFlow.setDate(date);
+        cashFlow.setMoney(money);
+        cashFlow.setReason(reason);
+
+        try {
+            modelSerializer.changeData(cashFlow);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new EditingCashFlowFailed("Cashflow could not change due to an IO Error", cashFlow);
         }
     }
 }

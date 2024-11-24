@@ -37,7 +37,7 @@ public class AddNewDebtView extends FrameView {
         public AddNewDebtView(DebtController debtController) {
                 this.debtController = debtController;
                 setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                setTitle("Finance Tracker - Add Debt");
+                setTitle("Add Debt");
 
                 initComponents();
 

@@ -22,7 +22,7 @@ import financetracker.windowing.ErrorBox;
 public class ChangeMoneyView extends FrameView {
     public ChangeMoneyView(CashFlowController cashFlowController) {
         // Setup Window
-        setTitle("Finance Tracker - Change Money");
+        setTitle("Change Money");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 

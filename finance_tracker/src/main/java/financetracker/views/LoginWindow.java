@@ -21,7 +21,6 @@ import financetracker.windowing.ErrorBox;
 import javax.swing.GroupLayout.Alignment;
 
 public class LoginWindow extends FrameView {
-        private static final String TITLE = "Finance Tracker - Login";
         private static final Dimension DEFAULT_SIZE = new Dimension(300, 150);
 
         private JPanel panel;
@@ -41,7 +40,7 @@ public class LoginWindow extends FrameView {
         public LoginWindow(UserController userController) {
                 this.userController = userController;
 
-                setTitle(TITLE);
+                setTitle("Login");
                 setSize(DEFAULT_SIZE);
                 setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 setLocationRelativeTo(null); // Window starts in the middle

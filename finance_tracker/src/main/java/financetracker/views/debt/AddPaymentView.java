@@ -37,6 +37,8 @@ public class AddPaymentView extends FrameView {
                 this.debtController = debtController;
                 this.debt = debt;
 
+                setTitle("Add Payment");
+
                 setLayout(new BorderLayout());
 
                 initComponents();

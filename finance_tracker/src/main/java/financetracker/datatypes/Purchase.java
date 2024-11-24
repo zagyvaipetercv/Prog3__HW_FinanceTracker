@@ -9,10 +9,11 @@ import java.util.List;
 public class Purchase extends Model {
     private User user;
     private LocalDate dateOfPurchase;
-    private List<BoughtItem> boughtItems;
+    private List<PurchasedItem> boughtItems;
     private CashFlow cashFlow;
 
-    public Purchase(long id, User user, LocalDate dateOfPurchase, List<BoughtItem> boughtItems, CashFlow cashFlow) {
+    public Purchase(long id, User user, LocalDate dateOfPurchase, List<PurchasedItem> boughtItems,
+            CashFlow cashFlow) {
         super(id);
         this.user = user;
         this.dateOfPurchase = dateOfPurchase;
@@ -20,11 +21,11 @@ public class Purchase extends Model {
         this.cashFlow = cashFlow;
     }
 
-    public List<BoughtItem> getBoughtItems() {
+    public List<PurchasedItem> getBoughtItems() {
         return boughtItems;
     }
 
-    public List<BoughtItem> getBoughtItemsUnmodifiable() {
+    public List<PurchasedItem> getBoughtItemsUnmodifiable() {
         return Collections.unmodifiableList(boughtItems);
     }
 
@@ -44,13 +45,13 @@ public class Purchase extends Model {
         this.user = user;
     }
 
-    public void setBoughtItems(List<BoughtItem> boughtItems) {
+    public void setBoughtItems(List<PurchasedItem> boughtItems) {
         this.boughtItems = new ArrayList<>(boughtItems);
     }
 
     public Money getSumPrice() {
         double sum = 0.0;
-        for (BoughtItem boughtItem : boughtItems) {
+        for (PurchasedItem boughtItem : boughtItems) {
             sum += boughtItem.getSumPrice().getAmount();
         }
 
@@ -61,18 +62,18 @@ public class Purchase extends Model {
         return cashFlow;
     }
 
-    @Override 
+    @Override
     public String toString() {
         return getId() + " " + user.getName() + " " + dateOfPurchase.toString() + " " + getSumPrice().toString();
     }
 
-    @Override 
+    @Override
     public boolean equals(Object o) {
         if (o.getClass() != Purchase.class) {
             return false;
         }
 
-        return ((Purchase)o).getId() == getId();
+        return ((Purchase) o).getId() == getId();
     }
 
 }

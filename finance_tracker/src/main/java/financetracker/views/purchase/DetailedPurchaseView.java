@@ -14,7 +14,7 @@ public class DetailedPurchaseView extends FrameView {
     public DetailedPurchaseView(Purchase purchase) {
         this.pitm = new UneditablePurchasedItemTableModel(purchase.getBoughtItemsUnmodifiable());
 
-        setTitle("Finance Tracker - Purchase " + purchase.getId());
+        setTitle("Purchase " + purchase.getId());
 
         initCompnents();    
 

@@ -6,17 +6,17 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import financetracker.datatypes.BoughtItem;
+import financetracker.datatypes.PurchasedItem;
 import financetracker.datatypes.Category;
 import financetracker.datatypes.Money;
 
 public class PurchasedItemTableModel extends AbstractTableModel {
 
-    private List<BoughtItem> items;
+    private List<PurchasedItem> items;
 
     private static final String[] COLUMN_NAMES = { "Category", "Name", "Price/Unit", "Amount", "Sum Price" };
 
-    public PurchasedItemTableModel(List<BoughtItem> items) {
+    public PurchasedItemTableModel(List<PurchasedItem> items) {
         this.items = new ArrayList<>(items);
         addEmptyRow();
     }
@@ -26,7 +26,7 @@ public class PurchasedItemTableModel extends AbstractTableModel {
         addEmptyRow();
     }
 
-    public List<BoughtItem> getItems() {
+    public List<PurchasedItem> getItems() {
         return items.subList(0, items.size() - 1);
     }
 
@@ -47,7 +47,7 @@ public class PurchasedItemTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        BoughtItem item = items.get(rowIndex);
+        PurchasedItem item = items.get(rowIndex);
 
         switch (columnIndex) {
             case 0:
@@ -90,7 +90,7 @@ public class PurchasedItemTableModel extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object newValue, int rowIndex, int columnIndex) {
-        BoughtItem item = items.get(rowIndex);
+        PurchasedItem item = items.get(rowIndex);
 
         switch (columnIndex) {
             case 0:
@@ -125,7 +125,7 @@ public class PurchasedItemTableModel extends AbstractTableModel {
     }
 
     private boolean isRowFilled(int rowIndex) {
-        BoughtItem row = items.get(rowIndex);
+        PurchasedItem row = items.get(rowIndex);
         return (!row.getCategory().getName().isBlank() &&
                 !row.getName().isBlank() &&
                 row.getPricePerUnit().getAmount() != 0.0 &&
@@ -134,7 +134,7 @@ public class PurchasedItemTableModel extends AbstractTableModel {
     }
 
     protected void addEmptyRow() {
-        items.add(new BoughtItem(new Category(-1, ""), "", new Money(0, Currency.getInstance("HUF")), 0));
+        items.add(new PurchasedItem(null, new Category(-1, ""), "", new Money(0, Currency.getInstance("HUF")), 0));
     }
 
     public void deleteRow(int rowIndex) {

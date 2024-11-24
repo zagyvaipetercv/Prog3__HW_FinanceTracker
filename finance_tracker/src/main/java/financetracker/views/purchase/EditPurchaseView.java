@@ -44,7 +44,7 @@ public class EditPurchaseView extends FrameView {
         this.pitm = new PurchasedItemTableModel(purchase.getBoughtItems());
         this.purchase = purchase;
 
-        setTitle("Finance Tracker - Edit Purchase");
+        setTitle("Edit Purchase");
 
         initComponents();
         addButtonListeners();

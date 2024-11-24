@@ -7,14 +7,18 @@ import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import financetracker.controllers.PurchaseController;
 import financetracker.datatypes.Purchase;
+import financetracker.exceptions.FilteringFailed;
 import financetracker.exceptions.purchase.DeletingPurchaseFailed;
 import financetracker.exceptions.purchase.UpadtingPurchaseModelFailed;
 import financetracker.models.PurchaseListModel;
@@ -28,22 +32,29 @@ public class PurchaseView extends PanelView {
     private PurchaseController purchaseController;
     private PurchaseListModel plm;
 
-    public PurchaseView(PurchaseController purchaseController, PurchaseListModel purchaseListModel) {
+    private String idString;
+
+    public PurchaseView(PurchaseController purchaseController, PurchaseListModel purchaseListModel, String idString) {
         this.purchaseController = purchaseController;
         this.plm = purchaseListModel;
+        this.idString = idString;
 
-        initCompnents();
+        this.initCompnents();
     }
 
     private void initCompnents() {
         setLayout(new BorderLayout());
 
+        JPanel centerPanel = new JPanel(new BorderLayout());
+
         JList<Purchase> purchasesList = new JList<>(plm);
-
         purchasesList.setCellRenderer(new PurchaseListCellRenderer());
-
         JScrollPane scorllPane = new JScrollPane(purchasesList);
-        add(scorllPane, BorderLayout.CENTER);
+
+        centerPanel.add(scorllPane, BorderLayout.CENTER);
+        centerPanel.add(new FilterPanel(), BorderLayout.NORTH);
+
+        add(centerPanel, BorderLayout.CENTER);
 
         OptionsPanel optionsPanel = new OptionsPanel();
         add(optionsPanel, BorderLayout.EAST);
@@ -110,6 +121,59 @@ public class PurchaseView extends PanelView {
             }
 
             return result;
+        }
+    }
+
+    private class FilterPanel extends JPanel {
+        private JTextField idTextField;
+        private JButton filterButton;
+
+        public FilterPanel() {
+            this.initComponents();
+            this.addButtonListeners();
+        }
+
+        private void initComponents() {
+            setLayout(new BorderLayout());
+
+            JPanel panel = new JPanel();
+            GroupLayout layout = new GroupLayout(panel);
+            layout.setAutoCreateContainerGaps(true);
+            layout.setAutoCreateGaps(true);
+            panel.setLayout(layout);
+
+            add(panel);
+
+            JLabel idLabel = new JLabel("ID:");
+            idTextField = new JTextField(idString, 20);
+            filterButton = new JButton("Filter");
+
+            GroupLayout.SequentialGroup hGroup = layout.createSequentialGroup();
+            hGroup.addComponent(idLabel)
+                    .addComponent(idTextField)
+                    .addComponent(filterButton);
+
+            layout.setHorizontalGroup(hGroup);
+
+            GroupLayout.ParallelGroup vGroup = layout.createParallelGroup();
+            vGroup.addComponent(idLabel)
+                    .addComponent(idTextField)
+                    .addComponent(filterButton);
+
+            layout.setVerticalGroup(vGroup);
+        }
+
+        private void addButtonListeners() {
+            filterButton.addActionListener(
+                ae-> {
+                    try {
+                        purchaseController.filterPurchase(idTextField.getText());
+                        purchaseController.refreshPurchaseView();
+                    } catch (FilteringFailed | UpadtingPurchaseModelFailed e) {
+                        ErrorBox.show(this, e);
+                    }
+                }
+            );
         }
     }
 }

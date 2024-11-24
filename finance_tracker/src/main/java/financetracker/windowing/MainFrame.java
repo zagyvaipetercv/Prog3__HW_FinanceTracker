@@ -15,12 +15,12 @@ import financetracker.controllers.DebtController;
 import financetracker.controllers.PurchaseController;
 import financetracker.controllers.UserController;
 import financetracker.datatypes.User;
+import financetracker.exceptions.ChangingViewFailed;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.views.HomeView;
 import financetracker.views.base.PanelView;
 
 public class MainFrame extends JFrame {
-    private static final String TITLE = "Finance Tracker";
     private static final Dimension DEFAULT_SIZE = new Dimension(1280, 720);
     private static final Dimension MIN_SIZE = new Dimension(1000, 600);
 
@@ -43,9 +43,9 @@ public class MainFrame extends JFrame {
         try {
             userController = new UserController(this);
             cashFlowController = new CashFlowController(this);
+            categoryController = new CategoryController(this);
             debtController = new DebtController(this);
             purchaseController = new PurchaseController(this);
-            categoryController = new CategoryController(this);
         } catch (ControllerWasNotCreated e) {
             ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
             System.exit(-1);
@@ -54,7 +54,7 @@ public class MainFrame extends JFrame {
         subTitle = "Home";
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setTitle(TITLE + " - " + subTitle);
+        setTitle(subTitle);
         setLayout(new BorderLayout());
         setSize(DEFAULT_SIZE);
         setMinimumSize(MIN_SIZE);
@@ -72,7 +72,7 @@ public class MainFrame extends JFrame {
     @Override
     public void setTitle(String subTitle) {
         this.subTitle = subTitle;
-        super.setTitle(TITLE + " - " + subTitle);
+        super.setTitle(MyWindowConstants.TITLE + " - " + subTitle);
     }
 
     public void changeView(PanelView panelView) {
@@ -135,6 +135,17 @@ public class MainFrame extends JFrame {
                 mainFrame.setTitle("Purchases");
             });
             add(purchasesButton);
+
+            NavButton purchasedItemsButton = new NavButton("Purchased Items");
+            purchasedItemsButton.addActionListener(ae -> {
+                try {
+                    mainFrame.changeView(purchaseController.getPurchsedItemsView());
+                } catch (ChangingViewFailed e) {
+                    ErrorBox.show(this, e);
+                }
+                mainFrame.setTitle("Purchasd Items");
+            });
+            add(purchasedItemsButton);
         }
 
         private class NavButton extends JButton {
