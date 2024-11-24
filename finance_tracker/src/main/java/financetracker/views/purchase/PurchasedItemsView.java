@@ -16,9 +16,9 @@ import com.github.lgooddatepicker.components.DatePicker;
 
 import financetracker.controllers.PurchaseController;
 import financetracker.datatypes.Category;
-import financetracker.exceptions.ChangingViewFailed;
-import financetracker.exceptions.FilteringFailed;
-import financetracker.exceptions.purchase.UpdatingPurchasedItemModelFailed;
+import financetracker.exceptions.generic.ChangingViewFailed;
+import financetracker.exceptions.generic.FilteringFailed;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.models.DetailedPurchaseTableModel;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
@@ -75,13 +75,13 @@ public class PurchasedItemsView extends PanelView {
         private void addButtonListeners() {
             filterButton.addActionListener(
                     ae -> {
-                        try {
-                            purchaseController.filterPurchasedItems(startDatePicker.getDate(), endDatePicker.getDate(),
-                                    (String) categoryComboBox.getSelectedItem());
-                            purchaseController.refreshPurchasedItemsView();
-                        } catch (FilteringFailed | UpdatingPurchasedItemModelFailed | ChangingViewFailed e) {
-                            ErrorBox.show(this, e);
-                        }
+                            try {
+                                purchaseController.filterPurchasedItems(startDatePicker.getDate(), endDatePicker.getDate(),
+                                        (String) categoryComboBox.getSelectedItem());
+                                purchaseController.refreshPurchasedItemsView();
+                            } catch (FilteringFailed | UpdatingModelFailed | ChangingViewFailed e) {
+                                ErrorBox.show(this, e);
+                            }
                     });
         }
 

@@ -5,8 +5,8 @@ import java.util.List;
 
 import financetracker.datatypes.Category;
 import financetracker.exceptions.category.CategoryLookupFailedException;
-import financetracker.exceptions.category.CreatingCategoryFailedException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.exceptions.generic.CreatingRecordFailed;
 import financetracker.exceptions.modelserailizer.IdNotFoundException;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
@@ -76,12 +76,12 @@ public class CategoryController extends Controller<Category> {
         }
     }
 
-    public Category createCategory(String categoryName) throws CreatingCategoryFailedException {
+    public Category createCategory(String categoryName) throws CreatingRecordFailed {
         Category result = new Category(modelSerializer.getNextId(), categoryName.toUpperCase());
         try {
             modelSerializer.appendNewData(result);
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new CreatingCategoryFailedException("Failed to create new category due to IO Error", result);
+            throw new CreatingRecordFailed("Failed to create new category due to IO Error", result);
         }
 
         return result;

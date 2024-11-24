@@ -1,11 +1,9 @@
 package financetracker.views.debt;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.time.Month;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
@@ -25,8 +23,9 @@ import financetracker.controllers.DebtController;
 import financetracker.controllers.DebtController.DebtDirection;
 import financetracker.controllers.DebtController.DebtFulfilled;
 import financetracker.datatypes.Debt;
-import financetracker.exceptions.debtcontroller.DeletingDebtFailedException;
 import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
+import financetracker.exceptions.generic.DeletingRecordFailed;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.exceptions.models.NoItemWasSelected;
 import financetracker.exceptions.usercontroller.UserNotFound;
 import financetracker.models.DebtListModel;
@@ -38,10 +37,10 @@ import financetracker.windowing.OptionsPanel;
 public class DebtView extends PanelView {
     private JList<Debt> debts;
 
-    private DebtController controller;
+    private DebtController debtController;
 
     public DebtView(DebtController controller, DebtListModel dlm) {
-        this.controller = controller;
+        this.debtController = controller;
 
         setLayout(new BorderLayout());
         debts = new JList<>(dlm);
@@ -54,9 +53,7 @@ public class DebtView extends PanelView {
         OptionsPanel optionsPanel = new OptionsPanel();
         optionsPanel.addOptionButton(
                 "Add New Debt",
-                ae -> {
-                    controller.getAddNewDebtView().setVisible(true);
-                });
+                ae -> controller.getAddNewDebtView().setVisible(true));
         optionsPanel.addOptionButton(
                 "Edit Selected",
                 ae -> {
@@ -81,7 +78,8 @@ public class DebtView extends PanelView {
                 ae -> {
                     try {
                         controller.deleteDebt(debts.getSelectedValue());
-                    } catch (DeletingDebtFailedException e) {
+                        controller.refreshDebtView();
+                    } catch (DeletingRecordFailed | UpdatingModelFailed e) {
                         ErrorBox.show(this, e);
                     }
                 });
@@ -94,7 +92,6 @@ public class DebtView extends PanelView {
     }
 
     private class DebtListCellRenderer extends DefaultListCellRenderer {
-
 
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index,
@@ -111,7 +108,7 @@ public class DebtView extends PanelView {
             panel.add(idLabel);
 
             JLabel owesLabel;
-            DebtDirection direction = controller.getDirection(debt);
+            DebtDirection direction = debtController.getDirection(debt);
             switch (direction) {
                 case I_OWE:
                     owesLabel = new JLabel("You owe " + debt.getCreditor().getName());
@@ -163,7 +160,8 @@ public class DebtView extends PanelView {
                 fullfilledCheckBox.setForeground(list.getForeground());
             }
 
-            panel.setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
+            panel.setBorder(
+                    BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
 
             return panel;
         }
@@ -202,9 +200,9 @@ public class DebtView extends PanelView {
             JButton submitButton = new JButton("Filter");
             submitButton.addActionListener(ae -> {
                 try {
-                    controller.filterFor((DebtDirection) directionPicker.getSelectedItem(),
+                    debtController.filterFor((DebtDirection) directionPicker.getSelectedItem(),
                             (DebtFulfilled) fulfilledPicker.getSelectedItem(), userTextField.getText());
-                } catch (UserNotFound e) {
+                } catch (UserNotFound | UpdatingModelFailed e) {
                     ErrorBox.show(this, e);
                 }
             });

@@ -16,7 +16,8 @@ import com.github.lgooddatepicker.components.DatePicker;
 import financetracker.controllers.DebtController;
 import financetracker.controllers.DebtController.DebtDirection;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
-import financetracker.exceptions.debtcontroller.CreatingDebtFailedException;
+import financetracker.exceptions.generic.CreatingRecordFailed;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.exceptions.usercontroller.UserNotFound;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
@@ -50,12 +51,12 @@ public class AddNewDebtView extends FrameView {
                                                 amountTextField.getText(),
                                                 hasDeadLinechCheckBox.isSelected(),
                                                 deadlinePicker.getDate());
-
                                 debtController.refreshDebtView();
                                 debtController.closeFrameView(this);
-                        } catch (UserNotFound | InvalidAmountException | CreatingDebtFailedException e) {
-                                ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
+                        } catch (UserNotFound | InvalidAmountException | CreatingRecordFailed | UpdatingModelFailed e) {
+                                ErrorBox.show(this, e);
                         }
+
                 });
 
                 pack();

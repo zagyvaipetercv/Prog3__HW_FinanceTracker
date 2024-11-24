@@ -18,9 +18,9 @@ import javax.swing.SwingConstants;
 
 import financetracker.controllers.PurchaseController;
 import financetracker.datatypes.Purchase;
-import financetracker.exceptions.FilteringFailed;
-import financetracker.exceptions.purchase.DeletingPurchaseFailed;
-import financetracker.exceptions.purchase.UpadtingPurchaseModelFailed;
+import financetracker.exceptions.generic.DeletingRecordFailed;
+import financetracker.exceptions.generic.FilteringFailed;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.models.PurchaseListModel;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
@@ -73,7 +73,7 @@ public class PurchaseView extends PanelView {
                     try {
                         purchaseController.deletePurchase(purchasesList.getSelectedValue());
                         purchaseController.refreshPurchaseView();
-                    } catch (DeletingPurchaseFailed | UpadtingPurchaseModelFailed e) {
+                    } catch (DeletingRecordFailed | UpdatingModelFailed e) {
                         ErrorBox.show(this, e);
                     }
                 });
@@ -169,7 +169,7 @@ public class PurchaseView extends PanelView {
                     try {
                         purchaseController.filterPurchase(idTextField.getText());
                         purchaseController.refreshPurchaseView();
-                    } catch (FilteringFailed | UpadtingPurchaseModelFailed e) {
+                    } catch (FilteringFailed | UpdatingModelFailed e) {
                         ErrorBox.show(this, e);
                     }
                 }

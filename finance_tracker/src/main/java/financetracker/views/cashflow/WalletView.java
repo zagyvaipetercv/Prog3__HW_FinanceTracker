@@ -1,13 +1,9 @@
 package financetracker.views.cashflow;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.time.LocalDate;
 import java.time.Month;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
@@ -20,10 +16,9 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 
 import financetracker.controllers.CashFlowController;
-import financetracker.datatypes.Money;
+import financetracker.controllers.CashFlowController.CashFlowType;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.generic.UpdatingModelFailed;
-import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.MyWindowConstants;
@@ -33,20 +28,33 @@ import financetracker.models.SummarizedCashFlowModel;
 
 public class WalletView extends PanelView {
 
-
     private CashFlowController cashFlowController;
 
     private CashFlowTableModel cashFlowTableModel;
     private SummarizedCashFlowModel summarizedCashFlowModel;
 
+    private int year;
+    private Month month;
+    private CashFlowType cashFlowType;
+
     public WalletView(
             CashFlowController cashFlowController,
-            CashFlowTableModel cashFlowTableModel,
-            SummarizedCashFlowModel summarizedCashFlowModel) {
+            CashFlowTableModel cashFlowTableModel, SummarizedCashFlowModel summarizedCashFlowModel,
+            int year, Month month, CashFlowType cashFlowType) {
+
         this.cashFlowController = cashFlowController;
         this.cashFlowTableModel = cashFlowTableModel;
         this.summarizedCashFlowModel = summarizedCashFlowModel;
 
+        this.year = year;
+        this.month = month;
+        this.cashFlowType = cashFlowType;
+
+        initCompoents();
+
+    }
+
+    private void initCompoents() {
         setLayout(new BorderLayout());
 
         JPanel centerPanel = new JPanel(new BorderLayout());
@@ -58,18 +66,17 @@ public class WalletView extends PanelView {
         centerPanel.add(new FilterPanel(), BorderLayout.NORTH);
         centerPanel.add(new CashFlowPanel(), BorderLayout.CENTER);
         rightPanel.add(new SummaryPanel(), BorderLayout.NORTH);
-        
+
         OptionsPanel optionsPanel = new OptionsPanel();
         optionsPanel.addOptionButton(
-            "Change Money on account",
-            ae -> cashFlowController.getChangeMoneyView().setVisible(true));
+                "Change Money on account",
+                ae -> cashFlowController.getChangeMoneyView().setVisible(true));
 
         optionsPanel.addOptionButton(
-            "Set Money on account",
-            ae -> cashFlowController.getSetMoneyView().setVisible(true));
+                "Set Money on account",
+                ae -> cashFlowController.getSetMoneyView().setVisible(true));
 
         rightPanel.add(optionsPanel, BorderLayout.CENTER);
-
     }
 
     private class FilterPanel extends JPanel {
@@ -86,24 +93,24 @@ public class WalletView extends PanelView {
             JLabel typeLabel = new JLabel("Type:");
             JComboBox<CashFlowController.CashFlowType> typePicker = new JComboBox<>(
                     CashFlowController.CashFlowType.values());
-            typePicker.setSelectedItem(cashFlowController.getSelectedCashFlowType());
+            typePicker.setSelectedItem(cashFlowType);
 
             JLabel yearLabel = new JLabel("Year:");
             JTextField yearTextField = new JTextField(4);
-            yearTextField.setText(String.valueOf(cashFlowController.getSelectedYear()));
+            yearTextField.setText(String.valueOf(year));
 
             JLabel monthLabel = new JLabel("Month:");
             JComboBox<Month> monthPicker = new JComboBox<>(Month.values());
-            monthPicker.setSelectedItem(cashFlowController.getSelectedMonth());
+            monthPicker.setSelectedItem(month);
 
             JButton submitButton = new JButton("Filter");
             submitButton.addActionListener(ae -> {
                 try {
-                    cashFlowController.setFilterOptions(
-                        yearTextField.getText(), 
-                        (Month) monthPicker.getSelectedItem(),
-                        (CashFlowController.CashFlowType)typePicker.getSelectedItem());
-                    
+                    cashFlowController.filterFor(
+                            yearTextField.getText(),
+                            (Month) monthPicker.getSelectedItem(),
+                            (CashFlowController.CashFlowType) typePicker.getSelectedItem());
+
                     cashFlowController.refreshWalletView();
                 } catch (InvalidYearFormatException | UpdatingModelFailed e) {
                     ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
@@ -151,7 +158,8 @@ public class WalletView extends PanelView {
 
         public CashFlowPanel() {
             setLayout(new BorderLayout());
-            setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
+            setBorder(
+                    BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
 
             JTable table = new JTable(cashFlowTableModel);
             JScrollPane scrollPane = new JScrollPane(table);
@@ -168,7 +176,8 @@ public class WalletView extends PanelView {
         JLabel selectedMonthSumLabel;
 
         public SummaryPanel() {
-            setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
+            setBorder(
+                    BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
             setPreferredSize(new Dimension(MyWindowConstants.OPTIONS_PANEL_WIDTH, PANEL_HEIGHT));
             GridLayout layout = new GridLayout(4, 2);
             setLayout(layout);

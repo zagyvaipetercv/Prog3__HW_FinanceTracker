@@ -10,4 +10,8 @@ public class PurchaseListModel extends DefaultListModel<Purchase> {
     public PurchaseListModel(List<Purchase> purchases) {
         addAll(purchases);
     }
+
+    public PurchaseListModel() {
+        super();
+    }
 }

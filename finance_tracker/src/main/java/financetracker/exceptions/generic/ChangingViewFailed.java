@@ -1,4 +1,6 @@
-package financetracker.exceptions;
+package financetracker.exceptions.generic;
+
+import financetracker.exceptions.ErrorBoxException;
 
 public class ChangingViewFailed extends ErrorBoxException {
 

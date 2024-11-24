@@ -19,8 +19,10 @@ import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.exceptions.debtcontroller.DeptPaymentFailedException;
 import financetracker.exceptions.debtcontroller.PaymentIsGreaterThanRemaining;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
+import financetracker.windowing.WarningBox;
 
 public class AddPaymentView extends FrameView {
         private DebtController debtController;
@@ -46,11 +48,17 @@ public class AddPaymentView extends FrameView {
                 repayButton.addActionListener(ae -> {
                         try {
                                 debtController.repayDebt(debt, amountTextField.getText(), datePicker.getDate());
-                                debtController.refreshDebtView();
-                                debtController.closeFrameView(this);
-                        } catch (InvalidAmountException | DeptPaymentFailedException
-                                        | PaymentIsGreaterThanRemaining e) {
+                        } catch (InvalidAmountException | DeptPaymentFailedException e) {
                                 ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
+                        } catch (PaymentIsGreaterThanRemaining e) {
+                                WarningBox.show(this, e);
+                        } finally {
+                                debtController.closeFrameView(this);
+                                try {
+                                        debtController.refreshDebtView();
+                                } catch (UpdatingModelFailed e) {
+                                        ErrorBox.show(this, e);
+                                }
                         }
                 });
 
@@ -59,7 +67,7 @@ public class AddPaymentView extends FrameView {
                                 debtController.repayAll(debt, datePicker.getDate());
                                 debtController.refreshDebtView();
                                 debtController.closeFrameView(this);
-                        } catch (DeptPaymentFailedException e) {
+                        } catch (DeptPaymentFailedException | UpdatingModelFailed e) {
                                 ErrorBox.show(this, e);
                         }
                 });

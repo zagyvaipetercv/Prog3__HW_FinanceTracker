@@ -9,11 +9,11 @@ import java.util.List;
 import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Money;
 import financetracker.datatypes.User;
-import financetracker.exceptions.cashflowcontroller.BalanceCouldNotChangeException;
-import financetracker.exceptions.cashflowcontroller.DeletingCashFlowFailed;
-import financetracker.exceptions.cashflowcontroller.EditingCashFlowFailed;
 import financetracker.exceptions.cashflowcontroller.InvalidYearFormatException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.exceptions.generic.CreatingRecordFailed;
+import financetracker.exceptions.generic.DeletingRecordFailed;
+import financetracker.exceptions.generic.EditingRecordFailed;
 import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
@@ -37,11 +37,14 @@ public class CashFlowController extends Controller<CashFlow> {
     private int selectedYear;
     private Month selectedMonth;
 
+    // MODELS
     private CashFlowTableModel cashFlowTableModel;
     private SummarizedCashFlowModel summarizedCashFlowModel;
 
+    // USER
     private User userLogedIn;
 
+    // CONSTRUCTORS
     public CashFlowController(MainFrame mainFrame) throws ControllerWasNotCreated {
         this(DEAFULT_SAVE_PATH, mainFrame);
     }
@@ -52,19 +55,20 @@ public class CashFlowController extends Controller<CashFlow> {
 
         userLogedIn = mainFrame.getUserLogedIn();
 
-        try {
-            LocalDate defaultDate = LocalDate.now();
-            selectedYear = defaultDate.getYear();
-            selectedMonth = defaultDate.getMonth();
-            selectedCashFlowType = CashFlowType.ALL;
-
-            updateModels(selectedYear, selectedMonth, selectedCashFlowType);
-        } catch (UpdatingModelFailed e) {
-            throw new ControllerWasNotCreated("Creating cashflow faield due to model update failiure", CashFlowController.class);
-        }
+        LocalDate defaultDate = LocalDate.now();
+        selectedYear = defaultDate.getYear();
+        selectedMonth = defaultDate.getMonth();
+        selectedCashFlowType = CashFlowType.ALL;
     }
 
     // VIEW GETTERS
+    public PanelView getWalletView() throws UpdatingModelFailed {
+        updateModels(selectedYear, selectedMonth, selectedCashFlowType);
+        return new WalletView(this,
+                cashFlowTableModel, summarizedCashFlowModel,
+                selectedYear, selectedMonth, selectedCashFlowType);
+    }
+
     public FrameView getChangeMoneyView() {
         return new ChangeMoneyView(this);
     }
@@ -73,19 +77,14 @@ public class CashFlowController extends Controller<CashFlow> {
         return new SetMoneyView(this);
     }
 
-    public PanelView getWalletView() throws UpdatingModelFailed {
-        updateModels(selectedYear, selectedMonth, selectedCashFlowType);
-        return new WalletView(this, cashFlowTableModel, summarizedCashFlowModel);
-    }
-
     // VIEW REFRESHER
     public void refreshWalletView() throws UpdatingModelFailed {
         mainFrame.changeView(getWalletView());
     }
 
-    // DATA MODIFIERS
+    // ACTIONS
     public void changeMoneyOnAccount(LocalDate date, String amountString, Currency currency, String reason)
-            throws InvalidReasonException, BalanceCouldNotChangeException, InvalidAmountException, UpdatingModelFailed {
+            throws InvalidReasonException, CreatingRecordFailed, InvalidAmountException, UpdatingModelFailed {
 
         double amount = Money.parseAmount(amountString);
         addNewCashFlow(userLogedIn, date, amount, currency, reason);
@@ -93,7 +92,7 @@ public class CashFlowController extends Controller<CashFlow> {
     }
 
     public CashFlow addNewCashFlow(User user, LocalDate date, double amount, Currency currency, String reason)
-            throws InvalidReasonException, BalanceCouldNotChangeException {
+            throws InvalidReasonException, CreatingRecordFailed {
         if (reasonIsInvalid(reason)) {
             throw new InvalidReasonException(reason, "Reason can't be blank");
         }
@@ -110,41 +109,56 @@ public class CashFlowController extends Controller<CashFlow> {
             modelSerializer.appendNewData(cashFlow); // Write data
 
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new BalanceCouldNotChangeException("Couldn't add money to balance");
+            throw new CreatingRecordFailed("Failed to create new cashflow record", cashFlow);
         }
         return cashFlow;
     }
 
     public void setMoneyOnAccount(String newAmountString, Currency currency, String reason)
-            throws InvalidAmountException, BalanceCouldNotChangeException, InvalidReasonException, UpdatingModelFailed {
+            throws InvalidAmountException, CreatingRecordFailed, InvalidReasonException, UpdatingModelFailed {
         double newAmount = Money.parseAmount(newAmountString);
         LocalDate today = LocalDate.now();
         double currentAmount;
         try {
             currentAmount = getMoneyOnAccount().getAmount();
         } catch (SerializerCannotRead e) {
-            throw new BalanceCouldNotChangeException("Reading money on account failed due to an IO Error");
+            throw new CreatingRecordFailed("Setting money on account failed due to reading current amount failiure",
+                    null);
         }
         double difference = newAmount - currentAmount;
-        changeMoneyOnAccount(today, String.valueOf(difference), currency, reason);
+        addNewCashFlow(userLogedIn, today, difference, currency, reason);
     }
 
-    public void addListOfCashFlow(List<CashFlow> cashFlowList) throws BalanceCouldNotChangeException {
+    public void deleteCashFlow(CashFlow cashFlow) throws DeletingRecordFailed {
         try {
-            modelSerializer.appendNewDatas(cashFlowList);
+            modelSerializer.removeData(cashFlow.getId());
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new BalanceCouldNotChangeException("Couldn't add money to balance due to an IO Error");
+            throw new DeletingRecordFailed("Deleting Cashflow failed", cashFlow);
         }
     }
 
-    // SETTERS
-    public void setFilterOptions(String yearString, Month month, CashFlowType type)
-            throws InvalidYearFormatException {
-        setFilterOptions(parseYear(yearString), month, type);
+    public void editCashFlow(CashFlow cashFlow, Money money, String reason, LocalDate date)
+            throws EditingRecordFailed {
+        cashFlow.setDate(date);
+        cashFlow.setMoney(money);
+        cashFlow.setReason(reason);
+
+        try {
+            modelSerializer.changeData(cashFlow);
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new EditingRecordFailed("Cashflow could not change due to an IO Error", cashFlow);
+        }
     }
 
-    public void setFilterOptions(int year, Month month, CashFlowType type) {
+    // FILTERING
+    public void filterFor(String yearString, Month month, CashFlowType type)
+            throws InvalidYearFormatException, UpdatingModelFailed {
+        int year = parseYear(yearString);
+        updateModels(year, month, type);
 
+        selectedYear = year;
+        selectedMonth = month;
+        selectedCashFlowType = type;
     }
 
     // GETTERS
@@ -170,7 +184,7 @@ public class CashFlowController extends Controller<CashFlow> {
         return new Money(sum, Currency.getInstance("HUF"));
     }
 
-    // CACHED DATA
+    // MODEL UPDATE
     private void updateModels(int year, Month month, CashFlowType type) throws UpdatingModelFailed {
         List<CashFlow> cashFlows;
         try {
@@ -238,26 +252,5 @@ public class CashFlowController extends Controller<CashFlow> {
         ALL,
         INCOME,
         EXPENSE
-    }
-
-    public void deleteCashFlow(CashFlow cashFlow) throws DeletingCashFlowFailed {
-        try {
-            modelSerializer.removeData(cashFlow.getId());
-        } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new DeletingCashFlowFailed("Deleting Cashflow failed", cashFlow);
-        }
-    }
-
-    public void editCashFlow(CashFlow cashFlow, Money money, String reason, LocalDate date)
-            throws EditingCashFlowFailed {
-        cashFlow.setDate(date);
-        cashFlow.setMoney(money);
-        cashFlow.setReason(reason);
-
-        try {
-            modelSerializer.changeData(cashFlow);
-        } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new EditingCashFlowFailed("Cashflow could not change due to an IO Error", cashFlow);
-        }
     }
 }

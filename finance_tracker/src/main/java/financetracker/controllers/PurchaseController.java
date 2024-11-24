@@ -12,26 +12,21 @@ import financetracker.datatypes.Category;
 import financetracker.datatypes.Money;
 import financetracker.datatypes.Purchase;
 import financetracker.datatypes.User;
-import financetracker.exceptions.ChangingViewFailed;
-import financetracker.exceptions.FilteringFailed;
-import financetracker.exceptions.cashflowcontroller.BalanceCouldNotChangeException;
-import financetracker.exceptions.cashflowcontroller.DeletingCashFlowFailed;
-import financetracker.exceptions.cashflowcontroller.EditingCashFlowFailed;
 import financetracker.exceptions.cashflowcontroller.InvalidReasonException;
 import financetracker.exceptions.category.CategoryLookupFailedException;
-import financetracker.exceptions.category.CreatingCategoryFailedException;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.exceptions.generic.ChangingViewFailed;
+import financetracker.exceptions.generic.CreatingRecordFailed;
+import financetracker.exceptions.generic.DeletingRecordFailed;
+import financetracker.exceptions.generic.EditingRecordFailed;
+import financetracker.exceptions.generic.FilteringFailed;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.exceptions.modelserailizer.IdNotFoundException;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
-import financetracker.exceptions.purchase.CreatingPurchaseFailedException;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
-import financetracker.exceptions.purchase.DeletingPurchaseFailed;
-import financetracker.exceptions.purchase.EditingPurchaseFailed;
 import financetracker.exceptions.purchase.InvalidTableCellException;
 import financetracker.exceptions.purchase.ReadingPurchasesFailedException;
-import financetracker.exceptions.purchase.UpadtingPurchaseModelFailed;
-import financetracker.exceptions.purchase.UpdatingPurchasedItemModelFailed;
 import financetracker.models.DetailedPurchaseTableModel;
 import financetracker.models.PurchaseListModel;
 import financetracker.models.PurchasedItemTableModel;
@@ -48,21 +43,26 @@ public class PurchaseController extends Controller<Purchase> {
 
     private static final String DEFAULT_SAVE_PATH = "saves/purchases.dat";
 
+    // USED CONTROLLERS
     private CashFlowController cashFlowController;
     private CategoryController categoryController;
 
+    // MODELS
     private PurchaseListModel purchaseListModel;
-    private DetailedPurchaseTableModel purchasedItemsModel;
+    private DetailedPurchaseTableModel purchasedItemsTableModel;
 
+    // USER
     private User userLogedIn;
 
     // FILTER OPTIONS
-    private String filterID;
+    private boolean filterForID;
+    private long filterID;
 
     private LocalDate startDate;
     private LocalDate endDate;
     private Category category;
 
+    // CONSTRUCTORS
     public PurchaseController(MainFrame mainFrame) throws ControllerWasNotCreated {
         this(DEFAULT_SAVE_PATH, mainFrame);
     }
@@ -81,27 +81,26 @@ public class PurchaseController extends Controller<Purchase> {
         endDate = LocalDate.of(today.getYear(), today.getMonth(), daysInThisMonth);
         category = null;
 
-        try {
-            List<Purchase> usersPurchases = getPurchases();
-            purchaseListModel = new PurchaseListModel(usersPurchases);
-            purchasedItemsModel = new DetailedPurchaseTableModel();
-            updatePurchasedItemModel(startDate, endDate);
-        } catch (ReadingPurchasesFailedException e) {
-            throw new ControllerWasNotCreated("Purchases could not be initalized", PurchaseController.class);
-        } catch (UpdatingPurchasedItemModelFailed e) {
-            throw new ControllerWasNotCreated("Purchased Itmes could not be initalized", PurchaseController.class);
+        filterForID = false;
+        filterID = 0;
+    }
+
+    // VIEW GETTERS
+    public PanelView getPurchaseView() throws UpdatingModelFailed {
+        if (filterForID) {
+            updatePurchaseModel(filterID);
+        } else {
+            updatePurchaseModel();
         }
-
+        return new PurchaseView(this, purchaseListModel, (!filterForID ? "" : Long.toString(filterID)));
     }
 
-    public PanelView getPurchaseView() {
-        return new PurchaseView(this, purchaseListModel, filterID);
-    }
+    public PanelView getPurchsedItemsView() throws UpdatingModelFailed, ChangingViewFailed {
+        updatePurchasedItemModel(startDate, endDate, category);
 
-    public PanelView getPurchsedItemsView() throws ChangingViewFailed {
         try {
             return new PurchasedItemsView(this,
-                    purchasedItemsModel,
+                    purchasedItemsTableModel,
                     startDate, endDate, category,
                     categoryController.getCategoriesNames());
         } catch (CategoryLookupFailedException e) {
@@ -121,14 +120,15 @@ public class PurchaseController extends Controller<Purchase> {
         return new DetailedPurchaseView(purchase);
     }
 
-    public void refreshPurchaseView() {
+    public void refreshPurchaseView() throws UpdatingModelFailed {
         mainFrame.changeView(getPurchaseView());
     }
 
-    public void refreshPurchasedItemsView() throws ChangingViewFailed {
+    public void refreshPurchasedItemsView() throws ChangingViewFailed, UpdatingModelFailed {
         mainFrame.changeView(getPurchsedItemsView());
     }
 
+    // ACTIONS
     public void deleteRow(PurchasedItemTableModel pitm, int rowIndex) throws DeleteUnfinishedEmptyRowException {
         if (rowIndex == pitm.getRowCount() - 1) {
             throw new DeleteUnfinishedEmptyRowException("Can't delete unfinished empty row");
@@ -138,17 +138,20 @@ public class PurchaseController extends Controller<Purchase> {
     }
 
     public void addPurchase(PurchasedItemTableModel pitm, LocalDate date) throws InvalidTableCellException,
-            CreatingPurchaseFailedException, CategoryLookupFailedException, CreatingCategoryFailedException,
-            UpadtingPurchaseModelFailed {
+            CreatingRecordFailed, CategoryLookupFailedException {
         checkCells(pitm);
 
         List<PurchasedItem> purchasedItems = pitm.getItems();
 
         if (purchasedItems.isEmpty()) {
-            throw new CreatingPurchaseFailedException("List has no items", null);
+            throw new CreatingRecordFailed("Creating purchase failed - There is no purchased item in the list", null);
         }
 
-        lookupCategories(purchasedItems);
+        try {
+            lookupCategories(purchasedItems);
+        } catch (CategoryLookupFailedException | CreatingRecordFailed e) {
+            throw new CreatingRecordFailed("Creating purchase faield due to categroy lookup Error", null);
+        }
 
         double sumPrice = 0.0;
         for (PurchasedItem purchasedItem : purchasedItems) {
@@ -158,7 +161,7 @@ public class PurchaseController extends Controller<Purchase> {
         Purchase purchase = null;
         try {
             long purchaseId = modelSerializer.getNextId();
-            CashFlow cashFlow = cashFlowController.addNewCashFlow(userLogedIn, date, sumPrice,
+            CashFlow cashFlow = cashFlowController.addNewCashFlow(userLogedIn, date, -sumPrice,
                     Currency.getInstance("HUF"), "Purchase: " + purchaseId);
 
             purchase = new Purchase(purchaseId, mainFrame.getUserLogedIn(), date, purchasedItems,
@@ -169,25 +172,28 @@ public class PurchaseController extends Controller<Purchase> {
             }
 
             modelSerializer.appendNewData(purchase);
-        } catch (InvalidReasonException | BalanceCouldNotChangeException e) {
-            throw new CreatingPurchaseFailedException("Cashflow for purcahse could not register", null);
+        } catch (InvalidReasonException | CreatingRecordFailed e) {
+            throw new CreatingRecordFailed("Creating purchase failed - Cashflow for purchase could not register",
+                    purchase);
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new CreatingPurchaseFailedException("Creating purchase failed due to IO Error", purchase);
+            throw new CreatingRecordFailed("Creating purchase failed due to IO Error", purchase);
         }
-        updatePurchaseModel();
     }
 
     public void editPurchase(Purchase purchase, PurchasedItemTableModel pitm, LocalDate dateOfPurchase)
-            throws InvalidTableCellException, CategoryLookupFailedException, CreatingCategoryFailedException,
-            EditingPurchaseFailed, UpadtingPurchaseModelFailed {
+            throws InvalidTableCellException, EditingRecordFailed {
         checkCells(pitm);
         List<PurchasedItem> purchasedItems = pitm.getItems();
 
         if (purchasedItems.isEmpty()) {
-            throw new EditingPurchaseFailed("Purchase has no items", purchase);
+            throw new EditingRecordFailed("Edting purchase failed - Purchase has no items", purchase);
         }
 
-        lookupCategories(purchasedItems);
+        try {
+            lookupCategories(purchasedItems);
+        } catch (CategoryLookupFailedException | CreatingRecordFailed e) {
+            throw new EditingRecordFailed("Editing purchase faield due to categroy lookup Error", purchase);
+        }
 
         purchase.setBoughtItems(pitm.getItems());
         purchase.setDateOfPurchase(dateOfPurchase);
@@ -196,24 +202,36 @@ public class PurchaseController extends Controller<Purchase> {
             item.setPurchase(purchase);
         }
 
+        Money sumPrice = new Money(-purchase.getSumPrice().getAmount(), Currency.getInstance("HUF"));
+
         try {
-            cashFlowController.editCashFlow(purchase.getCashFlow(), purchase.getSumPrice(),
+            cashFlowController.editCashFlow(purchase.getCashFlow(), sumPrice,
                     purchase.getCashFlow().getReason(), dateOfPurchase);
-        } catch (EditingCashFlowFailed e) {
-            throw new EditingPurchaseFailed("Editing purchse failed due to cahsflow edit failiure", purchase);
+        } catch (EditingRecordFailed e) {
+            throw new EditingRecordFailed("Editing purchse failed due to cahsflow edit failiure", purchase);
         }
 
         try {
             modelSerializer.changeData(purchase);
         } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new EditingPurchaseFailed("Editing purchase failed due to an IO Error", purchase);
+            throw new EditingRecordFailed("Editing purchase failed due to an IO Error", purchase);
         }
-
-        updatePurchaseModel();
     }
 
+    public void deletePurchase(Purchase purchase) throws DeletingRecordFailed {
+        try {
+            cashFlowController.deleteCashFlow(purchase.getCashFlow());
+            modelSerializer.removeData(purchase.getId());
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new DeletingRecordFailed("Deleting purchase failed due to an IO Error", purchase);
+        } catch (DeletingRecordFailed e) {
+            throw new DeletingRecordFailed("Deleting purcahse failed due to CashFlow error", purchase);
+        }
+    }
+
+    // HELPERS
     private void lookupCategories(List<PurchasedItem> purchasedItems)
-            throws CategoryLookupFailedException, CreatingCategoryFailedException {
+            throws CategoryLookupFailedException, CreatingRecordFailed {
         for (PurchasedItem boughtItem : purchasedItems) { // Set the category for items
             Category categoryForItem;
             try { // Try adding category form existing ones
@@ -226,6 +244,24 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
+    private List<Purchase> getUsersPurchases() throws ReadingPurchasesFailedException {
+        List<Purchase> result = new ArrayList<>();
+
+        try {
+            List<Purchase> purchases = modelSerializer.readAll();
+            for (Purchase purchase : purchases) {
+                if (purchase.getUser().equals(userLogedIn)) {
+                    result.add(purchase);
+                }
+            }
+
+            return result;
+        } catch (SerializerCannotRead e) {
+            throw new ReadingPurchasesFailedException("Failed to read purchases");
+        }
+    }
+
+    // VALIDATORS
     private void checkCells(PurchasedItemTableModel pitm) throws InvalidTableCellException {
         for (int row = 0; row < pitm.getRowCount() - 1; row++) { // Last row is empty row -> don need to check it
             for (int column = 0; column < pitm.getColumnCount(); column++) {
@@ -254,26 +290,10 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
-    private List<Purchase> getPurchases() throws ReadingPurchasesFailedException {
-        List<Purchase> result = new ArrayList<>();
-
+    // MODEL UPDATE
+    private void updatePurchaseModel(long id) throws UpdatingModelFailed {
         try {
-            List<Purchase> purchases = modelSerializer.readAll();
-            for (Purchase purchase : purchases) {
-                if (purchase.getUser().equals(userLogedIn)) {
-                    result.add(purchase);
-                }
-            }
-
-            return result;
-        } catch (SerializerCannotRead e) {
-            throw new ReadingPurchasesFailedException("Failed to read purchases");
-        }
-    }
-
-    private void updatePurchaseModel(long id) throws UpadtingPurchaseModelFailed {
-        try {
-            List<Purchase> purchases = getPurchases();
+            List<Purchase> purchases = getUsersPurchases();
             List<Purchase> result = new ArrayList<>();
 
             for (Purchase purchase : purchases) {
@@ -283,23 +303,23 @@ public class PurchaseController extends Controller<Purchase> {
             }
             purchaseListModel = new PurchaseListModel(result);
         } catch (ReadingPurchasesFailedException e) {
-            throw new UpadtingPurchaseModelFailed("Updating purchase model failed due to an IO Error");
+            throw new UpdatingModelFailed("Updating purchase model failed due to an IO Error");
         }
     }
 
-    private void updatePurchaseModel() throws UpadtingPurchaseModelFailed {
+    private void updatePurchaseModel() throws UpdatingModelFailed {
         try {
-            List<Purchase> purchases = getPurchases();
+            List<Purchase> purchases = getUsersPurchases();
             purchaseListModel = new PurchaseListModel(purchases);
         } catch (ReadingPurchasesFailedException e) {
-            throw new UpadtingPurchaseModelFailed("Updating purchase model failed due to an IO Error");
+            throw new UpdatingModelFailed("Updating purchase model failed due to an IO Error");
         }
     }
 
     private void updatePurchasedItemModel(LocalDate startDate, LocalDate endDate, Category category)
-            throws UpdatingPurchasedItemModelFailed {
+            throws UpdatingModelFailed {
         try {
-            List<Purchase> purchases = getPurchases();
+            List<Purchase> purchases = getUsersPurchases();
             List<PurchasedItem> purchasedItems = new ArrayList<>();
             for (Purchase purchase : purchases) {
                 if (purchase.getDateOfPurchase().isBefore(startDate) || purchase.getDateOfPurchase().isAfter(endDate)) {
@@ -315,32 +335,15 @@ public class PurchaseController extends Controller<Purchase> {
                 }
             }
 
-            purchasedItemsModel = new DetailedPurchaseTableModel(purchasedItems);
+            purchasedItemsTableModel = new DetailedPurchaseTableModel(purchasedItems);
         } catch (ReadingPurchasesFailedException e) {
-            throw new UpdatingPurchasedItemModelFailed("Updating purchased item model faield due to an IO Error");
+            throw new UpdatingModelFailed("Updating purchased item model faield due to an IO Error");
         }
     }
 
-    private void updatePurchasedItemModel(LocalDate startDate, LocalDate endDate)
-            throws UpdatingPurchasedItemModelFailed {
-        updatePurchasedItemModel(startDate, endDate, null);
-    }
-
-    public void deletePurchase(Purchase purchase) throws DeletingPurchaseFailed, UpadtingPurchaseModelFailed {
-        try {
-            cashFlowController.deleteCashFlow(purchase.getCashFlow());
-            modelSerializer.removeData(purchase.getId());
-        } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new DeletingPurchaseFailed("Deleting purchase failed due to an IO Error", purchase);
-        } catch (DeletingCashFlowFailed e) {
-            throw new DeletingPurchaseFailed("Deleting purcahse failed due to CashFlow error", purchase);
-        }
-
-        updatePurchaseModel();
-    }
-
+    // FILTERING
     public void filterPurchasedItems(LocalDate startDate, LocalDate endDate, String categoryString)
-            throws FilteringFailed, UpdatingPurchasedItemModelFailed {
+            throws FilteringFailed, UpdatingModelFailed {
         // Get the category
         Category cat = null;
         if (!categoryString.isBlank()) { // Only change value of cat if its not blank
@@ -360,17 +363,17 @@ public class PurchaseController extends Controller<Purchase> {
         this.category = cat;
     }
 
-    public void filterPurchase(String idString) throws FilteringFailed, UpadtingPurchaseModelFailed {
+    public void filterPurchase(String idString) throws FilteringFailed, UpdatingModelFailed {
         if (idString.isBlank()) {
             updatePurchaseModel();
-            filterID = "";
+            filterForID = false;
             return;
         }
 
         try {
-            long id = Long.parseLong(idString);
-            this.filterID = idString;
-            updatePurchaseModel(id);
+            filterForID = true;
+            filterID = Long.parseLong(idString);
+            updatePurchaseModel(filterID);
         } catch (NumberFormatException e) {
             throw new FilteringFailed(idString + " can't be parsed to id [whole number]");
         }

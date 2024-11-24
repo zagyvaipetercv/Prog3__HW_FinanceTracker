@@ -14,12 +14,10 @@ import com.github.lgooddatepicker.components.DatePicker;
 
 import financetracker.controllers.PurchaseController;
 import financetracker.datatypes.Purchase;
-import financetracker.exceptions.category.CategoryLookupFailedException;
-import financetracker.exceptions.category.CreatingCategoryFailedException;
+import financetracker.exceptions.generic.EditingRecordFailed;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
-import financetracker.exceptions.purchase.EditingPurchaseFailed;
 import financetracker.exceptions.purchase.InvalidTableCellException;
-import financetracker.exceptions.purchase.UpadtingPurchaseModelFailed;
 import financetracker.models.PurchasedItemTableModel;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
@@ -106,14 +104,13 @@ public class EditPurchaseView extends FrameView {
         });
 
         submitButton.addActionListener(ae -> {
-            try {
-                purchaseController.editPurchase(purchase, pitm, datePicker.getDate());
-                purchaseController.refreshPurchaseView();
-                purchaseController.closeFrameView(this);
-            } catch (InvalidTableCellException | EditingPurchaseFailed | CategoryLookupFailedException
-                    | CreatingCategoryFailedException | UpadtingPurchaseModelFailed e) {
-                ErrorBox.show(this, e);
-            }
+                try {
+                    purchaseController.editPurchase(purchase, pitm, datePicker.getDate());
+                    purchaseController.refreshPurchaseView();
+                    purchaseController.closeFrameView(this);
+                } catch (InvalidTableCellException | EditingRecordFailed | UpdatingModelFailed e) {
+                    ErrorBox.show(this, e);
+                }
         });
     }
 }

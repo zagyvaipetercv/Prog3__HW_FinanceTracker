@@ -17,8 +17,8 @@ import financetracker.controllers.DebtController;
 import financetracker.controllers.DebtController.DebtDirection;
 import financetracker.datatypes.Debt;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
-import financetracker.exceptions.debtcontroller.EditingDebtFailedException;
-import financetracker.exceptions.usercontroller.UserNotFound;
+import financetracker.exceptions.generic.EditingRecordFailed;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 
@@ -58,7 +58,7 @@ public class EditSelectedDebtView extends FrameView {
 
                 debtController.refreshDebtView();
                 debtController.closeFrameView(this);
-            } catch (InvalidAmountException | EditingDebtFailedException e) {
+            } catch (InvalidAmountException | EditingRecordFailed | UpdatingModelFailed e) {
                 ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
             }
         });

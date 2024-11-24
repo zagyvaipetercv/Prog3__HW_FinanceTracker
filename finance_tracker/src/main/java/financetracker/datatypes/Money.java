@@ -71,4 +71,5 @@ public class Money implements Serializable {
 
         return Currency.getInstance(currency);
     }
+
 }

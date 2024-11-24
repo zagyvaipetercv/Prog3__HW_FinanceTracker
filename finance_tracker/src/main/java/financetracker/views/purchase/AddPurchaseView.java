@@ -13,11 +13,10 @@ import com.github.lgooddatepicker.components.DatePicker;
 
 import financetracker.controllers.PurchaseController;
 import financetracker.exceptions.category.CategoryLookupFailedException;
-import financetracker.exceptions.category.CreatingCategoryFailedException;
-import financetracker.exceptions.purchase.CreatingPurchaseFailedException;
+import financetracker.exceptions.generic.CreatingRecordFailed;
+import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
 import financetracker.exceptions.purchase.InvalidTableCellException;
-import financetracker.exceptions.purchase.UpadtingPurchaseModelFailed;
 import financetracker.models.PurchasedItemTableModel;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
@@ -95,19 +94,16 @@ public class AddPurchaseView extends FrameView {
             }
         });
 
-        cancelButton.addActionListener(ae -> {
-            purchaseController.closeFrameView(this);
-        });
+        cancelButton.addActionListener(ae -> purchaseController.closeFrameView(this));
 
         submitButton.addActionListener(ae -> {
-            try {
-                purchaseController.addPurchase(pitm, datePicker.getDate());
-                purchaseController.refreshPurchaseView();
-                purchaseController.closeFrameView(this);
-            } catch (InvalidTableCellException | CreatingPurchaseFailedException | CategoryLookupFailedException
-                    | CreatingCategoryFailedException | UpadtingPurchaseModelFailed e) {
-                ErrorBox.show(this, e);
-            }
+                try {
+                    purchaseController.addPurchase(pitm, datePicker.getDate());
+                    purchaseController.refreshPurchaseView();
+                    purchaseController.closeFrameView(this);
+                } catch (InvalidTableCellException | CreatingRecordFailed | CategoryLookupFailedException | UpdatingModelFailed e) {
+                    ErrorBox.show(this, e);
+                }
         });
     }
 }

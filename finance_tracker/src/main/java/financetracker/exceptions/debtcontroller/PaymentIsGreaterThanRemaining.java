@@ -1,9 +1,9 @@
 package financetracker.exceptions.debtcontroller;
 
 import financetracker.datatypes.Money;
-import financetracker.exceptions.ErrorBoxException;
+import financetracker.exceptions.WarningBoxException;
 
-public class PaymentIsGreaterThanRemaining extends ErrorBoxException {
+public class PaymentIsGreaterThanRemaining extends WarningBoxException {
     private static final String ERROR_TITLE = "PAYMENT IS GREATER THAN REMAINING";
 
     private final transient Money remaining;

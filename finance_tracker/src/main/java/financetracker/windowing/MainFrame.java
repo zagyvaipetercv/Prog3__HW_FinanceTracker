@@ -15,8 +15,8 @@ import financetracker.controllers.DebtController;
 import financetracker.controllers.PurchaseController;
 import financetracker.controllers.UserController;
 import financetracker.datatypes.User;
-import financetracker.exceptions.ChangingViewFailed;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
+import financetracker.exceptions.generic.ChangingViewFailed;
 import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.views.HomeView;
 import financetracker.views.base.PanelView;
@@ -129,14 +129,22 @@ public class MainFrame extends JFrame {
 
             NavButton debtsButton = new NavButton("Debts");
             debtsButton.addActionListener(ae -> {
-                mainFrame.changeView(debtController.getDebtView());
+                try {
+                    mainFrame.changeView(debtController.getDebtView());
+                } catch (UpdatingModelFailed e) {
+                    ErrorBox.show(this, e);
+                }
                 mainFrame.setTitle("Debts");
             });
             add(debtsButton);
 
             NavButton purchasesButton = new NavButton("Purchases");
             purchasesButton.addActionListener(ae -> {
-                mainFrame.changeView(purchaseController.getPurchaseView());
+                try {
+                    mainFrame.changeView(purchaseController.getPurchaseView());
+                } catch (UpdatingModelFailed e) {
+                    ErrorBox.show(this, e);
+                }
                 mainFrame.setTitle("Purchases");
             });
             add(purchasesButton);
@@ -145,7 +153,7 @@ public class MainFrame extends JFrame {
             purchasedItemsButton.addActionListener(ae -> {
                 try {
                     mainFrame.changeView(purchaseController.getPurchsedItemsView());
-                } catch (ChangingViewFailed e) {
+                } catch (ChangingViewFailed | UpdatingModelFailed e) {
                     ErrorBox.show(this, e);
                 }
                 mainFrame.setTitle("Purchasd Items");
