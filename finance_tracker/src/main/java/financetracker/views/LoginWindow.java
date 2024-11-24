@@ -57,7 +57,6 @@ public class LoginWindow extends FrameView {
                 loginButton.addActionListener(event -> {
                         try {
                                 this.userController.login(
-                                                event,
                                                 usernameTextField.getText(),
                                                 passwordTextField.getText());
                                 
@@ -71,7 +70,6 @@ public class LoginWindow extends FrameView {
                 registerButton.addActionListener(event -> {
                         try {
                                 this.userController.register(
-                                                event,
                                                 usernameTextField.getText(),
                                                 passwordTextField.getText());
                         } catch (InvalidUserNameException | InvalidPasswordException | RegistrationFailedException e) {

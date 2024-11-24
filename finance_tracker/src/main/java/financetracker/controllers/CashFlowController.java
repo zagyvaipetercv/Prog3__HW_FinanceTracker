@@ -115,7 +115,7 @@ public class CashFlowController extends Controller<CashFlow> {
     }
 
     public void setMoneyOnAccount(String newAmountString, Currency currency, String reason)
-            throws InvalidAmountException, CreatingRecordFailed, InvalidReasonException, UpdatingModelFailed {
+            throws InvalidAmountException, CreatingRecordFailed, InvalidReasonException {
         double newAmount = Money.parseAmount(newAmountString);
         LocalDate today = LocalDate.now();
         double currentAmount;
@@ -150,6 +150,16 @@ public class CashFlowController extends Controller<CashFlow> {
         }
     }
 
+    private Money getMoneyOnAccount() throws SerializerCannotRead {
+        double sum = 0;
+        for (CashFlow cashFlow : modelSerializer.readAll()) {
+            if (cashFlow.getUser().equals(userLogedIn)) {
+                sum += cashFlow.getMoney().getAmount();
+            }
+        }
+        return new Money(sum, Currency.getInstance("HUF"));
+    }
+
     // FILTERING
     public void filterFor(String yearString, Month month, CashFlowType type)
             throws InvalidYearFormatException, UpdatingModelFailed {
@@ -159,29 +169,6 @@ public class CashFlowController extends Controller<CashFlow> {
         selectedYear = year;
         selectedMonth = month;
         selectedCashFlowType = type;
-    }
-
-    // GETTERS
-    public int getSelectedYear() {
-        return selectedYear;
-    }
-
-    public Month getSelectedMonth() {
-        return selectedMonth;
-    }
-
-    public CashFlowType getSelectedCashFlowType() {
-        return selectedCashFlowType;
-    }
-
-    private Money getMoneyOnAccount() throws SerializerCannotRead {
-        double sum = 0;
-        for (CashFlow cashFlow : modelSerializer.readAll()) {
-            if (cashFlow.getUser().equals(userLogedIn)) {
-                sum += cashFlow.getMoney().getAmount();
-            }
-        }
-        return new Money(sum, Currency.getInstance("HUF"));
     }
 
     // MODEL UPDATE
@@ -252,5 +239,10 @@ public class CashFlowController extends Controller<CashFlow> {
         ALL,
         INCOME,
         EXPENSE
+    }
+
+    // FOR-TESTING
+    public List<CashFlow> getAllCashFlows() throws SerializerCannotRead {
+        return modelSerializer.readAll();
     }
 }

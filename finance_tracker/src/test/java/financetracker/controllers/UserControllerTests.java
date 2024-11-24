@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import financetracker.datatypes.User;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
-import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.usercontroller.InvalidPasswordException;
 import financetracker.exceptions.usercontroller.InvalidUserNameException;
 import financetracker.exceptions.usercontroller.LoginFailedException;
@@ -34,18 +33,18 @@ class UserControllerTests extends ControllerTests {
 
     @BeforeEach
     public void setupController() throws ControllerWasNotCreated  {
-        userController = new UserController(TEST_SAVE_FILE_PATH, null);
+        userController = new UserController(TEST_USER_FILE_PATH, null);
     }
 
     @Test
     void checkRegisterSucceds() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
-        boolean succes = userController.register(null, validUsername1, validPassword1);
+        boolean succes = userController.register(validUsername1, validPassword1);
         assertEquals(true, succes);
     }
 
     @Test
     void checkFindUser() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException, UserNotFound {
-        boolean succes = userController.register(null, validUsername1, validPassword1);
+        boolean succes = userController.register(validUsername1, validPassword1);
         User user = userController.findUser(validUsername1);
         assertEquals(true, succes);
         assertEquals(validUsername1, user.getName());
@@ -56,8 +55,8 @@ class UserControllerTests extends ControllerTests {
     @Test
     void checkLoginUser() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException,
             LoginFailedException {
-        boolean succesRegister = userController.register(null, validUsername1, validPassword1);
-        boolean succesLogin = userController.login(null, validUsername1, validPassword1);
+        boolean succesRegister = userController.register(validUsername1, validPassword1);
+        boolean succesLogin = userController.login(validUsername1, validPassword1);
 
         assertEquals(true, succesRegister);
         assertEquals(true, succesLogin);
@@ -65,10 +64,10 @@ class UserControllerTests extends ControllerTests {
 
     @Test
     void checkWrongLogin() throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
-        boolean succesReg2 = userController.register(null, validUsername2, validPassword2);
-        boolean succesReg1 = userController.register(null, validUsername1, validPassword1);
+        boolean succesReg2 = userController.register(validUsername2, validPassword2);
+        boolean succesReg1 = userController.register(validUsername1, validPassword1);
 
-        assertThrows(InvalidPasswordException.class, () -> userController.login(null, validUsername1, validPassword2)); // Login
+        assertThrows(InvalidPasswordException.class, () -> userController.login(validUsername1, validPassword2)); // Login
                                                                                                                         // with
                                                                                                                         // wrong
                                                                                                                         // wrong
@@ -80,36 +79,36 @@ class UserControllerTests extends ControllerTests {
     @Test
     void checkInvalidUserName1() {
         assertThrows(InvalidUserNameException.class,
-                () -> userController.register(null, invalidUsernameBlank, validPassword1));
+                () -> userController.register(invalidUsernameBlank, validPassword1));
     }
 
     @Test
     void checkInvalidUserName2() {
         assertThrows(InvalidUserNameException.class,
-                () -> userController.register(null, invalidUsernameHasOnlySpace, validPassword1));
+                () -> userController.register(invalidUsernameHasOnlySpace, validPassword1));
     }
 
     @Test
     void checkInvalidUserName3() {
         assertThrows(InvalidUserNameException.class,
-                () -> userController.register(null, invalidUsernameHasSpace, validPassword1));
+                () -> userController.register(invalidUsernameHasSpace, validPassword1));
     }
 
     @Test
     void checkInvalidPassword1() {
         assertThrows(InvalidPasswordException.class,
-                () -> userController.register(null, validUsername1, invalidPasswordBlank));
+                () -> userController.register(validUsername1, invalidPasswordBlank));
     }
 
     @Test
     void checkInvalidPassword2() {
         assertThrows(InvalidPasswordException.class,
-                () -> userController.register(null, validUsername1, invalidPasswordHasOnlySpace));
+                () -> userController.register(validUsername1, invalidPasswordHasOnlySpace));
     }
 
     @Test
     void checkInvalidPassword3() {
         assertThrows(InvalidPasswordException.class,
-                () -> userController.register(null, validUsername1, invalidPasswordNotEnoughChars));
+                () -> userController.register(validUsername1, invalidPasswordNotEnoughChars));
     }
 }

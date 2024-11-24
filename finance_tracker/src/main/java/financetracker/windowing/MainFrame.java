@@ -37,10 +37,46 @@ public class MainFrame extends JFrame {
     private transient PurchaseController purchaseController;
     private transient CategoryController categoryController;
 
+    public MainFrame(
+            User userSignedIn,
+            String userFilePath,
+            String cashFLowFilePath,
+            String debtFielPath,
+            String purchaseFilePath,
+            String categoryFilePath) {
+        user = userSignedIn;
+
+        try {
+            userController = new UserController(userFilePath, this);
+            cashFlowController = new CashFlowController(cashFLowFilePath, this);
+            categoryController = new CategoryController(categoryFilePath, this);
+            debtController = new DebtController(debtFielPath, this);
+            purchaseController = new PurchaseController(purchaseFilePath, this);
+        } catch (ControllerWasNotCreated e) {
+            ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
+            System.exit(-1);
+        }
+
+        subTitle = "Home";
+
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setTitle(subTitle);
+        setLayout(new BorderLayout());
+        setSize(DEFAULT_SIZE);
+        setMinimumSize(MIN_SIZE);
+        setLocationRelativeTo(null);
+
+        sidePanel = new SidePanel(this);
+        this.add(sidePanel, BorderLayout.WEST);
+
+        currentView = new HomeView(getUserName());
+        add(currentView);
+    }
+
     public MainFrame(User userSignedIn) {
         super();
         user = userSignedIn;
-        
+
         try {
             userController = new UserController(this);
             cashFlowController = new CashFlowController(this);

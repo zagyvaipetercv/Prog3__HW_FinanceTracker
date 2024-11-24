@@ -20,6 +20,7 @@ public class UserController extends Controller<User> {
 
     private static final String DEFAULT_SAVE_PATH = "saves\\users.dat";
 
+
     /**
      * Initializes the UserController
      * Collects metadata
@@ -46,7 +47,7 @@ public class UserController extends Controller<User> {
      * @return true if registration was succesfull, false if not
      * @throws RegistrationFailedException
      */
-    public boolean register(ActionEvent event, String username, String password)
+    public boolean register(String username, String password)
             throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         // Check for errors
         if (usernameIsInvalid(username)) {
@@ -83,7 +84,7 @@ public class UserController extends Controller<User> {
      * @throws InvalidPasswordException
      * @throws InvalidUserNameException
      */
-    public boolean login(ActionEvent event, String username, String password)
+    public boolean login(String username, String password)
             throws LoginFailedException, InvalidPasswordException, InvalidUserNameException {
         try {
             User user = findUser(username);
@@ -96,6 +97,7 @@ public class UserController extends Controller<User> {
             }
 
             mainFrame = new MainFrame(user);
+            mainFrame.setVisible(true);
             return true;
 
         } catch (UserNotFound e) {
