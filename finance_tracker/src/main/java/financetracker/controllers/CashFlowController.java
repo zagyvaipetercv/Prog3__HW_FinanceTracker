@@ -44,26 +44,11 @@ public class CashFlowController extends Controller<CashFlow> {
     // USER
     private User userLogedIn;
 
-    // CONSTRUCTORS
-    /**
-     * Creates a CashFlowController with the default save file path
-     * 
-     * @param mainFrame the main frame of the program
-     * @throws ControllerWasNotCreated if the controller failed to initialize the
-     *                                 next id or the save file
-     */
+
     public CashFlowController(MainFrame mainFrame) throws ControllerWasNotCreated {
         this(DEAFULT_SAVE_PATH, mainFrame);
     }
 
-    /**
-     * Creates a CashFlowController with the specified save file path
-     * 
-     * @param filePath  the path of the save file
-     * @param mainFrame the main frame of the program
-     * @throws ControllerWasNotCreated if the controller failed to initialize the
-     *                                 next id or the save file
-     */
     public CashFlowController(String filePath, MainFrame mainFrame)
             throws ControllerWasNotCreated {
         super(filePath, mainFrame);

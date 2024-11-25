@@ -21,6 +21,7 @@ import financetracker.datatypes.Purchase;
 import financetracker.exceptions.generic.DeletingRecordFailed;
 import financetracker.exceptions.generic.FilteringFailed;
 import financetracker.exceptions.generic.UpdatingModelFailed;
+import financetracker.exceptions.models.NoItemWasSelected;
 import financetracker.models.PurchaseListModel;
 import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
@@ -65,7 +66,13 @@ public class PurchaseView extends PanelView {
 
         optionsPanel.addOptionButton(
                 "Edit Selected",
-                ae -> purchaseController.getEditPurchaseView(purchasesList.getSelectedValue()).setVisible(true));
+                ae -> {
+                    try {
+                        purchaseController.getEditPurchaseView(purchasesList.getSelectedValue()).setVisible(true);
+                    } catch (NoItemWasSelected e) {
+                        ErrorBox.show(this, e);
+                    }
+                });
 
         optionsPanel.addOptionButton(
                 "Delete Selected",
@@ -73,14 +80,20 @@ public class PurchaseView extends PanelView {
                     try {
                         purchaseController.deletePurchase(purchasesList.getSelectedValue());
                         purchaseController.refreshPurchaseView();
-                    } catch (DeletingRecordFailed | UpdatingModelFailed e) {
+                    } catch (DeletingRecordFailed | UpdatingModelFailed | NoItemWasSelected e) {
                         ErrorBox.show(this, e);
                     }
                 });
 
         optionsPanel.addOptionButton(
                 "Show Details",
-                ae -> purchaseController.getDetailedPurcahseView(purchasesList.getSelectedValue()).setVisible(true));
+                ae -> {
+                    try {
+                        purchaseController.getDetailedPurcahseView(purchasesList.getSelectedValue()).setVisible(true);
+                    } catch (NoItemWasSelected e) {
+                        ErrorBox.show(this, e);
+                    }
+                });
     }
 
     private class PurchaseListCellRenderer extends DefaultListCellRenderer {

@@ -255,8 +255,13 @@ public class DebtController extends Controller<Debt> {
      * 
      * @param debt the debt that needs to be removed
      * @throws DeletingRecordFailed if the debt was not deleted due to an IO Error.
+     * @throws NoItemWasSelected if no debt was selected
      */
-    public void deleteDebt(Debt debt) throws DeletingRecordFailed {
+    public void deleteDebt(Debt debt) throws DeletingRecordFailed, NoItemWasSelected {
+        if (debt == null) {
+            throw new NoItemWasSelected("A debt must be selected to delete");
+        }
+
         try {
             for (Payment payment : debt.getPayments()) {
                 cashFlowController.deleteCashFlow(payment.getDebtorsCashFlow());

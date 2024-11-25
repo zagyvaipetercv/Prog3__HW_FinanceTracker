@@ -91,7 +91,7 @@ public class DebtView extends PanelView {
                     try {
                         controller.deleteDebt(debts.getSelectedValue());
                         controller.refreshDebtView();
-                    } catch (DeletingRecordFailed | UpdatingModelFailed e) {
+                    } catch (DeletingRecordFailed | UpdatingModelFailed | NoItemWasSelected e) {
                         ErrorBox.show(this, e);
                     }
                 });

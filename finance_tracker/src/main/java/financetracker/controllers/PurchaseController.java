@@ -21,6 +21,7 @@ import financetracker.exceptions.generic.DeletingRecordFailed;
 import financetracker.exceptions.generic.EditingRecordFailed;
 import financetracker.exceptions.generic.FilteringFailed;
 import financetracker.exceptions.generic.UpdatingModelFailed;
+import financetracker.exceptions.models.NoItemWasSelected;
 import financetracker.exceptions.modelserailizer.IdNotFoundException;
 import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
@@ -112,11 +113,18 @@ public class PurchaseController extends Controller<Purchase> {
         return new AddPurchaseView(this);
     }
 
-    public FrameView getEditPurchaseView(Purchase purchase) {
+    public FrameView getEditPurchaseView(Purchase purchase) throws NoItemWasSelected {
+        if (purchase == null) {
+            throw new NoItemWasSelected("No purchase was selected to edit");
+        }
+
         return new EditPurchaseView(this, purchase);
     }
 
-    public FrameView getDetailedPurcahseView(Purchase purchase) {
+    public FrameView getDetailedPurcahseView(Purchase purchase) throws NoItemWasSelected {
+        if (purchase == null) {
+            throw new NoItemWasSelected("No purchase was selected for details");
+        }
         return new DetailedPurchaseView(purchase);
     }
 
@@ -223,7 +231,11 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
-    public void deletePurchase(Purchase purchase) throws DeletingRecordFailed {
+    public void deletePurchase(Purchase purchase) throws DeletingRecordFailed, NoItemWasSelected {
+        if (purchase == null) {
+            throw new NoItemWasSelected("A purchase must be selected to delete");
+        }
+
         try {
             cashFlowController.deleteCashFlow(purchase.getCashFlow());
             modelSerializer.removeData(purchase.getId());
