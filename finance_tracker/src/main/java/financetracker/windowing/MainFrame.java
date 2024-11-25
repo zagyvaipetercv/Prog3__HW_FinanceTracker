@@ -226,4 +226,8 @@ public class MainFrame extends JFrame {
     public CategoryController getCategoryController() {
         return categoryController;
     }
+
+    public PurchaseController getPurchaseController() {
+        return purchaseController;
+    }
 }

@@ -49,7 +49,7 @@ class UserControllerTests extends ControllerTests {
         assertEquals(true, succes);
         assertEquals(validUsername1, user.getName());
         assertEquals(validPassword1, user.getPassword());
-        assertEquals(1, user.getId());
+        assertEquals(4, user.getId()); // In parent test class I added 3 other users before -> this user has to be the 4th user -> id = 4 
     }
 
     @Test

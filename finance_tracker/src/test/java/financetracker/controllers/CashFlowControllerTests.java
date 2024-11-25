@@ -95,7 +95,11 @@ class CashFlowControllerTests extends ControllerTests {
                 "Test");
 
         assertEquals(1, cashFlowController.getAllCashFlows().size());
-        assertEquals(userSignedIn, cashFlowController.getAllCashFlows().get(0).getUser());
+        CashFlow cashFlow = cashFlowController.getAllCashFlows().get(0);
+        assertEquals(1, cashFlow.getId());
+        assertEquals(userSignedIn, cashFlow.getUser());
+        assertEquals(LocalDate.of(2000,01,01), cashFlow.getDate());
+        assertEquals(new Money(1500, Currency.getInstance("HUF")), cashFlow.getMoney());
     }
 
     @Test

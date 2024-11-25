@@ -378,4 +378,9 @@ public class PurchaseController extends Controller<Purchase> {
             throw new FilteringFailed(idString + " can't be parsed to id [whole number]");
         }
     }
+
+    // FOR-TESTING
+    public List<Purchase> getAllPurchases() throws SerializerCannotRead {
+        return modelSerializer.readAll();
+    }
 }

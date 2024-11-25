@@ -123,7 +123,7 @@ public class DebtController extends Controller<Debt> {
 
         Money money = new Money(amount, Currency.getInstance("HUF"));
         if (counterParty.equals(userLogedIn)) {
-            throw new CreatingRecordFailed("Other party can't be the user loged in", null);
+            throw new CreatingRecordFailed("Other party can't be the user signed in", null);
         }
 
         User debtor;
@@ -147,6 +147,10 @@ public class DebtController extends Controller<Debt> {
     public void editDebt(Debt debt, LocalDate date, String amountString, boolean hasDeadline, LocalDate deadline)
             throws InvalidAmountException, EditingRecordFailed {
 
+        if (debt == null) {
+            throw new EditingRecordFailed("Debt was null", null);
+        }
+
         double amount = Money.parseAmount(amountString);
         validateAmount(amount, debt);
 
@@ -163,8 +167,31 @@ public class DebtController extends Controller<Debt> {
         }
     }
 
+    public void deleteDebt(Debt debt) throws DeletingRecordFailed {
+        if (debt == null) {
+            throw new DeletingRecordFailed("Debt was null", null);
+        }
+
+        try {
+            for (Payment payment : debt.getPayments()) {
+                cashFlowController.deleteCashFlow(payment.getDebtorsCashFlow());
+                cashFlowController.deleteCashFlow(payment.getCreditorsCashFlow());
+            }
+            modelSerializer.removeData(debt.getId());
+        } catch (SerializerCannotRead | SerializerCannotWrite e) {
+            throw new DeletingRecordFailed("Debt was not removed due to an IO Error", debt);
+        } catch (DeletingRecordFailed e) {
+            throw new DeletingRecordFailed("Debt could not delete cashflows", debt);
+        }
+    }
+
     public void repayDebt(Debt debt, String amountString, LocalDate date)
             throws InvalidAmountException, DeptPaymentFailedException, PaymentIsGreaterThanRemaining {
+
+        if (debt == null) {
+            throw new DeptPaymentFailedException("Debt was null", null, 0);
+        }
+
         double amount = Money.parseAmount(amountString);
 
         double remainingDebtAmount = debt.getDebtAmount().getAmount() - Debt.repayed(debt).getAmount();
@@ -189,23 +216,13 @@ public class DebtController extends Controller<Debt> {
     }
 
     public void repayAll(Debt debt, LocalDate date) throws DeptPaymentFailedException {
+        if (debt == null) {
+            throw new DeptPaymentFailedException("Debt was null", null, 0);
+        }
+
         double remaining = debt.getDebtAmount().getAmount() - Debt.repayed(debt).getAmount();
 
         repay(debt, remaining, date);
-    }
-
-    public void deleteDebt(Debt debt) throws DeletingRecordFailed {
-        try {
-            for (Payment payment : debt.getPayments()) {
-                cashFlowController.deleteCashFlow(payment.getDebtorsCashFlow());
-                cashFlowController.deleteCashFlow(payment.getCreditorsCashFlow());
-            }
-            modelSerializer.removeData(debt.getId());
-        } catch (SerializerCannotRead | SerializerCannotWrite e) {
-            throw new DeletingRecordFailed("Debt was not removed due to an IO Error", debt);
-        } catch (DeletingRecordFailed e) {
-            throw new DeletingRecordFailed("Debt could not delete cashflows", debt);
-        }
     }
 
     public void filterFor(DebtDirection direction, DebtFulfilled fulfilled, String userName)
@@ -376,4 +393,8 @@ public class DebtController extends Controller<Debt> {
         FULFILLED
     }
 
+    // FOR-TESTING
+    public List<Debt> getAllDebts() throws SerializerCannotRead {
+        return modelSerializer.readAll();
+    }
 }

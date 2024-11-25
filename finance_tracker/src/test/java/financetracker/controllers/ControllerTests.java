@@ -19,7 +19,7 @@ public abstract class ControllerTests {
     protected static final String TEST_DEBT_FILE_PATH = "test_data\\debt_test.dat";
     protected static final String TEST_PURCHASE_FILE_PATH = "test_data\\purchase_test.dat";
 
-    protected final String userName1 = "test_user_1";
+    protected final String userLogedInName = "test_user_1";
     protected final String userName2 = "test_user_2";
     protected final String userName3 = "test_user_3";
 
@@ -55,11 +55,11 @@ public abstract class ControllerTests {
         }
 
         UserController userController = new UserController(TEST_USER_FILE_PATH, null);
-        userController.register(userName1, defaultPassword);
+        userController.register(userLogedInName, defaultPassword);
         userController.register(userName2, defaultPassword);
         userController.register(userName3, defaultPassword);
 
-        userSignedIn = userController.findUser(userName1);
+        userSignedIn = userController.findUser(userLogedInName);
 
         mainFrame = new MainFrame(
             userSignedIn,
