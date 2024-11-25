@@ -184,8 +184,8 @@ class DebtControllerTest extends ControllerTests {
 
         // ACT
         Debt debt = debtController.getAllDebts().get(0);
-        debtController.repayDebt(debt, "1000", LocalDate.of(2000, 01, 01));
-        debtController.repayDebt(debt, "500", LocalDate.of(2000, 01, 01));
+        debtController.payDebt(debt, "1000", LocalDate.of(2000, 01, 01));
+        debtController.payDebt(debt, "500", LocalDate.of(2000, 01, 01));
 
         // ASSERT
         debt = debtController.getAllDebts().get(0);
@@ -202,8 +202,8 @@ class DebtControllerTest extends ControllerTests {
 
         // ACT
         Debt debt = debtController.getAllDebts().get(0);
-        debtController.repayDebt(debt, "1000", LocalDate.of(2000, 01, 01));
-        debtController.repayDebt(debt, "1000", LocalDate.of(2000, 01, 01));
+        debtController.payDebt(debt, "1000", LocalDate.of(2000, 01, 01));
+        debtController.payDebt(debt, "1000", LocalDate.of(2000, 01, 01));
 
         // ASSERT
         debt = debtController.getAllDebts().get(0);
@@ -219,12 +219,12 @@ class DebtControllerTest extends ControllerTests {
 
         // ACT
         Debt debt = debtController.getAllDebts().get(0);
-        debtController.repayDebt(debt, "1000", LocalDate.of(2000, 01, 01));
+        debtController.payDebt(debt, "1000", LocalDate.of(2000, 01, 01));
 
         assertThrows(PaymentIsGreaterThanRemaining.class,
                 () -> {
                     Debt debtTmp = debtController.getAllDebts().get(0);
-                    debtController.repayDebt(debtTmp, "1500", LocalDate.of(2000, 01, 01));
+                    debtController.payDebt(debtTmp, "1500", LocalDate.of(2000, 01, 01));
                 });
 
         // ASSERT
@@ -241,8 +241,8 @@ class DebtControllerTest extends ControllerTests {
 
         // ACT
         Debt debt = debtController.getAllDebts().get(0);
-        debtController.repayDebt(debt, "1000", LocalDate.of(2000, 01, 01));
-        debtController.repayAll(debt, LocalDate.of(2000, 01, 01));
+        debtController.payDebt(debt, "1000", LocalDate.of(2000, 01, 01));
+        debtController.payAll(debt, LocalDate.of(2000, 01, 01));
 
         // ASSERT
         debt = debtController.getAllDebts().get(0);

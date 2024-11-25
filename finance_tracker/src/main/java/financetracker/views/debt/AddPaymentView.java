@@ -47,7 +47,7 @@ public class AddPaymentView extends FrameView {
 
                 repayButton.addActionListener(ae -> {
                         try {
-                                debtController.repayDebt(debt, amountTextField.getText(), datePicker.getDate());
+                                debtController.payDebt(debt, amountTextField.getText(), datePicker.getDate());
                         } catch (InvalidAmountException | DeptPaymentFailedException e) {
                                 ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
                         } catch (PaymentIsGreaterThanRemaining e) {
@@ -64,7 +64,7 @@ public class AddPaymentView extends FrameView {
 
                 repayAllButton.addActionListener(ae -> {
                         try {
-                                debtController.repayAll(debt, datePicker.getDate());
+                                debtController.payAll(debt, datePicker.getDate());
                                 debtController.refreshDebtView();
                                 debtController.closeFrameView(this);
                         } catch (DeptPaymentFailedException | UpdatingModelFailed e) {

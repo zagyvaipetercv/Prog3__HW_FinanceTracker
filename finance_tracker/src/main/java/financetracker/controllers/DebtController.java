@@ -75,48 +75,114 @@ public class DebtController extends Controller<Debt> {
     }
 
     // VIEW GETTERS
+    /**
+     * Returns an updated filtered DebtView where you can check the debts of the
+     * signed in user
+     * 
+     * @return an updateded, filtered DebtView
+     * @throws UpdatingModelFailed if the DebtListModel faield to update
+     */
     public PanelView getDebtView() throws UpdatingModelFailed {
         updateDebtListModel(filterDirection, filterIsFulfilled, fitleredUser);
-        return new DebtView(this, debtListModel);
+        return new DebtView(this, debtListModel,
+                filterDirection, filterIsFulfilled, fitleredUser);
     }
 
-    public FrameView getEditSelectedDebtView(JList<? extends Debt> debtsList)
+    /**
+     * Returns an EditSelectedDebtView frame filled with the selected debt's
+     * properties where you can change the selected debt's properties
+     * 
+     * @param debt the debt which will be edited
+     * @return an EditSelectedDebtView
+     * @throws NoItemWasSelected       if no item from the lsit was selected
+     * @throws FulfilledDebtCantChange if the debt is already filfilled
+     */
+    public FrameView getEditSelectedDebtView(Debt debt)
             throws NoItemWasSelected, FulfilledDebtCantChange {
 
-        Debt selected = getSelectedItem(debtsList);
-
-        if (selected.isFulfilled()) {
-            throw new FulfilledDebtCantChange("Can't edit a debt that is already fulfilled", selected);
+        if (debt == null) {
+            throw new NoItemWasSelected("A debt must be selected to edit");
         }
 
-        return new EditSelectedDebtView(this, selected);
+        if (debt.isFulfilled()) {
+            throw new FulfilledDebtCantChange("Can't edit a debt that is already fulfilled", debt);
+        }
+
+        return new EditSelectedDebtView(this, debt);
     }
 
+    /**
+     * Returns an AddNewDebtView frame where you can add and save a new debt
+     * 
+     * @return an AddNewDebtView frame
+     */
     public FrameView getAddNewDebtView() {
         return new AddNewDebtView(this);
     }
 
-    public FrameView getAddPaymentView(JList<? extends Debt> debtList)
+    /**
+     * Returns an AddPaymentView for the selected debt
+     * 
+     * @param debt the debt which will be payed
+     * @return an AddPaymentView for the selected debt
+     * @throws NoItemWasSelected       no debt was selected
+     * @throws FulfilledDebtCantChange if the debt is already fulfilled
+     */
+    public FrameView getAddPaymentView(Debt debt)
             throws NoItemWasSelected, FulfilledDebtCantChange {
-        Debt selected = getSelectedItem(debtList);
-
-        if (selected.isFulfilled()) {
-            throw new FulfilledDebtCantChange("Can't repay an already fulfilled debt", selected);
+        if (debt == null) {
+            throw new NoItemWasSelected("A debt must be selected to edit");
         }
 
-        return new AddPaymentView(this, selected);
+        if (debt.isFulfilled()) {
+            throw new FulfilledDebtCantChange("Can't repay an already fulfilled debt", debt);
+        }
+
+        return new AddPaymentView(this, debt);
     }
 
+    /*
+     * Refreshes the debt view by creating a new instance and updating the main
+     * panel of mainFrame
+     */
     public void refreshDebtView() throws UpdatingModelFailed {
         updateDebtListModel(filterDirection, filterIsFulfilled, fitleredUser);
         mainFrame.changeView(getDebtView());
     }
 
     // ACTIONS
+
+    /**
+     * Creates and saves a new debt with 0 payment.
+     * 
+     * @param name         the other party's name
+     * @param direction    direction of debt
+     *                     <ul>
+     *                     <li>I_OWE - user signed in is the debtor, the other party
+     *                     is the creditor</li>
+     *                     <li>THEY_OWE - user signed in is the creditor, the other
+     *                     party is the debtor</li>
+     *                     <li>UNSET - (default) the debt dirextion is not set
+     *                     yet</li>
+     *                     </ul>
+     * @param date         date of the debt
+     * @param amountString a string representing the amount of the debt
+     * @param hasDeadline
+     *                     <ul>
+     *                     <li>true - if the debt has a deadline</li>
+     *                     <li>flase - if the debt has no deadline</li>
+     *                     <ul>
+     * @param deadline     date of the deadline
+     * @throws UserNotFound           if no user with the specified name was found
+     * @throws InvalidAmountException if the amount was less or equal to 0 or amount
+     *                                could not be parsed to a double value
+     * @throws CreatingRecordFailed   if an IO Error occured or DebtDirection was
+     *                                UNSET
+     */
     public void addDebt(String name, DebtDirection direction, LocalDate date, String amountString, boolean hasDeadline,
             LocalDate deadline) throws UserNotFound, InvalidAmountException, CreatingRecordFailed {
         long id = modelSerializer.getNextId();
-        User counterParty = findCounterParty(name);
+        User counterParty = userController.findUser(name);
         double amount = Money.parseAmount(amountString);
 
         validateAmount(amount, null);
@@ -129,8 +195,8 @@ public class DebtController extends Controller<Debt> {
         User debtor;
         User creditor;
         try {
-            debtor = getDebtor(counterParty, direction);
-            creditor = getCreditor(counterParty, direction);
+            debtor = calculateDebtor(counterParty, direction);
+            creditor = calculateCreditor(counterParty, direction);
         } catch (UnknownDebtDirection e) {
             throw new CreatingRecordFailed("Creating debt failed due to unkonw direction", null);
         }
@@ -144,12 +210,29 @@ public class DebtController extends Controller<Debt> {
         }
     }
 
+    /**
+     * Edits a debt specified in the parameters.
+     * <p>
+     * Only the date, the amount and the deadline can be changed, because changeing
+     * the direction would impact others cashflows too.
+     * 
+     * @param debt         debt that will be edited
+     * @param date         the new date value
+     * @param amountString a string representing the new value
+     * @param hasDeadline  true if debt should have a deadline, false if not
+     * @param deadline     the new value of the deadline
+     * @throws InvalidAmountException
+     *                                <ul>
+     *                                <li>if the amount can't be parsed to a double
+     *                                value</li>
+     *                                <li>if the amount is 0 or less</li>
+     *                                <li>if the amount is less than what's already
+     *                                payed</li>
+     *                                </ul>
+     * @throws EditingRecordFailed    if editing the debt failed due to an IO Error
+     */
     public void editDebt(Debt debt, LocalDate date, String amountString, boolean hasDeadline, LocalDate deadline)
             throws InvalidAmountException, EditingRecordFailed {
-
-        if (debt == null) {
-            throw new EditingRecordFailed("Debt was null", null);
-        }
 
         double amount = Money.parseAmount(amountString);
         validateAmount(amount, debt);
@@ -167,11 +250,13 @@ public class DebtController extends Controller<Debt> {
         }
     }
 
+    /**
+     * Removes a debt from the save files
+     * 
+     * @param debt the debt that needs to be removed
+     * @throws DeletingRecordFailed if the debt was not deleted due to an IO Error.
+     */
     public void deleteDebt(Debt debt) throws DeletingRecordFailed {
-        if (debt == null) {
-            throw new DeletingRecordFailed("Debt was null", null);
-        }
-
         try {
             for (Payment payment : debt.getPayments()) {
                 cashFlowController.deleteCashFlow(payment.getDebtorsCashFlow());
@@ -185,46 +270,84 @@ public class DebtController extends Controller<Debt> {
         }
     }
 
-    public void repayDebt(Debt debt, String amountString, LocalDate date)
+    /**
+     * Adds and saves new payment for a debt specified in the parameters.
+     * 
+     * @param debt         the debt that will be payed
+     * @param amountString the string representation of the amount of the payment
+     * @param date         date of the payment
+     * @throws InvalidAmountException        if the amount can't be parsed to a
+     *                                       double or the amount is 0 or less
+     * @throws DeptPaymentFailedException    if an IO Error occured during the
+     *                                       process
+     * @throws PaymentIsGreaterThanRemaining if the payed amount is greater than the
+     *                                       remaining (the remaining amount will be
+     *                                       payed)
+     */
+    public void payDebt(Debt debt, String amountString, LocalDate date)
             throws InvalidAmountException, DeptPaymentFailedException, PaymentIsGreaterThanRemaining {
-
-        if (debt == null) {
-            throw new DeptPaymentFailedException("Debt was null", null, 0);
-        }
 
         double amount = Money.parseAmount(amountString);
 
         double remainingDebtAmount = debt.getDebtAmount().getAmount() - Debt.repayed(debt).getAmount();
 
-        if (paymentAmountIsInvalid(amount)) {
-            throw new InvalidAmountException(amountString, "Cant't repay 0 or less");
-        }
+        validateAmount(amount, null);
 
         if (CustomMath.almostEquals(amount, remainingDebtAmount)) {
             amount = remainingDebtAmount;
         }
 
         if (remainingDebtAmount < amount) {
-            repay(debt, remainingDebtAmount, date);
+            pay(debt, remainingDebtAmount, date);
             throw new PaymentIsGreaterThanRemaining(
                     "Payed amount is greater than remaining. Only remaining will be payed",
                     new Money(remainingDebtAmount, Currency.getInstance("HUF")),
                     new Money(amount, Currency.getInstance("HUF")));
         }
 
-        repay(debt, amount, date);
+        pay(debt, amount, date);
     }
 
-    public void repayAll(Debt debt, LocalDate date) throws DeptPaymentFailedException {
-        if (debt == null) {
-            throw new DeptPaymentFailedException("Debt was null", null, 0);
-        }
-
+    /**
+     * Pays the full remaining amount for the debt
+     * 
+     * @param debt the debt which will be payed
+     * @param date date of payment
+     * @throws DeptPaymentFailedException if an IO Error occured
+     */
+    public void payAll(Debt debt, LocalDate date) throws DeptPaymentFailedException {
         double remaining = debt.getDebtAmount().getAmount() - Debt.repayed(debt).getAmount();
 
-        repay(debt, remaining, date);
+        pay(debt, remaining, date);
     }
 
+    /**
+     * Filters for a specified direction, user and fulfilled state. Then updates the
+     * DebtListModel according to the filters.
+     * 
+     * @param direction direction of debt
+     *                  *
+     *                  <ul>
+     *                  <li>I_OWE - show only those where the user singed in is the
+     *                  debtor</li>
+     *                  <li>THEY_OWE - show only those where the user signed in is
+     *                  the creditor</li>
+     *                  <li>UNSET - show all</li>
+     *                  </ul>
+     * @param fulfilled
+     *                  <ul>
+     *                  <li>ALL - show all</li>
+     *                  <li>FULFILLED - show only those where the debt is
+     *                  fulfilled</li>
+     *                  <li>NOT_FULFILLED - show only those where the debt is not
+     *                  fulfilled</li>
+     *                  </ul>
+     * @param userName  the name of the user that is either the debtor or the
+     *                  creditor. If left empty then the function wont filter for
+     *                  username.
+     * @throws UserNotFound        if the user with the specified name was not found
+     * @throws UpdatingModelFailed if updateing the model failed due to an IO Error
+     */
     public void filterFor(DebtDirection direction, DebtFulfilled fulfilled, String userName)
             throws UserNotFound, UpdatingModelFailed {
 
@@ -233,64 +356,95 @@ public class DebtController extends Controller<Debt> {
             user = userController.findUser(userName);
         }
         updateDebtListModel(direction, fulfilled, user);
-        refreshDebtView();
-    }
-
-    // HELPER METHODS
-    private void updateDebtListModel(DebtDirection direction, DebtFulfilled fulfilled, User user)
-            throws UpdatingModelFailed {
-        List<Debt> listedDebts;
-        try {
-            listedDebts = new ArrayList<>(modelSerializer.readAll());
-        } catch (SerializerCannotRead e) {
-            throw new UpdatingModelFailed("Updating DebtModel failed due to an IO Error");
-        }
-
-        ListIterator<Debt> iter = listedDebts.listIterator();
-
-        while (iter.hasNext()) {
-            Debt debt = iter.next();
-
-            // Check loged in user
-            if (!debt.getDebtor().equals(userLogedIn) && !debt.getCreditor().equals(userLogedIn)) {
-                iter.remove();
-            }
-
-            // Check direction
-            if (!direction.equals(DebtDirection.UNSET) && getDirection(debt).equals(direction)) {
-                iter.remove();
-            }
-
-            // Check fulfilled
-            switch (fulfilled) {
-                case FULFILLED:
-                    if (!debt.isFulfilled()) {
-                        iter.remove();
-                    }
-                    break;
-                case NOT_FULFILLED:
-                    if (debt.isFulfilled()) {
-                        iter.remove();
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            // Check user
-            if (user != null && !debt.getDebtor().equals(user) && !debt.getCreditor().equals(user)) {
-                iter.remove();
-            }
-        }
-
-        debtListModel = new DebtListModel(listedDebts);
 
         this.filterDirection = direction;
         this.filterIsFulfilled = fulfilled;
         this.fitleredUser = user;
     }
 
-    private void repay(Debt debt, double amount, LocalDate date) throws DeptPaymentFailedException {
+    // HELPER METHODS
+
+    /**
+     * Updates the DebtListModel based on a specifeid debt direction, a user and a
+     * fulfilled state
+     * 
+     * @param direction
+     *                  <ul>
+     *                  <li>UNSET - model will not fitler for direction type</li>
+     *                  <li>I_OWE - model will only contain records where the user
+     *                  signed in is the debtor</li>
+     *                  <li>THEY_OWE - model will only contain records where the
+     *                  user signed in is the creditor</li>
+     *                  </ul>
+     * @param fulfilled
+     *                  <ul>
+     *                  <li>ALL - model will not fitler for fulfilled state</li>
+     *                  <li>FULFILLED - model will only contain records where the
+     *                  debt is fulfilled</li>
+     *                  <li>NOT_FULFILLED- model will only contain records where the
+     *                  debt is not fulfilled</li>
+     *                  </ul>
+     * @param user      model will only contain records where the user is either the
+     *                  debtor or the creditor. If set to null then the model will
+     *                  not be filtered for a user.
+     * @throws UpdatingModelFailed if updateing the model failed due to an IO Error
+     */
+    private void updateDebtListModel(DebtDirection direction, DebtFulfilled fulfilled, User user)
+            throws UpdatingModelFailed {
+        List<Debt> listedDebts = new ArrayList<>();
+
+        try {
+            for (Debt debt : modelSerializer.readAll()) {
+                // Check loged in user
+                if (!debt.getDebtor().equals(userLogedIn) &&
+                        !debt.getCreditor().equals(userLogedIn)) {
+                    continue;
+                }
+
+                // Check direction
+                if (!direction.equals(DebtDirection.UNSET) && !getDirection(debt).equals(direction)) {
+                    continue;
+                }
+
+                // Check fulfilled
+                switch (fulfilled) {
+                    case FULFILLED:
+                        if (!debt.isFulfilled()) {
+                            continue;
+                        }
+                        break;
+                    case NOT_FULFILLED:
+                        if (debt.isFulfilled()) {
+                            continue;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                // Check user
+                if (user != null && !debt.getDebtor().equals(user) && !debt.getCreditor().equals(user)) {
+                    continue;
+                }
+
+                listedDebts.add(debt);
+            }
+        } catch (SerializerCannotRead e) {
+            throw new UpdatingModelFailed("Updating DebtListModel failed due to an IO Error");
+        }
+
+        debtListModel = new DebtListModel(listedDebts);
+    }
+
+    /**
+     * Payes a specified amount to a debt.
+     * 
+     * @param debt   the debt which will be payed
+     * @param amount the amount that will be added to the debt's payment
+     * @param date   the date of the payment
+     * @throws DeptPaymentFailedException if the payment failed due to an IO Error
+     */
+    private void pay(Debt debt, double amount, LocalDate date) throws DeptPaymentFailedException {
         CashFlow debtorsCashFlow = null;
         CashFlow creditorsCashFlow = null;
         try { // Creates and appends the creaditor's and the debtor's cashflows to the
@@ -322,20 +476,16 @@ public class DebtController extends Controller<Debt> {
         }
     }
 
-    private User findCounterParty(String name) throws UserNotFound {
-        return userController.findUser(name);
-    }
-
-    private Debt getSelectedItem(JList<? extends Debt> debtsList) throws NoItemWasSelected {
-        Debt selected = debtsList.getSelectedValue();
-        if (selected == null) {
-            throw new NoItemWasSelected("One debt needs to be selected to Edit");
-        }
-
-        return selected;
-    }
-
-    private User getDebtor(User counterParty, DebtDirection direction) throws UnknownDebtDirection {
+    /**
+     * Calculates and returns the debtor (User) between a given user and the user
+     * signed in based on the debt direction
+     * 
+     * @param counterParty the other user
+     * @param direction    the direction of the payment
+     * @return the user that should be the debtor
+     * @throws UnknownDebtDirection if the direction is not set to I_OWE or THEY_OWE
+     */
+    private User calculateDebtor(User counterParty, DebtDirection direction) throws UnknownDebtDirection {
         switch (direction) {
             case I_OWE:
                 return userLogedIn;
@@ -347,7 +497,16 @@ public class DebtController extends Controller<Debt> {
 
     }
 
-    private User getCreditor(User counterParty, DebtDirection direction) throws UnknownDebtDirection {
+    /**
+     * Calculates and returns the creditor (User) between a given user and the user
+     * signed in based on the debt direction
+     * 
+     * @param counterParty the other user
+     * @param direction    the direction of the payment
+     * @return the user that should be the creditor
+     * @throws UnknownDebtDirection if the direction is not set to I_OWE or THEY_OWE
+     */
+    private User calculateCreditor(User counterParty, DebtDirection direction) throws UnknownDebtDirection {
         switch (direction) {
             case I_OWE:
                 return counterParty;
@@ -358,6 +517,16 @@ public class DebtController extends Controller<Debt> {
         }
     }
 
+    /**
+     * Returns the direction of a debt based on the current user signed in
+     * 
+     * @param debt
+     * @return
+     *         <ul>
+     *         <li>I_OWE - if the user signed in is the debtor</li>
+     *         <li>THEY_OWE - if the user signed in is the creditor</li>
+     *         </ul>
+     */
     public DebtDirection getDirection(Debt debt) {
         if (debt.getDebtor().equals(userLogedIn)) {
             return DebtDirection.I_OWE;
@@ -367,6 +536,16 @@ public class DebtController extends Controller<Debt> {
     }
 
     // VALIDATORS
+    /**
+     * Checks if the amount is valid. Throws exception if not.
+     * <p>
+     * Amount must be greater than 0 and greater than the repayed amount of the debt
+     * if it was not set to null
+     * 
+     * @param amount the amount that will be checked
+     * @param debt   the debt to compare with (can be setto null)
+     * @throws InvalidAmountException if one of the checks fail
+     */
     private void validateAmount(double amount, Debt debt) throws InvalidAmountException {
         if (amount <= 0) {
             throw new InvalidAmountException(amount, "Amount must be greater than 0");
@@ -375,10 +554,6 @@ public class DebtController extends Controller<Debt> {
         if (debt != null && amount <= Debt.repayed(debt).getAmount()) {
             throw new InvalidAmountException(amount, "Amount must stay greater than what's already repayed");
         }
-    }
-
-    private boolean paymentAmountIsInvalid(double amount) {
-        return amount <= 0.0;
     }
 
     public enum DebtDirection {

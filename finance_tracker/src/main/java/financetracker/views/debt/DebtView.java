@@ -23,6 +23,7 @@ import financetracker.controllers.DebtController;
 import financetracker.controllers.DebtController.DebtDirection;
 import financetracker.controllers.DebtController.DebtFulfilled;
 import financetracker.datatypes.Debt;
+import financetracker.datatypes.User;
 import financetracker.exceptions.debtcontroller.FulfilledDebtCantChange;
 import financetracker.exceptions.generic.DeletingRecordFailed;
 import financetracker.exceptions.generic.UpdatingModelFailed;
@@ -39,8 +40,17 @@ public class DebtView extends PanelView {
 
     private DebtController debtController;
 
-    public DebtView(DebtController controller, DebtListModel dlm) {
+    private DebtDirection direction;
+    private DebtFulfilled isFulfilled;
+    private User filteredUser;
+
+    public DebtView(DebtController controller, DebtListModel dlm,
+            DebtDirection direction, DebtFulfilled isFulfilled, User filteredUser) {
         this.debtController = controller;
+
+        this.direction = direction;
+        this.isFulfilled = isFulfilled;
+        this.filteredUser = filteredUser;
 
         setLayout(new BorderLayout());
         debts = new JList<>(dlm);
@@ -58,7 +68,8 @@ public class DebtView extends PanelView {
                 "Edit Selected",
                 ae -> {
                     try {
-                        controller.getEditSelectedDebtView(debts).setVisible(true);
+                        Debt selected = debts.getSelectedValue();
+                        controller.getEditSelectedDebtView(selected).setVisible(true);
                     } catch (NoItemWasSelected | FulfilledDebtCantChange e) {
                         ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
                     }
@@ -67,7 +78,8 @@ public class DebtView extends PanelView {
                 "Add Payment to Selected",
                 ae -> {
                     try {
-                        controller.getAddPaymentView(debts).setVisible(true);
+                        Debt selected = debts.getSelectedValue();
+                        controller.getAddPaymentView(selected).setVisible(true);
                     } catch (NoItemWasSelected | FulfilledDebtCantChange e) {
                         ErrorBox.show(this, e);
                     }
@@ -190,18 +202,22 @@ public class DebtView extends PanelView {
             JLabel directionLabel = new JLabel("Direction:");
             JComboBox<DebtDirection> directionPicker = new JComboBox<>(
                     DebtDirection.values());
+            directionPicker.setSelectedItem(direction);
 
             JLabel fulfilledLabel = new JLabel("Fulfilled");
             JComboBox<DebtFulfilled> fulfilledPicker = new JComboBox<>(DebtFulfilled.values());
+            fulfilledPicker.setSelectedItem(isFulfilled);
 
             JLabel userLabel = new JLabel("User:");
             JTextField userTextField = new JTextField("", 20);
+            userTextField.setText((filteredUser == null ? "" : filteredUser.getName()));
 
             JButton submitButton = new JButton("Filter");
             submitButton.addActionListener(ae -> {
                 try {
                     debtController.filterFor((DebtDirection) directionPicker.getSelectedItem(),
                             (DebtFulfilled) fulfilledPicker.getSelectedItem(), userTextField.getText());
+                    debtController.refreshDebtView();
                 } catch (UserNotFound | UpdatingModelFailed e) {
                     ErrorBox.show(this, e);
                 }

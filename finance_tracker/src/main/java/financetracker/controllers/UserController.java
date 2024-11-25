@@ -1,6 +1,5 @@
 package financetracker.controllers;
 
-import java.awt.event.ActionEvent;
 import java.util.List;
 
 import financetracker.datatypes.User;

@@ -102,7 +102,7 @@ public class PurchaseController extends Controller<Purchase> {
             return new PurchasedItemsView(this,
                     purchasedItemsTableModel,
                     startDate, endDate, category,
-                    categoryController.getCategoriesNames());
+                    categoryController.getCategoryNames());
         } catch (CategoryLookupFailedException e) {
             throw new ChangingViewFailed("Changing to Purchased Items Failed");
         }
@@ -182,6 +182,11 @@ public class PurchaseController extends Controller<Purchase> {
 
     public void editPurchase(Purchase purchase, PurchasedItemTableModel pitm, LocalDate dateOfPurchase)
             throws InvalidTableCellException, EditingRecordFailed {
+
+        if (purchase == null) {
+            throw new EditingRecordFailed("Purchase is null", null);
+        }
+
         checkCells(pitm);
         List<PurchasedItem> purchasedItems = pitm.getItems();
 

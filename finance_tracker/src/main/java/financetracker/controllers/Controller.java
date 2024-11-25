@@ -21,8 +21,12 @@ public abstract class Controller<T extends Model> {
         }
     }
 
-    public void closeFrameView(FrameView fv) {
-        fv.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        fv.dispose();
+    /**
+     * Closes the frame view in the paramteres
+     * @param frameView the frame view you want to close
+     */
+    public void closeFrameView(FrameView frameView) {
+        frameView.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        frameView.dispose();
     }
 }
