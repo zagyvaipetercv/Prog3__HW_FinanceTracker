@@ -67,7 +67,7 @@ class UserControllerTests extends ControllerTests {
         boolean succesReg2 = userController.register(validUsername2, validPassword2);
         boolean succesReg1 = userController.register(validUsername1, validPassword1);
 
-        assertThrows(InvalidPasswordException.class, () -> userController.login(validUsername1, validPassword2)); // Login
+        assertThrows(LoginFailedException.class, () -> userController.login(validUsername1, validPassword2)); // Login
                                                                                                                         // with
                                                                                                                         // wrong
                                                                                                                         // wrong

@@ -101,7 +101,7 @@ public class AddPurchaseView extends FrameView {
                     purchaseController.addPurchase(pitm, datePicker.getDate());
                     purchaseController.refreshPurchaseView();
                     purchaseController.closeFrameView(this);
-                } catch (InvalidTableCellException | CreatingRecordFailed | CategoryLookupFailedException | UpdatingModelFailed e) {
+                } catch (InvalidTableCellException | CreatingRecordFailed | UpdatingModelFailed e) {
                     ErrorBox.show(this, e);
                 }
         });

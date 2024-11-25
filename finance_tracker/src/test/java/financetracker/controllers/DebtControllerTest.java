@@ -48,7 +48,7 @@ class DebtControllerTest extends ControllerTests {
         assertEquals(userController.findUser(userName2), debt1.getCreditor());
         assertEquals(LocalDate.of(2000, 01, 01), debt1.getDate());
         assertEquals(new Money(2000, Currency.getInstance("HUF")), debt1.getDebtAmount());
-        assertEquals(new Money(0, Currency.getInstance("HUF")), Debt.repayed(debt1));
+        assertEquals(new Money(0, Currency.getInstance("HUF")), debt1.getPayedAmount());
         assertEquals(false, debt1.hasDeadline());
         assertEquals(null, debt1.getDeadline());
 
@@ -58,7 +58,7 @@ class DebtControllerTest extends ControllerTests {
         assertEquals(userSignedIn, debt2.getCreditor());
         assertEquals(LocalDate.of(2000, 01, 01), debt2.getDate());
         assertEquals(new Money(2500, Currency.getInstance("HUF")), debt2.getDebtAmount());
-        assertEquals(new Money(0, Currency.getInstance("HUF")), Debt.repayed(debt2));
+        assertEquals(new Money(0, Currency.getInstance("HUF")), debt2.getPayedAmount());
         assertEquals(true, debt2.hasDeadline());
         assertEquals(LocalDate.of(2000, 01, 03), debt2.getDeadline());
     }
@@ -134,7 +134,7 @@ class DebtControllerTest extends ControllerTests {
         assertEquals(userController.findUser(userName2), debt1.getCreditor());
         assertEquals(LocalDate.of(2000, 01, 03), debt1.getDate());
         assertEquals(new Money(3000, Currency.getInstance("HUF")), debt1.getDebtAmount());
-        assertEquals(new Money(0, Currency.getInstance("HUF")), Debt.repayed(debt1));
+        assertEquals(new Money(0, Currency.getInstance("HUF")), debt1.getPayedAmount());
         assertEquals(true, debt1.hasDeadline());
         assertEquals(LocalDate.of(2000, 01, 04), debt1.getDeadline());
 
@@ -144,7 +144,7 @@ class DebtControllerTest extends ControllerTests {
         assertEquals(userSignedIn, debt2.getCreditor());
         assertEquals(LocalDate.of(2000, 01, 01), debt2.getDate());
         assertEquals(new Money(2500, Currency.getInstance("HUF")), debt2.getDebtAmount());
-        assertEquals(new Money(0, Currency.getInstance("HUF")), Debt.repayed(debt2));
+        assertEquals(new Money(0, Currency.getInstance("HUF")), debt2.getPayedAmount());
         assertEquals(true, debt2.hasDeadline());
         assertEquals(LocalDate.of(2000, 01, 03), debt2.getDeadline());
     }
@@ -171,7 +171,7 @@ class DebtControllerTest extends ControllerTests {
         assertEquals(userSignedIn, debt2.getCreditor());
         assertEquals(LocalDate.of(2000, 01, 01), debt2.getDate());
         assertEquals(new Money(2500, Currency.getInstance("HUF")), debt2.getDebtAmount());
-        assertEquals(new Money(0, Currency.getInstance("HUF")), Debt.repayed(debt2));
+        assertEquals(new Money(0, Currency.getInstance("HUF")), debt2.getPayedAmount());
         assertEquals(true, debt2.hasDeadline());
         assertEquals(LocalDate.of(2000, 01, 03), debt2.getDeadline());
     }
@@ -189,7 +189,7 @@ class DebtControllerTest extends ControllerTests {
 
         // ASSERT
         debt = debtController.getAllDebts().get(0);
-        assertEquals(1500, Debt.repayed(debt).getAmount());
+        assertEquals(1500, debt.getPayedAmount().getAmount());
         assertEquals(false, debt.isFulfilled());
 
     }
@@ -207,7 +207,7 @@ class DebtControllerTest extends ControllerTests {
 
         // ASSERT
         debt = debtController.getAllDebts().get(0);
-        assertEquals(2000, Debt.repayed(debt).getAmount());
+        assertEquals(2000, debt.getPayedAmount().getAmount());
         assertEquals(true, debt.isFulfilled());
     }
 
@@ -229,7 +229,7 @@ class DebtControllerTest extends ControllerTests {
 
         // ASSERT
         debt = debtController.getAllDebts().get(0);
-        assertEquals(2000, Debt.repayed(debt).getAmount());
+        assertEquals(2000, debt.getPayedAmount().getAmount());
         assertEquals(true, debt.isFulfilled());
     }
 
@@ -246,7 +246,7 @@ class DebtControllerTest extends ControllerTests {
 
         // ASSERT
         debt = debtController.getAllDebts().get(0);
-        assertEquals(2000, Debt.repayed(debt).getAmount());
+        assertEquals(2000, debt.getPayedAmount().getAmount());
         assertEquals(true, debt.isFulfilled());
     }
 

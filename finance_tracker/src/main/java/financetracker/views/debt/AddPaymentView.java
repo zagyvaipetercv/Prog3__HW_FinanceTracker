@@ -98,7 +98,7 @@ public class AddPaymentView extends FrameView {
                 JLabel repayedTitleLabel = new JLabel("Already Repayed:");
                 JLabel remainingTitleLabel = new JLabel("Remaining Debt:");
 
-                Money repayed = Debt.repayed(debt);
+                Money repayed = debt.getPayedAmount();
                 Money remainingDebt = new Money(debt.getDebtAmount().getAmount() - repayed.getAmount(),
                                 Currency.getInstance("HUF"));
 

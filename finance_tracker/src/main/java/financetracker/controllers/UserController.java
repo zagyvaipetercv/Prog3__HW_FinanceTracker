@@ -19,7 +19,6 @@ public class UserController extends Controller<User> {
 
     private static final String DEFAULT_SAVE_PATH = "saves\\users.dat";
 
-
     /**
      * Initializes the UserController
      * Collects metadata
@@ -38,27 +37,30 @@ public class UserController extends Controller<User> {
     // PUBLIC METHODS
     /**
      * Registers a user to the system with 'username' and 'password'
-     * If fails error then an message will appear
      * 
-     * @param event    event that calls this method
      * @param username username of the user
      * @param password password of the user
      * @return true if registration was succesfull, false if not
-     * @throws RegistrationFailedException
+     * @throws RegistrationFailedException if registration failed due to an IO Error
+     * @throws InvalidUserNameException    if username is blank, has whitespace or a
+     *                                     user with the same name already exists
+     * @throws InvalidPasswordException    if the psasword is blank has whitespace
+     *                                     or has less than 8 characters
      */
     public boolean register(String username, String password)
             throws InvalidUserNameException, InvalidPasswordException, RegistrationFailedException {
         // Check for errors
         if (usernameIsInvalid(username)) {
-            throw new InvalidUserNameException(InvalidUserNameException.ErrorType.REGISTRATION_ALREADY_EXISTS);
+            throw new InvalidUserNameException("Username can't be blank or have whitespaces");
         }
 
         if (passwordIsInvalid(password)) {
-            throw new InvalidPasswordException(InvalidPasswordException.ErrorType.NOT_ENOUGH_CHARACTERS_OR_WHITESPACE);
+            throw new InvalidPasswordException(
+                    "Password must have at least 8 characters and can't be blank or have white spaces");
         }
 
         if (userExists(username)) {
-            throw new InvalidUserNameException(InvalidUserNameException.ErrorType.REGISTRATION_ALREADY_EXISTS);
+            throw new InvalidUserNameException("Username is already taken");
         }
 
         // If no error -> save
@@ -73,26 +75,20 @@ public class UserController extends Controller<User> {
 
     /**
      * Tries to log in to the user with 'username' and 'password'
-     * If fails error then an message will appear
+     * <p>
+     * If login succeds the mainFrame will be initialized and set visible
      * 
-     * @param event    event that calls this method
      * @param username username of the user
      * @param password password of the user
      * @return true if login was succesfull, false if not
-     * @throws LoginFailedException
-     * @throws InvalidPasswordException
-     * @throws InvalidUserNameException
+     * @throws LoginFailedException if user with username does not exist or
+     *                              passwords don't match
      */
-    public boolean login(String username, String password)
-            throws LoginFailedException, InvalidPasswordException, InvalidUserNameException {
+    public boolean login(String username, String password) throws LoginFailedException {
         try {
             User user = findUser(username);
-            if (user == null) {
-                throw new InvalidUserNameException(InvalidUserNameException.ErrorType.LOGIN_NOT_REGISTERED_USERNAME);
-            }
-
             if (!user.getPassword().equals(password)) {
-                throw new InvalidPasswordException(InvalidPasswordException.ErrorType.PASSWORDS_DO_NOT_MATCH);
+                throw new LoginFailedException("Login failed - Passwords don't match");
             }
 
             mainFrame = new MainFrame(user);
@@ -100,15 +96,27 @@ public class UserController extends Controller<User> {
             return true;
 
         } catch (UserNotFound e) {
-            throw new LoginFailedException("Login failed, User was not found");
+            throw new LoginFailedException("Login failed - User was not found");
         }
     }
 
+    /**
+     * Returns a LoginWindow where the user can log in to their account or register
+     * a new account
+     * 
+     * @return a LoginWindow
+     */
     public FrameView getLoginView() {
         return new LoginWindow(this);
     }
 
     // CHECKS
+    /**
+     * Checks if the save file has a record with the username
+     * 
+     * @param username the username of the user
+     * @return true if user exists
+     */
     private boolean userExists(String username) {
         try {
             User user = findUser(username);
@@ -118,18 +126,44 @@ public class UserController extends Controller<User> {
         }
     }
 
+    /**
+     * Checks if username is invalid
+     * <p>
+     * A username is invalid if it's blank or contains white spaces
+     * 
+     * @param username the username that needs to be checked
+     * @return true if username is blank or contains white spaces,
+     *         false otherwise
+     */
     private boolean usernameIsInvalid(String username) {
         return (username.isBlank() ||
                 username.contains(" "));
     }
 
+    /**
+     * Checks if password is invalid
+     * <p>
+     * A password is invalid if it's blank or contains white spaces or has less than
+     * 8 characters
+     * 
+     * @param password the password that needs to be checked
+     * @return true if password is blank or contains white spaces or has less than 8
+     *         characters, false otherwise
+     */
     private boolean passwordIsInvalid(String password) {
         return (password.isBlank() ||
                 password.contains(" ") ||
                 password.length() < 8);
     }
 
-    protected User findUser(String username) throws UserNotFound {
+    /**
+     * Finds a user with a specific username
+     * 
+     * @param username the username the user has
+     * @return the user with the username
+     * @throws UserNotFound if user was not found due to an IO Error or user does not exist
+     */
+    public User findUser(String username) throws UserNotFound {
         try {
             List<User> users = modelSerializer.readAll();
             for (User user : users) {

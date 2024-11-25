@@ -27,7 +27,6 @@ import financetracker.exceptions.modelserailizer.SerializerCannotRead;
 import financetracker.exceptions.modelserailizer.SerializerCannotWrite;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
 import financetracker.exceptions.purchase.InvalidTableCellException;
-import financetracker.exceptions.purchase.ReadingPurchasesFailedException;
 import financetracker.models.DetailedPurchaseTableModel;
 import financetracker.models.PurchaseListModel;
 import financetracker.models.PurchasedItemTableModel;
@@ -87,6 +86,13 @@ public class PurchaseController extends Controller<Purchase> {
     }
 
     // VIEW GETTERS
+    /**
+     * Returns an updated, filtered PurchaseView that contains information of the
+     * purchases of the user signed in
+     * 
+     * @return an updated filtered PurchaseView
+     * @throws UpdatingModelFailed if updating the PurchaseListModel model failed
+     */
     public PanelView getPurchaseView() throws UpdatingModelFailed {
         if (filterForID) {
             updatePurchaseModel(filterID);
@@ -96,6 +102,16 @@ public class PurchaseController extends Controller<Purchase> {
         return new PurchaseView(this, purchaseListModel, (!filterForID ? "" : Long.toString(filterID)));
     }
 
+    /**
+     * Returns an updated, filtered PurchasedItemsView which contains information of
+     * the signed in user's purchased items
+     * 
+     * @return an updated, filtered PurchasedItemsView
+     * @throws UpdatingModelFailed if the DetailedPurchaseTableModel failed to
+     *                             update
+     * @throws ChangingViewFailed  if the categories for the filtering view failed
+     *                             to load
+     */
     public PanelView getPurchsedItemsView() throws UpdatingModelFailed, ChangingViewFailed {
         updatePurchasedItemModel(startDate, endDate, category);
 
@@ -109,10 +125,24 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
+    /**
+     * Returns an AddPurchaseView where the user can add and save a new purchase
+     * record
+     * 
+     * @return an empty AddPurchaseView
+     */
     public FrameView getAddPurchasesView() {
         return new AddPurchaseView(this);
     }
 
+    /**
+     * Returns an EditPurchaseView where the user can change, add or remove
+     * PurchasedItems in an existing purchase
+     * 
+     * @param purchase the purchase that will be changed
+     * @return an EditPurchaseView filled with the existing items in it
+     * @throws NoItemWasSelected if no purchase was selected
+     */
     public FrameView getEditPurchaseView(Purchase purchase) throws NoItemWasSelected {
         if (purchase == null) {
             throw new NoItemWasSelected("No purchase was selected to edit");
@@ -121,6 +151,17 @@ public class PurchaseController extends Controller<Purchase> {
         return new EditPurchaseView(this, purchase);
     }
 
+    /**
+     * Returns a DetailedPurchaseView where the user can check details for the
+     * selected purchase
+     * <p>
+     * The cells of the purchase can't be modified
+     * 
+     * @param purchase the purchase that will be detailed
+     * @return a DetailedPurchaseView filled with the purchased items of the
+     *         purchase
+     * @throws NoItemWasSelected
+     */
     public FrameView getDetailedPurcahseView(Purchase purchase) throws NoItemWasSelected {
         if (purchase == null) {
             throw new NoItemWasSelected("No purchase was selected for details");
@@ -128,15 +169,40 @@ public class PurchaseController extends Controller<Purchase> {
         return new DetailedPurchaseView(purchase);
     }
 
+    /**
+     * Refreshes the purchase view by creating a new instance and updating the main
+     * panel of mainFrame
+     * 
+     * @throws UpdatingModelFailed if updating the PurchaseListModel model failed
+     */
     public void refreshPurchaseView() throws UpdatingModelFailed {
         mainFrame.changeView(getPurchaseView());
     }
 
+    /**
+     * Refreshes the debt view by creating a new instance and updating the main
+     * panel of mainFrame
+     * 
+     * @throws UpdatingModelFailed if the DetailedPurchaseTableModel failed to
+     *                             update
+     * @throws ChangingViewFailed  if the categories for the filtering view failed
+     *                             to load
+     */
     public void refreshPurchasedItemsView() throws ChangingViewFailed, UpdatingModelFailed {
         mainFrame.changeView(getPurchsedItemsView());
     }
 
     // ACTIONS
+    /**
+     * Deletes a row in the PurchasedItemTableModel
+     * <p>
+     * The row can't be the last unfinished/empty row
+     * 
+     * @param pitm     the PurchasedItemTableModel where the row will be deleted
+     * @param rowIndex the index of the row that will be deleted
+     * @throws DeleteUnfinishedEmptyRowException if the user tries to delete the
+     *                                           lest row
+     */
     public void deleteRow(PurchasedItemTableModel pitm, int rowIndex) throws DeleteUnfinishedEmptyRowException {
         if (rowIndex == pitm.getRowCount() - 1) {
             throw new DeleteUnfinishedEmptyRowException("Can't delete unfinished empty row");
@@ -145,8 +211,37 @@ public class PurchaseController extends Controller<Purchase> {
         pitm.deleteRow(rowIndex);
     }
 
+    /**
+     * Adds and saves a purchase with the purchased items specified in the model and
+     * the date
+     * <p>
+     * A Cashflow with the sumPayed amount will be also created
+     * 
+     * @param pitm the PurchasedItemTableModel that stores the PurchasedItems of the
+     *             purchase
+     * @param date the date of the purchase
+     * @throws InvalidTableCellException if one of the cells has an invalid value.
+     *                                   <p>
+     *                                   Cell can be invalid if:
+     *                                   <ul>
+     *                                   <li>the cell is blank</li>
+     *                                   <li>the cell stores a Money value and it's
+     *                                   amount is 0 or less</li>
+     *                                   <li>the cell stores a double value and it's
+     *                                   value is 0 or less</li>
+     *                                   </ul>
+     * @throws CreatingRecordFailed
+     *                                   <ul>
+     *                                   <li>if the model had no purchased items in
+     *                                   it</li>
+     *                                   <li>if looking up the category of a
+     *                                   PurchsedItem faield</li>
+     *                                   <li>if an IO Error occured</li>
+     *                                   </ul>
+     */
     public void addPurchase(PurchasedItemTableModel pitm, LocalDate date) throws InvalidTableCellException,
-            CreatingRecordFailed, CategoryLookupFailedException {
+            CreatingRecordFailed {
+
         checkCells(pitm);
 
         List<PurchasedItem> purchasedItems = pitm.getItems();
@@ -188,6 +283,35 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
+    /**
+     * Edits the an existing purchase based on the PurchasedItemTableModel and the
+     * dateOfPurchase
+     * <p>
+     * Also edits the releveant cashflow record
+     * 
+     * @param purchase       the pruchase that will be changed
+     * @param pitm           PurchasedItemTableModel that stores the new
+     *                       PurchasedItems
+     * @param dateOfPurchase the new date of the purchase
+     * @throws InvalidTableCellException if one of the cells has an invalid value.
+     *                                   <p>
+     *                                   Cell can be invalid if:
+     *                                   <ul>
+     *                                   <li>the cell is blank</li>
+     *                                   <li>the cell stores a Money value and it's
+     *                                   amount is 0 or less</li>
+     *                                   <li>the cell stores a double value and it's
+     *                                   value is 0 or less</li>
+     *                                   </ul>
+     * @throws EditingRecordFailed
+     *                                   <ul>
+     *                                   <li>if the model had no purchased items in
+     *                                   it</li>
+     *                                   <li>if looking up the category of a
+     *                                   PurchsedItem faield</li>
+     *                                   <li>if an IO Error occured</li>
+     *                                   </ul>
+     */
     public void editPurchase(Purchase purchase, PurchasedItemTableModel pitm, LocalDate dateOfPurchase)
             throws InvalidTableCellException, EditingRecordFailed {
 
@@ -231,6 +355,14 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
+    /**
+     * Removes a purchase from the save file
+     * 
+     * @param purchase the purchase that will be removed
+     * @throws DeletingRecordFailed if an IO Error occured or the relevant cashlfow
+     *                              was not removed
+     * @throws NoItemWasSelected    if no purchase was selected (purchase == null)
+     */
     public void deletePurchase(Purchase purchase) throws DeletingRecordFailed, NoItemWasSelected {
         if (purchase == null) {
             throw new NoItemWasSelected("A purchase must be selected to delete");
@@ -247,6 +379,16 @@ public class PurchaseController extends Controller<Purchase> {
     }
 
     // HELPERS
+
+    /**
+     * Finds and sets the Category of the PurchasedItems given in the parameter
+     * <p>
+     * If a Category does not exist it will be created and assigned
+     * 
+     * @param purchasedItems list of purchased items
+     * @throws CategoryLookupFailedException if the category was not found
+     * @throws CreatingRecordFailed          if creating new category failed
+     */
     private void lookupCategories(List<PurchasedItem> purchasedItems)
             throws CategoryLookupFailedException, CreatingRecordFailed {
         for (PurchasedItem boughtItem : purchasedItems) { // Set the category for items
@@ -261,24 +403,43 @@ public class PurchaseController extends Controller<Purchase> {
         }
     }
 
-    private List<Purchase> getUsersPurchases() throws ReadingPurchasesFailedException {
+    /**
+     * Returns the purchses that belong to the user signed in
+     * 
+     * @return the purchses that belong to the user signed in
+     * @throws SerializerCannotRead if an IO Error occured
+     */
+    private List<Purchase> getUsersPurchases() throws SerializerCannotRead {
         List<Purchase> result = new ArrayList<>();
 
-        try {
-            List<Purchase> purchases = modelSerializer.readAll();
-            for (Purchase purchase : purchases) {
-                if (purchase.getUser().equals(userLogedIn)) {
-                    result.add(purchase);
-                }
+        List<Purchase> purchases = modelSerializer.readAll();
+        for (Purchase purchase : purchases) {
+            if (purchase.getUser().equals(userLogedIn)) {
+                result.add(purchase);
             }
-
-            return result;
-        } catch (SerializerCannotRead e) {
-            throw new ReadingPurchasesFailedException("Failed to read purchases");
         }
+
+        return result;
     }
 
     // VALIDATORS
+    /**
+     * Validates the cells of a PurchasedItemTableModel
+     * <p>
+     * Cell can be invalid if:
+     * <ul>
+     * <li>the cell is blank</li>
+     * <li>the cell stores a Money value and it's
+     * amount is 0 or less</li>
+     * <li>the cell stores a double value and it's
+     * value is 0 or less</li>
+     * </ul>
+     * 
+     * If a cell was invalid an exception will be thrown
+     * 
+     * @param pitm the PurchasedItemTableModel
+     * @throws InvalidTableCellException if the cell is invalid
+     */
     private void checkCells(PurchasedItemTableModel pitm) throws InvalidTableCellException {
         for (int row = 0; row < pitm.getRowCount() - 1; row++) { // Last row is empty row -> don need to check it
             for (int column = 0; column < pitm.getColumnCount(); column++) {
@@ -296,7 +457,7 @@ public class PurchaseController extends Controller<Purchase> {
                     }
                 }
 
-                // Check if double is 0 or less
+                // Check if amount is 0 or less
                 if (pitm.getColumnClass(column).equals(Double.class)) {
                     double amount = (double) pitm.getValueAt(row, column);
                     if (amount <= 0.0) {
@@ -308,6 +469,14 @@ public class PurchaseController extends Controller<Purchase> {
     }
 
     // MODEL UPDATE
+    /**
+     * Updates the PurchaseListModel based on an id
+     * <p>
+     * The model will conatin the purchase that's id matches with the parameter
+     * 
+     * @param id id of the purchase
+     * @throws UpdatingModelFailed if an IO Error occured
+     */
     private void updatePurchaseModel(long id) throws UpdatingModelFailed {
         try {
             List<Purchase> purchases = getUsersPurchases();
@@ -319,23 +488,47 @@ public class PurchaseController extends Controller<Purchase> {
                 }
             }
             purchaseListModel = new PurchaseListModel(result);
-        } catch (ReadingPurchasesFailedException e) {
+        } catch (SerializerCannotRead e) {
             throw new UpdatingModelFailed("Updating purchase model failed due to an IO Error");
         }
     }
 
+    /**
+     * Updates the PurchaseListModel based on an id
+     * <p>
+     * The model will contain every purchase that belongs to the user
+     * 
+     * @throws UpdatingModelFailed if an IO Error occured
+     */
     private void updatePurchaseModel() throws UpdatingModelFailed {
         try {
             List<Purchase> purchases = getUsersPurchases();
             purchaseListModel = new PurchaseListModel(purchases);
-        } catch (ReadingPurchasesFailedException e) {
+        } catch (SerializerCannotRead e) {
             throw new UpdatingModelFailed("Updating purchase model failed due to an IO Error");
         }
     }
 
+    /**
+     * Updates the DetailedPurchaseTableModel to match the filter options.
+     * <p>
+     * The model will contain only those purchased items that were bought betweeen
+     * the start and the end date and has the same category as the parameter
+     * <p>
+     * If the category parameter is set to null then modelsill not be filtered for
+     * any category
+     * 
+     * @param startDate model will only have items that were purchased on the start
+     *                  date or after the start date
+     * @param endDate   model will only have items that were purchased on the start
+     *                  end or before the end date
+     * @param category  model will only have items that have the same category
+     * @throws UpdatingModelFailed if an IO Error occured
+     */
     private void updatePurchasedItemModel(LocalDate startDate, LocalDate endDate, Category category)
             throws UpdatingModelFailed {
         try {
+
             List<Purchase> purchases = getUsersPurchases();
             List<PurchasedItem> purchasedItems = new ArrayList<>();
             for (Purchase purchase : purchases) {
@@ -353,14 +546,39 @@ public class PurchaseController extends Controller<Purchase> {
             }
 
             purchasedItemsTableModel = new DetailedPurchaseTableModel(purchasedItems);
-        } catch (ReadingPurchasesFailedException e) {
+        } catch (SerializerCannotRead e) {
             throw new UpdatingModelFailed("Updating purchased item model faield due to an IO Error");
         }
     }
 
     // FILTERING
+
+    /**
+     * Updates the filter varuables and the DetailedPurchaseTableModel model
+     * <p>
+     * If category string is blank the model will not be fitlered for category
+     * 
+     * @param startDate
+     * @param endDate
+     * @param categoryString
+     * 
+     * @param startDate      model will only have items that were purchased on the
+     *                       start date or after the start date
+     * @param endDate        model will only have items that were purchased on the
+     *                       start end or before the end date
+     * @param categoryString model will only have items that have category with the
+     *                       same name
+     * @throws UpdatingModelFailed if model was not updated due to an IO Error
+     * @throws FilteringFailed     if start date is after end date or category was
+     *                             not found
+     */
     public void filterPurchasedItems(LocalDate startDate, LocalDate endDate, String categoryString)
             throws FilteringFailed, UpdatingModelFailed {
+
+        if (startDate.isAfter(endDate)) {
+            throw new FilteringFailed("Start date cant be after end date");
+        }
+
         // Get the category
         Category cat = null;
         if (!categoryString.isBlank()) { // Only change value of cat if its not blank
@@ -380,6 +598,15 @@ public class PurchaseController extends Controller<Purchase> {
         this.category = cat;
     }
 
+    /**
+     * Updates the paremeters for PurchaseListModel and updates teh model
+     * 
+     * @param idString a string representing a purchase id the user is looking for
+     * <p>
+     * If id is blank the model will not fitler for any id
+     * @throws FilteringFailed if idString can't be parsed to a long value
+     * @throws UpdatingModelFailed if updating the model failed due to an IO Error
+     */
     public void filterPurchase(String idString) throws FilteringFailed, UpdatingModelFailed {
         if (idString.isBlank()) {
             updatePurchaseModel();

@@ -150,7 +150,7 @@ public class DebtView extends PanelView {
             setComponentAttributes(deadlineLabel);
             panel.add(deadlineLabel);
 
-            JLabel repayedAmountLabel = new JLabel("Repayed: " + Debt.repayed(debt).toString());
+            JLabel repayedAmountLabel = new JLabel("Repayed: " + debt.getPayedAmount().toString());
             setComponentAttributes(repayedAmountLabel);
             panel.add(repayedAmountLabel);
 

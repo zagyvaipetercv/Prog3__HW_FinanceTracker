@@ -61,7 +61,7 @@ public class LoginWindow extends FrameView {
                                                 passwordTextField.getText());
                                 
                                 userController.closeFrameView(this);
-                        } catch (LoginFailedException | InvalidPasswordException | InvalidUserNameException e) {
+                        } catch (LoginFailedException e) {
                                 ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
                         }
                 });

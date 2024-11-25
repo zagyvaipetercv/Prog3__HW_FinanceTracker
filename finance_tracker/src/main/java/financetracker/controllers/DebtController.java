@@ -294,7 +294,7 @@ public class DebtController extends Controller<Debt> {
 
         double amount = Money.parseAmount(amountString);
 
-        double remainingDebtAmount = debt.getDebtAmount().getAmount() - Debt.repayed(debt).getAmount();
+        double remainingDebtAmount = debt.getDebtAmount().getAmount() - debt.getPayedAmount().getAmount();
 
         validateAmount(amount, null);
 
@@ -321,7 +321,7 @@ public class DebtController extends Controller<Debt> {
      * @throws DeptPaymentFailedException if an IO Error occured
      */
     public void payAll(Debt debt, LocalDate date) throws DeptPaymentFailedException {
-        double remaining = debt.getDebtAmount().getAmount() - Debt.repayed(debt).getAmount();
+        double remaining = debt.getDebtAmount().getAmount() - debt.getPayedAmount().getAmount();
 
         pay(debt, remaining, date);
     }
@@ -556,7 +556,7 @@ public class DebtController extends Controller<Debt> {
             throw new InvalidAmountException(amount, "Amount must be greater than 0");
         }
 
-        if (debt != null && amount <= Debt.repayed(debt).getAmount()) {
+        if (debt != null && amount <= debt.getPayedAmount().getAmount()) {
             throw new InvalidAmountException(amount, "Amount must stay greater than what's already repayed");
         }
     }

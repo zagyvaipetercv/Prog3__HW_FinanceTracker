@@ -67,7 +67,7 @@ public class Debt extends Model {
     }
 
     public boolean isFulfilled() {
-        return CustomMath.almostEquals(repayed(this).getAmount(), debtAmount.getAmount());
+        return CustomMath.almostEquals(getPayedAmount().getAmount(), debtAmount.getAmount());
     }
 
     public LocalDate getDeadline() {
@@ -87,10 +87,10 @@ public class Debt extends Model {
         return debtor.getName() + " owes " + creditor.getName() + " " + date + " " + debtAmount;
     }
 
-    public static Money repayed(Debt debt) {
+    public Money getPayedAmount() {
         double sum = 0.0;
 
-        for (Payment payment : debt.getPayments()) {
+        for (Payment payment : getPayments()) {
             sum += payment.getAmount().getAmount();
         }
 
