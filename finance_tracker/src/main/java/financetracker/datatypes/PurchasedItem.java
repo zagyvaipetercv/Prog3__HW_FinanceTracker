@@ -57,6 +57,13 @@ public class PurchasedItem implements Serializable {
         this.amount = amount;
     }
 
+    /**
+     * Calculates and returns the sum price of the item
+     * <p>
+     * sumPrice = amount * pricePerUnit
+     * 
+     * @return amount * pricePerUnit
+     */
     public Money getSumPrice() {
         if (pricePerUnit == null) {
             return null;
@@ -64,6 +71,11 @@ public class PurchasedItem implements Serializable {
         return new Money(amount * pricePerUnit.getAmount(), pricePerUnit.getCurrency());
     }
 
+    /**
+     * Sets the pricePerUnit value based on the amount and the sum price in the parameter
+     * 
+     * @param sumPrice the sumPrice of the item
+     */
     public void setSumPrice(Money sumPrice) {
         this.pricePerUnit = new Money(sumPrice.getAmount() / amount, sumPrice.getCurrency());
     }

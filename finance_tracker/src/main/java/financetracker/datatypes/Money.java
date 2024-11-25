@@ -52,6 +52,13 @@ public class Money implements Serializable {
         return Objects.hash(((Double)amount), currency);
     }
 
+    /**
+     * Tries to parse a string into a valid amount value
+     * 
+     * @param amountString the string that will be parsed
+     * @return the double value the string represents
+     * @throws InvalidAmountException if string is blank or in the wrong format
+     */
     public static double parseAmount(String amountString) throws InvalidAmountException {
         try {
             if (amountString.isBlank()) {
@@ -64,6 +71,14 @@ public class Money implements Serializable {
         }
     }
 
+    /**
+     * Parses a string to a Currency
+     * <p>
+     * Specialized for hungarian notation
+     * 
+     * @param currency the string representing a currency 
+     * @return a currency
+     */
     public static Currency parseCurrency(String currency) {
         if (currency.equals("Ft")) {
             return Currency.getInstance("HUF");

@@ -66,10 +66,6 @@ public class Debt extends Model {
         this.payments = payments;
     }
 
-    public boolean isFulfilled() {
-        return CustomMath.almostEquals(getPayedAmount().getAmount(), debtAmount.getAmount());
-    }
-
     public LocalDate getDeadline() {
         return deadline;
     }
@@ -78,15 +74,34 @@ public class Debt extends Model {
         this.deadline = deadLine;
     }
 
-    public boolean hasDeadline() {
-        return deadline != null;
-    }
-
     @Override
     public String toString() {
         return debtor.getName() + " owes " + creditor.getName() + " " + date + " " + debtAmount;
     }
 
+    /**
+     * Returns true if debt has a deadline, false if not
+     * 
+     * @return true if debt has a deadline, false if not
+     */
+    public boolean hasDeadline() {
+        return deadline != null;
+    }
+
+    /**
+     * Returns if payed amount is equal to the debt amount
+     * 
+     * @return true if payed amount is equal to debt amount, false if not
+     */
+    public boolean isFulfilled() {
+        return CustomMath.almostEquals(getPayedAmount().getAmount(), debtAmount.getAmount());
+    }
+
+    /**
+     * Returns the summarized payed amount  
+     * 
+     * @return the summarized payed amount
+     */
     public Money getPayedAmount() {
         double sum = 0.0;
 
