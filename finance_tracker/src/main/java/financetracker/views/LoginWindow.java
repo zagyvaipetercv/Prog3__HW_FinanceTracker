@@ -17,6 +17,7 @@ import financetracker.exceptions.usercontroller.LoginFailedException;
 import financetracker.exceptions.usercontroller.RegistrationFailedException;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
+import financetracker.windowing.WarningBox;
 
 import javax.swing.GroupLayout.Alignment;
 
@@ -69,9 +70,14 @@ public class LoginWindow extends FrameView {
                 registerButton = new JButton("Register");
                 registerButton.addActionListener(event -> {
                         try {
-                                this.userController.register(
+                                boolean succes = this.userController.register(
                                                 usernameTextField.getText(),
                                                 passwordTextField.getText());
+
+                                if (succes) {
+                                        WarningBox.show(this, "REGISTRATION SUCCES", "Registration was succesful");
+                                }
+
                         } catch (InvalidUserNameException | InvalidPasswordException | RegistrationFailedException e) {
                                 ErrorBox.show(this, e.getErrorTitle(), e.getMessage());
                         }
