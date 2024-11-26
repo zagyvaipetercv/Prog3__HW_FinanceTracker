@@ -55,8 +55,7 @@ public class PurchaseController extends Controller<Purchase> {
     private User userLogedIn;
 
     // FILTER OPTIONS
-    private boolean filterForID;
-    private long filterID;
+    private Long filterID;
 
     private LocalDate startDate;
     private LocalDate endDate;
@@ -81,8 +80,7 @@ public class PurchaseController extends Controller<Purchase> {
         endDate = LocalDate.of(today.getYear(), today.getMonth(), daysInThisMonth);
         category = null;
 
-        filterForID = false;
-        filterID = 0;
+        filterID = null;
     }
 
     // VIEW GETTERS
@@ -94,12 +92,8 @@ public class PurchaseController extends Controller<Purchase> {
      * @throws UpdatingModelFailed if updating the PurchaseListModel model failed
      */
     public PanelView getPurchaseView() throws UpdatingModelFailed {
-        if (filterForID) {
-            updatePurchaseModel(filterID);
-        } else {
-            updatePurchaseModel();
-        }
-        return new PurchaseView(this, purchaseListModel, (!filterForID ? "" : Long.toString(filterID)));
+        updatePurchaseModel(filterID);
+        return new PurchaseView(this, purchaseListModel, (filterID == null ? "" : Long.toString(filterID)));
     }
 
     /**
@@ -472,38 +466,28 @@ public class PurchaseController extends Controller<Purchase> {
     /**
      * Updates the PurchaseListModel based on an id
      * <p>
-     * The model will conatin the purchase that's id matches with the parameter
+     * The model will conatin the purchase that's id matches with the id in the
+     * parameters or if the id was null every record will be part of the model
      * 
      * @param id id of the purchase
      * @throws UpdatingModelFailed if an IO Error occured
      */
-    private void updatePurchaseModel(long id) throws UpdatingModelFailed {
+    private void updatePurchaseModel(Long id) throws UpdatingModelFailed {
         try {
             List<Purchase> purchases = getUsersPurchases();
-            List<Purchase> result = new ArrayList<>();
+            if (id == null) { // If the id was null-> every record should be part of the model
+                purchaseListModel = new PurchaseListModel(purchases);
+                return;
+            }
 
+            // If id was not null -> find the purchase with the id
+            List<Purchase> result = new ArrayList<>();
             for (Purchase purchase : purchases) {
                 if (purchase.getId() == id) {
                     result.add(purchase);
                 }
             }
             purchaseListModel = new PurchaseListModel(result);
-        } catch (SerializerCannotRead e) {
-            throw new UpdatingModelFailed("Updating purchase model failed due to an IO Error");
-        }
-    }
-
-    /**
-     * Updates the PurchaseListModel based on an id
-     * <p>
-     * The model will contain every purchase that belongs to the user
-     * 
-     * @throws UpdatingModelFailed if an IO Error occured
-     */
-    private void updatePurchaseModel() throws UpdatingModelFailed {
-        try {
-            List<Purchase> purchases = getUsersPurchases();
-            purchaseListModel = new PurchaseListModel(purchases);
         } catch (SerializerCannotRead e) {
             throw new UpdatingModelFailed("Updating purchase model failed due to an IO Error");
         }
@@ -602,25 +586,23 @@ public class PurchaseController extends Controller<Purchase> {
      * Updates the paremeters for PurchaseListModel and updates teh model
      * 
      * @param idString a string representing a purchase id the user is looking for
-     * <p>
-     * If id is blank the model will not fitler for any id
-     * @throws FilteringFailed if idString can't be parsed to a long value
+     *                 <p>
+     *                 If id is blank the model will not fitler for any id
+     * @throws FilteringFailed     if idString can't be parsed to a long value
      * @throws UpdatingModelFailed if updating the model failed due to an IO Error
      */
     public void filterPurchase(String idString) throws FilteringFailed, UpdatingModelFailed {
         if (idString.isBlank()) {
-            updatePurchaseModel();
-            filterForID = false;
-            return;
+            filterID = null;
+        } else {
+            try {
+                filterID = Long.parseLong(idString);
+            } catch (NumberFormatException e) {
+                throw new FilteringFailed(idString + " can't be parsed to id [whole number]");
+            }
         }
 
-        try {
-            filterForID = true;
-            filterID = Long.parseLong(idString);
-            updatePurchaseModel(filterID);
-        } catch (NumberFormatException e) {
-            throw new FilteringFailed(idString + " can't be parsed to id [whole number]");
-        }
+        updatePurchaseModel(null);
     }
 
     // FOR-TESTING

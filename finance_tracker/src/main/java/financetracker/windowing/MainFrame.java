@@ -18,7 +18,6 @@ import financetracker.datatypes.User;
 import financetracker.exceptions.controller.ControllerWasNotCreated;
 import financetracker.exceptions.generic.ChangingViewFailed;
 import financetracker.exceptions.generic.UpdatingModelFailed;
-import financetracker.views.HomeView;
 import financetracker.views.base.PanelView;
 
 public class MainFrame extends JFrame {
@@ -37,6 +36,7 @@ public class MainFrame extends JFrame {
     private transient PurchaseController purchaseController;
     private transient CategoryController categoryController;
 
+    // FOR-TESTING
     public MainFrame(
             User userSignedIn,
             String userFilePath,
@@ -69,7 +69,11 @@ public class MainFrame extends JFrame {
         sidePanel = new SidePanel(this);
         this.add(sidePanel, BorderLayout.WEST);
 
-        currentView = new HomeView(getUserName());
+        try {
+            currentView = cashFlowController.getWalletView();
+        } catch (UpdatingModelFailed e) {
+            ErrorBox.show(this, e);
+        }
         add(currentView);
     }
 
@@ -88,7 +92,7 @@ public class MainFrame extends JFrame {
             System.exit(-1);
         }
 
-        subTitle = "Home";
+        subTitle = "Wallet";
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle(subTitle);
@@ -100,7 +104,11 @@ public class MainFrame extends JFrame {
         sidePanel = new SidePanel(this);
         this.add(sidePanel, BorderLayout.WEST);
 
-        currentView = new HomeView(getUserName());
+        try {
+            currentView = cashFlowController.getWalletView();
+        } catch (UpdatingModelFailed e) {
+            ErrorBox.show(this, e);
+        }
         add(currentView);
 
         setVisible(true);
@@ -122,14 +130,6 @@ public class MainFrame extends JFrame {
         repaint();
     }
 
-    public String getUserName() {
-        return user.getName();
-    }
-
-    public long getUserId() {
-        return user.getId();
-    }
-
     private class SidePanel extends JPanel {
         private static final int PREFFERED_WIDTH = 250;
 
@@ -144,13 +144,6 @@ public class MainFrame extends JFrame {
             setLayout(layout);
 
             setBackground(getBackground().darker());
-
-            NavButton homeButton = new NavButton("Home");
-            homeButton.addActionListener(actionEvent -> {
-                mainFrame.changeView(new HomeView(mainFrame.getUserName()));
-                mainFrame.setTitle("Home");
-            });
-            add(homeButton);
 
             NavButton walletButton = new NavButton("Wallet");
             walletButton.addActionListener(ae -> {

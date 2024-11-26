@@ -59,7 +59,7 @@ public class LoginWindow extends FrameView {
                                 this.userController.login(
                                                 usernameTextField.getText(),
                                                 passwordTextField.getText());
-                                
+
                                 userController.closeFrameView(this);
                         } catch (LoginFailedException e) {
                                 ErrorBox.show(this, e.getErrorTitle(), e.getMessage());

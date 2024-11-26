@@ -4,9 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
-import java.util.ListIterator;
-
-import javax.swing.JList;
 
 import financetracker.datatypes.CashFlow;
 import financetracker.datatypes.Debt;
