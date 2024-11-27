@@ -12,7 +12,6 @@ import javax.swing.WindowConstants;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import financetracker.controllers.PurchaseController;
-import financetracker.exceptions.category.CategoryLookupFailedException;
 import financetracker.exceptions.generic.CreatingRecordFailed;
 import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.exceptions.purchase.DeleteUnfinishedEmptyRowException;
@@ -22,6 +21,9 @@ import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.customtables.PurchasedItemsTable;
 
+/**
+ * FrameView where the user can add a new purchase to their account
+ */
 public class AddPurchaseView extends FrameView {
     private PurchaseController purchaseController;
 

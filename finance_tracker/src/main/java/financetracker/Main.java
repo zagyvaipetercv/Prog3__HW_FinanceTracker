@@ -6,6 +6,10 @@ import financetracker.windowing.ErrorBox;
 import financetracker.windowing.MainFrame;
 
 public class Main {
+    /**
+     * Opens Login window where the user can register or login
+     * @param args never used
+     */
     public static void main(String[] args) {
         MainFrame mainFrame = null;
         try {

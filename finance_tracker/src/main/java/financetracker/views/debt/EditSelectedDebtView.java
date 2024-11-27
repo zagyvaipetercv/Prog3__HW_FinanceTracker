@@ -22,6 +22,9 @@ import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 
+/**
+ * FrameView where the user can edit their debts
+ */
 public class EditSelectedDebtView extends FrameView {
 
     private DebtController debtController;

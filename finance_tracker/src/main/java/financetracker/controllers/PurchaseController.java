@@ -39,6 +39,7 @@ import financetracker.views.purchase.PurchaseView;
 import financetracker.views.purchase.PurchasedItemsView;
 import financetracker.windowing.MainFrame;
 
+
 public class PurchaseController extends Controller<Purchase> {
 
     private static final String DEFAULT_SAVE_PATH = "saves/purchases.dat";

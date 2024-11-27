@@ -8,6 +8,9 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+/**
+ * JPanel for PanelView's options panel
+ */
 public class OptionsPanel extends JPanel {
     public OptionsPanel() {
         setBorder(BorderFactory.createLineBorder(MyWindowConstants.BORDER_COLOR, MyWindowConstants.BORDER_THICKNESS));
@@ -19,6 +22,11 @@ public class OptionsPanel extends JPanel {
         setLayout(layout);
     }
 
+    /**
+     * Adds a new OptionButton to this panel with a specific name and an ActionListener
+     * @param text
+     * @param actionListener
+     */
     public void addOptionButton(String text, ActionListener actionListener) {
         add(new OptionButton(text, actionListener));
     }

@@ -8,6 +8,9 @@ import financetracker.models.UneditablePurchasedItemTableModel;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.customtables.PurchasedItemsTable;
 
+/**
+ * FrameView where the user can see details about their selected purchase
+ */
 public class DetailedPurchaseView extends FrameView {
     private UneditablePurchasedItemTableModel pitm;
 

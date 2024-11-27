@@ -7,6 +7,11 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 
+/**
+ * A TableCellEditor made for Strings
+ * <p>
+ * When a cell is about to be adited the cell will become blank
+ */
 public class CustomStringCellEditor extends AbstractCellEditor implements TableCellEditor {
     private final JTextField textfield = new JTextField();
     private String currentString;

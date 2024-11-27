@@ -21,6 +21,9 @@ import financetracker.windowing.WarningBox;
 
 import javax.swing.GroupLayout.Alignment;
 
+/**
+ * FrameView where the user can log in or register
+ */
 public class LoginWindow extends FrameView {
         private static final Dimension DEFAULT_SIZE = new Dimension(300, 150);
 

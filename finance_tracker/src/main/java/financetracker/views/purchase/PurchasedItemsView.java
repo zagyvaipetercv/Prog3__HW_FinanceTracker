@@ -24,6 +24,9 @@ import financetracker.views.base.PanelView;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.customtables.PurchasedItemsTable;
 
+/**
+ * PanelView where the user can see detailed information about their purchases
+ */
 public class PurchasedItemsView extends PanelView {
     private DetailedPurchaseTableModel detailedPurchaseTableModel;
     private PurchaseController purchaseController;

@@ -26,6 +26,9 @@ import financetracker.windowing.OptionsPanel;
 import financetracker.models.CashFlowTableModel;
 import financetracker.models.SummarizedCashFlowModel;
 
+/**
+ * PanelView where the user can manage their cashflows
+ */
 public class WalletView extends PanelView {
 
     private CashFlowController cashFlowController;

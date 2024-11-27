@@ -23,6 +23,9 @@ import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.customtables.PurchasedItemsTable;
 
+/**
+ * FrameView where the user can edit their selected purchase
+ */
 public class EditPurchaseView extends FrameView {
     private PurchaseController purchaseController;
 

@@ -10,6 +10,11 @@ import financetracker.datatypes.PurchasedItem;
 import financetracker.datatypes.Category;
 import financetracker.datatypes.Money;
 
+/**
+ * Table model for purchases
+ * <p>
+ * Model is uneditable. Contains information about the purches' id; date; and its PurchsaedItems' Category; name; price/unit; amount; summarized price 
+ */
 public class DetailedPurchaseTableModel extends AbstractTableModel {
     private List<PurchasedItem> items;
 

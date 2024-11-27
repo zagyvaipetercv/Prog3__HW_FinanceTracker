@@ -3,14 +3,17 @@ package financetracker.windowing.celleditors;
 import java.awt.Component;
 
 import javax.swing.AbstractCellEditor;
-import javax.swing.JFrame;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 
-import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 
+/**
+ * A TableeCellEditor for doubles
+ * <p>
+ * When a cell is about to be adited the cell will become blank
+ */
 public class CustomDoubleCellEditor extends AbstractCellEditor implements TableCellEditor {
     private final JTextField textfield = new JTextField();
     private Double currentDouble;

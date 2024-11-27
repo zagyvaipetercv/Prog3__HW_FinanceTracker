@@ -22,6 +22,9 @@ import financetracker.exceptions.usercontroller.UserNotFound;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 
+/**
+ * FrameView where the user can create new debts
+ */
 public class AddNewDebtView extends FrameView {
 
         private DebtController debtController;

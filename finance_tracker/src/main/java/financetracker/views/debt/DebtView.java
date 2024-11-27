@@ -35,6 +35,9 @@ import financetracker.windowing.ErrorBox;
 import financetracker.windowing.MyWindowConstants;
 import financetracker.windowing.OptionsPanel;
 
+/**
+ * PanelView where the user cane manage their debts
+ */
 public class DebtView extends PanelView {
     private JList<Debt> debts;
 
@@ -103,6 +106,9 @@ public class DebtView extends PanelView {
         add(centerPanel, BorderLayout.CENTER);
     }
 
+    /**
+     * The efault list cell renderer for debts 
+     */
     private class DebtListCellRenderer extends DefaultListCellRenderer {
 
         @Override

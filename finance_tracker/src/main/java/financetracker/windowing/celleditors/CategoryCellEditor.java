@@ -10,6 +10,11 @@ import javax.swing.table.TableCellEditor;
 import financetracker.datatypes.Category;
 import financetracker.windowing.ErrorBox;
 
+/**
+ * A TableCellEditor made for the Category datatype
+ * <p>
+ * When a cell is about to be adited the cell will become blank
+ */
 public class CategoryCellEditor extends AbstractCellEditor implements TableCellEditor {
     private final JTextField textfield = new JTextField();
     private Category currentCategory;
@@ -19,7 +24,6 @@ public class CategoryCellEditor extends AbstractCellEditor implements TableCellE
     public CategoryCellEditor(Component parentComponent) {
         this.parnetComponent = parentComponent;
     }
-
 
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,

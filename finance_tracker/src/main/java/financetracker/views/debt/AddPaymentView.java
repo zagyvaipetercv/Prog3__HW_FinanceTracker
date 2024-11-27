@@ -24,6 +24,9 @@ import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 import financetracker.windowing.WarningBox;
 
+/**
+ * FrameView where the user can add payments to a sleected debt
+ */
 public class AddPaymentView extends FrameView {
         private DebtController debtController;
         private Debt debt;

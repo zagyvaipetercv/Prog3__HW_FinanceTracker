@@ -10,6 +10,11 @@ import financetracker.windowing.celleditors.CustomDoubleCellEditor;
 import financetracker.windowing.celleditors.CustomStringCellEditor;
 import financetracker.windowing.celleditors.MoneyCellEditor;
 
+/**
+ * A custom JTable for PurchasedItem types
+ * <p>
+ * Cell editors are set to work
+ */
 public class PurchasedItemsTable extends JTable {
     public PurchasedItemsTable(PurchasedItemTableModel pitm) {
         super(pitm);

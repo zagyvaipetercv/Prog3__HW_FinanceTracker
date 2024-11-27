@@ -12,6 +12,11 @@ import financetracker.datatypes.Money;
 import financetracker.exceptions.cashflowcontroller.InvalidAmountException;
 import financetracker.windowing.ErrorBox;
 
+/**
+ * A TableCellEditor made for the Money datatype
+ * <p>
+ * When a cell is about to be adited the cell will become blank
+ */
 public class MoneyCellEditor extends AbstractCellEditor implements TableCellEditor {
     private final JTextField textfield = new JTextField();
     private Money currentMoney;

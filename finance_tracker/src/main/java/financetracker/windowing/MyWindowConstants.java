@@ -2,6 +2,9 @@ package financetracker.windowing;
 
 import java.awt.Color;
 
+/**
+ * Contains options for the panels like border colors, or thickness
+ */
 public class MyWindowConstants {
     private MyWindowConstants() {
 

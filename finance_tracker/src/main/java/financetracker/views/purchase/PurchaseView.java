@@ -28,6 +28,9 @@ import financetracker.windowing.ErrorBox;
 import financetracker.windowing.MyWindowConstants;
 import financetracker.windowing.OptionsPanel;
 
+/**
+ * PanelView where the user can see basic informations about their purchases and manage them
+ */
 public class PurchaseView extends PanelView {
 
     private PurchaseController purchaseController;

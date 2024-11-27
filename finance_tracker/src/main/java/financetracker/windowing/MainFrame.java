@@ -20,6 +20,9 @@ import financetracker.exceptions.generic.ChangingViewFailed;
 import financetracker.exceptions.generic.UpdatingModelFailed;
 import financetracker.views.base.PanelView;
 
+/**
+ * The main frame of the application that will be opened after succesfull login
+ */
 public class MainFrame extends JFrame {
     private static final Dimension DEFAULT_SIZE = new Dimension(1280, 720);
     private static final Dimension MIN_SIZE = new Dimension(1000, 600);
@@ -200,26 +203,57 @@ public class MainFrame extends JFrame {
         }
     }
 
+    /**
+     * Returns the user that is signed in
+     * 
+     * @return the user that is signed in
+     */
     public User getUserLogedIn() {
         return user;
     }
 
+    /**
+     * Returns the UserController used by the program
+     * 
+     * @return the UserController used by the program
+     */
     public UserController getUserController() {
         return userController;
     }
 
+    /**
+     * Returns the DebtController used by the program
+     * 
+     * @return the DebtController used by the program
+     */
     public DebtController getDebtController() {
         return debtController;
     }
 
+    /**
+     * Returns the CashFlowController used by the program
+     * 
+     * @return the CashFlowController used by the program
+     */
     public CashFlowController getCashFlowController() {
         return cashFlowController;
     }
 
+    /**
+     * Returns the CategoryController used by the program
+     * 
+     * @return the CategoryController used by the program
+     */
     public CategoryController getCategoryController() {
         return categoryController;
     }
 
+    
+    /**
+     * Returns the PurchaseController used by the program
+     * 
+     * @return the PurchaseController used by the program
+     */
     public PurchaseController getPurchaseController() {
         return purchaseController;
     }

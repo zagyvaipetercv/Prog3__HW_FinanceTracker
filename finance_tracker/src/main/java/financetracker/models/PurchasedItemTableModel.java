@@ -10,6 +10,13 @@ import financetracker.datatypes.PurchasedItem;
 import financetracker.datatypes.Category;
 import financetracker.datatypes.Money;
 
+/**
+ * Table model for the purchased items
+ * <p>
+ * Checks if last row is filled with data. If so then automatically opens a new empty row.
+ * <p>
+ * Cells are editable
+ */
 public class PurchasedItemTableModel extends AbstractTableModel {
 
     private List<PurchasedItem> items;
@@ -124,6 +131,11 @@ public class PurchasedItemTableModel extends AbstractTableModel {
         }
     }
 
+    /**
+     * Checks if the row is filled with data
+     * @param rowIndex the row that will be checked
+     * @return true if every cell in the row is filled with data. false if not
+     */
     private boolean isRowFilled(int rowIndex) {
         PurchasedItem row = items.get(rowIndex);
         return (!row.getCategory().getName().isBlank() &&
@@ -133,10 +145,17 @@ public class PurchasedItemTableModel extends AbstractTableModel {
                 row.getSumPrice().getAmount() != 0.0);
     }
 
+    /**
+     * Adds an empty row to the end of the model
+     */
     protected void addEmptyRow() {
         items.add(new PurchasedItem(null, new Category(-1, ""), "", new Money(0, Currency.getInstance("HUF")), 0));
     }
 
+    /**
+     * Deletes a row from the list and updates the model
+     * @param rowIndex the row that will be deleted
+     */
     public void deleteRow(int rowIndex) {
         items.remove(rowIndex);
         fireTableRowsDeleted(rowIndex, rowIndex);

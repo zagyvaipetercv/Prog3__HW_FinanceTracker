@@ -7,6 +7,11 @@ import javax.swing.table.AbstractTableModel;
 
 import financetracker.datatypes.CashFlow;
 
+/**
+ * Table model for a the cashflow datatype
+ * <p>
+ * Inherits the AbstractTableModel
+ */
 public class CashFlowTableModel extends AbstractTableModel {
 
     private List<CashFlow> cashFlowList;

@@ -2,6 +2,15 @@ package financetracker.models;
 
 import financetracker.datatypes.Money;
 
+/**
+ * Contains information about the amount of money on the account
+ * <ul>
+ * <li>How much money is on the account</li>
+ * <li>The profit of this month</li>
+ * <li>Summarized Incomes</li>
+ * <li>Summarized Expenses</li>
+ * </ul>
+ */
 public class SummarizedCashFlowModel {
     private Money moneyOnAccount;
     private Money sumIncomes;

@@ -16,6 +16,9 @@ import financetracker.exceptions.generic.CreatingRecordFailed;
 import financetracker.views.base.FrameView;
 import financetracker.windowing.ErrorBox;
 
+/**
+ * FrameView where the user can add new cahsflows using a CashFlowController
+ */
 public class SetMoneyView extends FrameView {
     public SetMoneyView(CashFlowController cashFlowController) {
         // Setup Window
