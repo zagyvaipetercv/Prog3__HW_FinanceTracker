@@ -1,2 +1,4 @@
 saves/*
 *.dat
+target/*
+*.class
